@@ -115,6 +115,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bootstrap.cpp" />
+    <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="Yellow.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Cell.h" />
+    <ClInclude Include="Bootstrap.h" />
+    <ClInclude Include="Runtime.h" />
+    <ClInclude Include="Parser.h" />
+    <ClInclude Include="SlotPool.h" />
+    <ClInclude Include="SyntaxTree.h" />
+    <ClInclude Include="Yellow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
