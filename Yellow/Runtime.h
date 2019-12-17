@@ -50,7 +50,6 @@ class Runtime
 
 	TINDEX Car(TINDEX index)
 	{
-
 	}
 
 	TINDEX Cdr(TINDEX index)
