@@ -11,217 +11,217 @@ const char* SYMBOL_CHARS = "!$%&*+-./:<=>?@^_~";
 
 list<NodeRef> Parser::ParseExpressions(const string& code, ParsingError* outError)
 {
-	list<NodeRef> result;
-	_code = code.c_str();
+    list<NodeRef> result;
+    _code = code.c_str();
 
-	try
-	{
-		list<NodeRef> expressions;
-		while (*_code)
-		{
-			expressions.push_back(ParseElement());
-			SkipWhitespace();
-		}
+    try
+    {
+        list<NodeRef> expressions;
+        while (*_code)
+        {
+            expressions.push_back(ParseElement());
+            SkipWhitespace();
+        }
 
-		result = expressions;
-	}
-	catch (const char* errorMessage)
-	{
-		if (outError)
-		{
-			int line = 1;
-			int column = 1;
-			const char* errorLine = _code;
+        result = expressions;
+    }
+    catch (const char* errorMessage)
+    {
+        if (outError)
+        {
+            int line = 1;
+            int column = 1;
+            const char* errorLine = _code;
 
-			for (const char* cursor = code.c_str(); cursor < _code; cursor++)
-			{
-				if (*cursor == '\n')
-				{
-					line++;
-					column = 1;
-					errorLine = cursor + 1;
-				}
-				else
-					column++;
-			}
+            for (const char* cursor = code.c_str(); cursor < _code; cursor++)
+            {
+                if (*cursor == '\n')
+                {
+                    line++;
+                    column = 1;
+                    errorLine = cursor + 1;
+                }
+                else
+                    column++;
+            }
 
 
-			stringstream ss;
+            stringstream ss;
 
-			ss << "ERROR (line " << line << "): " << errorMessage << endl;
+            ss << "ERROR (line " << line << "): " << errorMessage << endl;
 
-			while (*errorLine && *errorLine != '\n')
-				ss << *errorLine++;
-			ss << endl;
+            while (*errorLine && *errorLine != '\n')
+                ss << *errorLine++;
+            ss << endl;
 
-			for (int i = 1; i < column - 1; i++)
-				ss << ' ';
-			ss << '^' << endl;
+            for (int i = 1; i < column - 1; i++)
+                ss << ' ';
+            ss << '^' << endl;
 
-			outError->_message = ss.str();
-			outError->_line = line;
-			outError->_column = column;
+            outError->_message = ss.str();
+            outError->_line = line;
+            outError->_column = column;
 
-			cout << outError->_message;
-		}
-	}
+            cout << outError->_message;
+        }
+    }
 
-	return result;
+    return result;
 }
 
 NodeRef Parser::ParseElement()
 {
-	if (Consume(QUOTE_CHAR))
-		return NodeRef(new QuoteNode(ParseElement()));
+    if (Consume(QUOTE_CHAR))
+        return NodeRef(new QuoteNode(ParseElement()));
 
-	if (Peek(OPEN_PAREN))
-		return ParseList();
+    if (Peek(OPEN_PAREN))
+        return ParseList();
 
-	return ParseAtom();
+    return ParseAtom();
 }
 
 NodeRef Parser::ParseList()
 {
-	if (!Consume(OPEN_PAREN))
-		throw "List expected";
+    if (!Consume(OPEN_PAREN))
+        throw "List expected";
 
-	vector<NodeRef> elements;
-	while (!Peek(CLOSE_PAREN))
-		elements.push_back(ParseElement());
+    vector<NodeRef> elements;
+    while (!Peek(CLOSE_PAREN))
+        elements.push_back(ParseElement());
 
-	if (!Consume(CLOSE_PAREN))
-		throw "List is unterminated";
+    if (!Consume(CLOSE_PAREN))
+        throw "List is unterminated";
 
-	return NodeRef(new ListNode(elements));
+    return NodeRef(new ListNode(elements));
 }
 
 NodeRef Parser::ParseAtom()
 {
-	if (Peek(STRING_DELIM))
-		return ParseString();
+    if (Peek(STRING_DELIM))
+        return ParseString();
 
-	if (isdigit(*_code))
-		return ParseNumber();
+    if (isdigit(*_code))
+        return ParseNumber();
 
-	return ParseIdentifier();
+    return ParseIdentifier();
 }
 
 NodeRef Parser::ParseString()
 {
-	if (!Consume(STRING_DELIM))
-		throw "String expected";
+    if (!Consume(STRING_DELIM))
+        throw "String expected";
 
-	// TODO: handle escape chars
+    // TODO: handle escape chars
 
-	const char* end = strchr(_code, STRING_DELIM);
-	if (!end)
-		throw "String is unterminated";
+    const char* end = strchr(_code, STRING_DELIM);
+    if (!end)
+        throw "String is unterminated";
 
-	string str(_code, end - _code);
-	_code = end + 1;
+    string str(_code, end - _code);
+    _code = end + 1;
 
-	return NodeRef(new StringNode(str));
+    return NodeRef(new StringNode(str));
 }
 
 NodeRef Parser::ParseNumber()
 {
-	assert(!isspace(*_code));
+    assert(!isspace(*_code));
 
-	char* end = NULL;
-	double val = strtod(_code, &end);
+    char* end = NULL;
+    double val = strtod(_code, &end);
 
-	if (end == _code)
-		throw "Number expected";
+    if (end == _code)
+        throw "Number expected";
 
-	_code = end;
+    _code = end;
 
-	int64_t integer = (int64_t)val;
-	if (integer == val)
-		return NodeRef(new IntNode(integer));
+    int64_t integer = (int64_t)val;
+    if (integer == val)
+        return NodeRef(new IntNode(integer));
 
-	return NodeRef(new FloatNode(val));
+    return NodeRef(new FloatNode(val));
 }
 
 NodeRef Parser::ParseIdentifier()
 {
-	assert(!isspace(*_code));
+    assert(!isspace(*_code));
 
-	const char* end = _code;
-	while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
-		end++;
+    const char* end = _code;
+    while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
+        end++;
 
-	if (end == _code)
-		throw "Invalid identifier";
+    if (end == _code)
+        throw "Invalid identifier";
 
-	string ident(_code, end - _code);
-	_code = end;
+    string ident(_code, end - _code);
+    _code = end;
 
-	return NodeRef(new IdentNode(ident));
+    return NodeRef(new IdentNode(ident));
 }
 
 // static
 void Parser::TestParsing(const string& code)
 {
-	Parser parser;
-	ParsingError error;
+    Parser parser;
+    ParsingError error;
 
-	list<NodeRef> expressions = parser.ParseExpressions(code, &error);
-	assert(expressions.size() == 1);
-	assert(expressions.front() != NULL);
+    list<NodeRef> expressions = parser.ParseExpressions(code, &error);
+    assert(expressions.size() == 1);
+    assert(expressions.front() != NULL);
 
-	string rebuilt = expressions.front()->Serialize();
-	assert(rebuilt == code);
+    string rebuilt = expressions.front()->Serialize();
+    assert(rebuilt == code);
 }
 
 // static
 void Parser::RunUnitTest()
 {
-	TestParsing("()");
-	TestParsing("'()");
+    TestParsing("()");
+    TestParsing("'()");
 
-	TestParsing("(())");
-	TestParsing("('())");
-	TestParsing("'(())");
-	TestParsing("'((a))");
+    TestParsing("(())");
+    TestParsing("('())");
+    TestParsing("'(())");
+    TestParsing("'((a))");
 
-	TestParsing("(a)");
-	TestParsing("'(a)");
-	TestParsing("('a)");
-	TestParsing("'('a)");
+    TestParsing("(a)");
+    TestParsing("'(a)");
+    TestParsing("('a)");
+    TestParsing("'('a)");
 
-	TestParsing("(ab)");
-	TestParsing("(ab (c de))");
-	TestParsing("(abc123)");
+    TestParsing("(ab)");
+    TestParsing("(ab (c de))");
+    TestParsing("(abc123)");
 
-	TestParsing("(a b)");
-	TestParsing("(a 'b)");
-	TestParsing("('a b)");
-	TestParsing("'(a b)");
+    TestParsing("(a b)");
+    TestParsing("(a 'b)");
+    TestParsing("('a b)");
+    TestParsing("'(a b)");
 
-	TestParsing("(a (b))");
-	TestParsing("(a () b)");
-	TestParsing("((a) b)");
-	TestParsing("((a) (b))");
-	TestParsing("(a '(b))");
-	TestParsing("(a ('b))");
+    TestParsing("(a (b))");
+    TestParsing("(a () b)");
+    TestParsing("((a) b)");
+    TestParsing("((a) (b))");
+    TestParsing("(a '(b))");
+    TestParsing("(a ('b))");
 
-	TestParsing("(a b c)");
-	TestParsing("((a) b c)");
-	TestParsing("(a (b) c)");
-	TestParsing("(a b (c))");
-	TestParsing("((a b) c)");
-	TestParsing("(a (b c))");
-	TestParsing("((a b c))");
+    TestParsing("(a b c)");
+    TestParsing("((a) b c)");
+    TestParsing("(a (b) c)");
+    TestParsing("(a b (c))");
+    TestParsing("((a b) c)");
+    TestParsing("(a (b c))");
+    TestParsing("((a b c))");
 
-	TestParsing("(123)");
-	TestParsing("('123)");
-	TestParsing("'(123)");
+    TestParsing("(123)");
+    TestParsing("('123)");
+    TestParsing("'(123)");
 
-	TestParsing("(123.45)");
-	TestParsing("('123.45)");
-	TestParsing("'(123.45)");
+    TestParsing("(123.45)");
+    TestParsing("('123.45)");
+    TestParsing("'(123.45)");
 
-	TestParsing("(123 45)");
-	TestParsing("(123 45.67)");
-	TestParsing("(123 four (5.67 eight))");
+    TestParsing("(123 45)");
+    TestParsing("(123 45.67)");
+    TestParsing("(123 four (5.67 eight))");
 }

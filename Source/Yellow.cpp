@@ -6,17 +6,17 @@
 
 int main(int argc, char** argv)
 {
-	Parser::RunUnitTest();
+    Parser::RunUnitTest();
 
-	Parser parser;
-	ParsingError error;
+    Parser parser;
+    ParsingError error;
 
-	list<NodeRef> expressions = parser.ParseExpressions(gBootstrapCode, &error);
-	for (auto expr : expressions)
-	{
-		cout << expr->Serialize() << std::endl;
-	}
+    list<NodeRef> expressions = parser.ParseExpressions(gBootstrapCode, &error);
+    for (auto expr : expressions)
+    {
+        cout << expr->Serialize() << std::endl;
+    }
 
 
-	return 0;
+    return 0;
 }

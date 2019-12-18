@@ -16,25 +16,25 @@ using namespace std;
 
 enum Tag
 {
-	TAG_USED,
-	TAG_MARKED,
+    TAG_USED,
+    TAG_MARKED,
 
-	TAG_COUNT,
-	TAG_BITS = 3
+    TAG_COUNT,
+    TAG_BITS = 3
 };
 
 enum Type
 {
-	TYPE_VOID,		
-	TYPE_ATOM,		// Hash of the identifier
-	TYPE_CELL,		// Index into cell table
-	TYPE_FUNC,		// Index into function table
-	TYPE_STRING,	// Index into string table
-	TYPE_INT,		// Literal int
-	TYPE_FLOAT,		// Literal float
+    TYPE_VOID,      
+    TYPE_ATOM,      // Hash of the identifier
+    TYPE_CELL,      // Index into cell table
+    TYPE_FUNC,      // Index into function table
+    TYPE_STRING,    // Index into string table
+    TYPE_INT,       // Literal int
+    TYPE_FLOAT,     // Literal float
 
-	TYPE_COUNT,
-	TYPE_BITS = 3
+    TYPE_COUNT,
+    TYPE_BITS = 3
 };
 
 typedef uint64_t TWORD;
