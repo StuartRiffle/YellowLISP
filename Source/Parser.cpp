@@ -1,3 +1,5 @@
+// YellowLISP (c) 2019 Stuart Riffle
+
 #include "Parser.h"
 
 const char QUOTE_CHAR = '\'';

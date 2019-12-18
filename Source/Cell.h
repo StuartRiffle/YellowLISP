@@ -1,3 +1,5 @@
+// YellowLISP (c) 2019 Stuart Riffle
+
 #pragma once
 #include "Yellow.h"
 

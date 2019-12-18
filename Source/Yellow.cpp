@@ -1,8 +1,8 @@
+// YellowLISP (c) 2019 Stuart Riffle
+
 #include "Yellow.h"
 #include "Bootstrap.h"
 #include "Parser.h"
-
-
 
 int main(int argc, char** argv)
 {

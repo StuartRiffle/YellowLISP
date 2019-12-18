@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{C309C69A-4F03-46ED-B019-F73BAA0BD6E0}</ProjectGuid>
+    <ProjectGuid>{7AAD7631-2359-401D-AC59-C9CFE5EDD402}</ProjectGuid>
     <RootNamespace>Yellow</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -69,7 +69,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -115,21 +118,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Bootstrap.cpp" />
-    <ClCompile Include="Parser.cpp" />
-    <ClCompile Include="Yellow.cpp" />
+    <ClCompile Include="Source\Bootstrap.cpp" />
+    <ClCompile Include="Source\Parser.cpp" />
+    <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Cell.h" />
-    <ClInclude Include="Bootstrap.h" />
-    <ClInclude Include="Runtime.h" />
-    <ClInclude Include="Parser.h" />
-    <ClInclude Include="SlotPool.h" />
-    <ClInclude Include="SyntaxTree.h" />
-    <ClInclude Include="Yellow.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\.gitignore" />
+    <ClInclude Include="Source\Bootstrap.h" />
+    <ClInclude Include="Source\Cell.h" />
+    <ClInclude Include="Source\Parser.h" />
+    <ClInclude Include="Source\Runtime.h" />
+    <ClInclude Include="Source\SlotPool.h" />
+    <ClInclude Include="Source\SyntaxTree.h" />
+    <ClInclude Include="Source\Yellow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
