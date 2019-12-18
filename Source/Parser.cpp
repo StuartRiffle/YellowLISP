@@ -39,24 +39,24 @@ list<NodeRef> Parser::ParseExpressions(const string& code, ParsingError* outErro
 				{
 					line++;
 					column = 1;
-					errorLine = _code;
+					errorLine = cursor + 1;
 				}
 				else
 					column++;
 			}
 
+
 			stringstream ss;
+
+			ss << "ERROR (line " << line << "): " << errorMessage << endl;
 
 			while (*errorLine && *errorLine != '\n')
 				ss << *errorLine++;
-
 			ss << endl;
 
 			for (int i = 1; i < column - 1; i++)
 				ss << ' ';
-
 			ss << '^' << endl;
-			ss << "ERROR: " << errorMessage;
 
 			outError->_message = ss.str();
 			outError->_line = line;
