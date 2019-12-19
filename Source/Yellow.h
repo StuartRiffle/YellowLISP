@@ -2,15 +2,22 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <assert.h>
- 
-#include <vector>
 #include <string>
+using std::string;
+
+#include <vector>
+using std::vector;
+
+#include <list>
+using std::list;
+
+#include <cstdint>
+using std::uint32_t;
+using std::uint64_t;
+
 #include <memory>
+#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
-
-using namespace std;
 

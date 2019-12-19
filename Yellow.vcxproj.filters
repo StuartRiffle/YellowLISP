@@ -28,9 +28,6 @@
     <ClInclude Include="Source\Bootstrap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Cell.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Parser.h">
       <Filter>Header Files</Filter>
     </ClInclude>

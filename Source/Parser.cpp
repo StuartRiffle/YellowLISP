@@ -46,7 +46,7 @@ list<NodeRef> Parser::ParseExpressions(const string& code, ParsingError* outErro
             }
 
 
-            stringstream ss;
+            std::stringstream ss;
 
             ss << "ERROR (line " << line << "): " << errorMessage << endl;
 

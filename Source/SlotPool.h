@@ -6,7 +6,7 @@
 template< typename T >
 class SlotPool
 {
-    std::vector<T> _elems;
+    vector<T> _elems;
     TINDEX _freeIndex;
 
     static_assert(sizeof(T) >= sizeof(TINDEX), "Type too small to be linked into a free list");
@@ -62,6 +62,11 @@ public:
         TINDEX* freeLink = (TINDEX*)&_elems[index];
         *freeLink = _freeIndex;
         _freeIndex = index;
+    }
+
+    size_t GetPoolSize() const
+    {
+        return _elems.size();
     }
 };
 
