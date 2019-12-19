@@ -1,134 +1,48 @@
 // YellowLISP (c) 2019 Stuart Riffle
 
 #pragma once
+#include "Cell.h"
 #include "SyntaxTree.h"
+#include "SlotPool.h"
+#include "Hash.h"
+
+struct SymbolInfo
+{
+    string _ident;
+    TINDEX _cellIndex;
+};
+
+struct FunctionInfo
+{
+    string _name;
+};
+
+typedef TINDEX CELL_INDEX;
+typedef TINDEX SYMBOL_INDEX;
+typedef TINDEX FUNC_INDEX;
+typedef TINDEX STRING_INDEX;
 
 class Runtime
 {
-    SlotPool<Cell>      _cells;
-    SlotPool<void*>     _functions;
-    SlotPool<string>    _strings;
+    SlotPool<Cell>          _cell;
+    SlotPool<SymbolInfo>    _symbol;
+    SlotPool<FunctionInfo>  _function;
+    SlotPool<string>        _string;
 
-    unordered_map<THASH, TINDEX> _symbols;
+    unordered_map<THASH, SYMBOL_INDEX> _symbolIndex;
 
-    TINDEX              _emptyList;
-    TINDEX              _symbolTrue;
+    CELL_INDEX          _nil;
+    CELL_INDEX          _true;
 
-    void Init()
-    {
-        _symbolTrue = GetAtom("t");
-        _emptyList = _cells.Alloc();
-    }
+    void Init();
 
-    TINDEX Quote(TINDEX index)
-    {
-        return index;
-    }
+    SYMBOL_INDEX ResolveSymbol(const char* ident);
+    string CellToString(CELL_INDEX index);
 
-    TINDEX Atom(TINDEX index)
-    {
-        Cell& cell = _cells[index];
-
-        if (cell.IsAtom() || cell.IsEmptyList())
-            return _symbolTrue;
-
-        return _emptyList;
-    }
-
-    TINDEX Eq(TINDEX a, TINDEX b)
-    {
-        Cell& ca = _cells[a];
-        Cell& cb = _cells[b];
-
-        if (ca.IsAtom() && cb.IsAtom())
-            if (ca.GetAtomHash() == cb.GetAtomHash())
-                return _symbolTrue;
-
-        if (ca.IsEmptyList() && cb.IsEmptyList())
-            return _symbolTrue;
-
-        return _emptyList;
-    }
-
-    TINDEX Car(TINDEX index)
-    {
-    }
-
-    TINDEX Cdr(TINDEX index)
-    {
-
-    }
-
-    TINDEX Cons(TINDEX head, TINDEX tail)
-    {
-        TINDEX index = _cells.Alloc();
-        Cell& cell = _cells[index];
-
-        cell.SetCellRef(head);
-        cell.SetNext(tail);
-
-        return index;
-    }
-
-    TINDEX Parse(const char* code)
-    {
-
-
-        return(INVALID_INDEX);
-    }
-
-    string Print(TINDEX index)
-    {
-
-    }
-
-    TINDEX Eval(TINDEX index)
-    {
-
-    }
-
-    string Eval(const char* code)
-    {
-        TINDEX expr = Parse(code);
-        TINDEX value = Eval(expr);
-        string output = Print(value);
-
-        return output;
-    }
-
-    void Repl()
-    {
-        string code;
-
-        while (std::getline(cin, code))
-            cout << Eval(code.c_str());
-    }
-
-    void CheckOutput(const string& input, const string& result)
-    {
-
-    }
-
-    void Test()
-    {
-        CheckOutput("'a", "a");
-        CheckOutput("(quote a)", "a");
-        CheckOutput("(quote (a b c))", "(a b c)");
-
-
-        CheckOutput("(atom 'a)", "t");
-        CheckOutput("(atom '(a b c))", "()");
-        CheckOutput("(atom '())", "t");
-        CheckOutput("(atom (atom 'a))", "t");
-        CheckOutput("(atom '(atom 'a))", "()");
-
-        CheckOutput("(eq 'a 'a)", "t");
-        CheckOutput("(eq 'a 'b)", "()");
-        CheckOutput("(eq '() '())", "t");
-    }
-
-    void Run(NodeRef ast)
-    {
-
-    }
+    CELL_INDEX Quote(CELL_INDEX index);
+    CELL_INDEX Atom(CELL_INDEX index);
+    CELL_INDEX Eq(CELL_INDEX a, CELL_INDEX b);
+    CELL_INDEX Car(CELL_INDEX index);
+    CELL_INDEX Cdr(CELL_INDEX index);
+    CELL_INDEX Cons(CELL_INDEX head, CELL_INDEX tail);
 };

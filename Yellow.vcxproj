@@ -120,11 +120,13 @@
   <ItemGroup>
     <ClCompile Include="Source\Bootstrap.cpp" />
     <ClCompile Include="Source\Parser.cpp" />
+    <ClCompile Include="Source\Runtime.cpp" />
     <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h" />
     <ClInclude Include="Source\Cell.h" />
+    <ClInclude Include="Source\Hash.h" />
     <ClInclude Include="Source\Parser.h" />
     <ClInclude Include="Source\Runtime.h" />
     <ClInclude Include="Source\SlotPool.h" />

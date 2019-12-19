@@ -22,7 +22,7 @@ class Parser
 
     inline bool Peek(char c)
     {
-        for (;; )
+        for (;;)
         {
             SkipWhitespace();
 
