@@ -1,10 +1,14 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
-void Runtime::Init()
+Runtime::Runtime()
 {
     _nil  = ResolveSymbol("nil");
     _true = ResolveSymbol("t");
+}
+
+Runtime::~Runtime()
+{
 }
 
 CELL_INDEX Runtime::Quote(CELL_INDEX index) const
@@ -164,7 +168,6 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
     }
 }
 
-
 SYMBOL_INDEX Runtime::ResolveSymbol(const char* ident)
 {
     THASH hash = HashString(ident);
@@ -187,6 +190,98 @@ SYMBOL_INDEX Runtime::ResolveSymbol(const char* ident)
     return symbolIndex;
 }
 
+CELL_INDEX Runtime::AllocateCell()
+{
+    CELL_INDEX index = _cell.Alloc();
+
+    if (!index)
+    {
+        size_t numCellsFreed = CollectGarbage();
+        float pctFreed = numCellsFreed * 1.0f / _cell.GetPoolSize();
+        float pctUsed = 1 - pctFreed;
+
+        if (pctUsed >= CELL_TABLE_EXPAND_THRESH)
+        {
+            // Garbage collection didn't help much. We will probably
+            // hit the wall again soon, so pre-emptively expand the pool.
+
+            _cell.ExpandPool();
+        }
+
+        index = _cell.Alloc();
+    }
+
+    return index;
+}
+
+void Runtime::MarkCellsInUse(CELL_INDEX index)
+{
+    Cell& cell = _cell[index];
+
+    if (cell._tags & TAG_GC_MARK)
+        return;
+
+    cell._tags |= TAG_GC_MARK;
+
+    if (cell._type == TYPE_CELL_REF)
+        MarkCellsInUse(cell._data);
+
+    if (cell._next)
+        MarkCellsInUse(cell._next);
+}
+
+size_t Runtime::CollectGarbage()
+{
+    size_t numCellsFreed = 0;
+
+    for (TINDEX i = 1; i < _cell.GetPoolSize(); i++)
+        assert(_cell[i]._tags & TAG_GC_MARK == 0);
+
+    // TODO: call MarkCellsInUse here
+
+    for (TINDEX i = 1; i < _cell.GetPoolSize(); i++)
+    {
+        Cell& cell = _cell[i];
+
+        if (cell._tags & TAG_GC_MARK)
+        {
+            cell._tags &= ~TAG_GC_MARK;
+        }
+        else
+        {
+            _cell.Free(i);
+            numCellsFreed++;
+        }
+    }
+
+    return numCellsFreed;
+}
+
+
+
+CELL_INDEX EncodeSyntaxTree(const NodeRef& node)
+{
+    
+
+    // Encode the entire tree into cells
+    // Call Eval() on the root
+
+    // If it's a list...
+
+    // Start with one node type: integer
+
+    NodeRef node = root;
+
+    EvalResult result;
+}
+
+string Runtime::GetPrintedValue(CELL_INDEX index)
+{
+    return "FIXME";
+}
+
+
+/*
 string Runtime::CellToString(CELL_INDEX index)
 {
     if (index == _nil)
@@ -208,3 +303,4 @@ string Runtime::CellToString(CELL_INDEX index)
 
     return ss.str();
 }
+*/

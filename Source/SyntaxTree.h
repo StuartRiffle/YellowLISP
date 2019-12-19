@@ -16,7 +16,7 @@ struct Node
     }
 };
 
-typedef shared_ptr< Node > NodeRef;
+typedef std::shared_ptr< Node > NodeRef;
 
 struct IdentNode : public Node
 {

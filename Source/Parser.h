@@ -3,11 +3,13 @@
 #pragma once
 #include "SyntaxTree.h"
 
-struct ParsingError
+struct ParsingError : std::exception
 {
+    string _message;
     int _line;
     int _column;
-    string _message;
+
+    virtual const char* what() const { return _message.c_str(); }
 };
 
 class Parser
@@ -52,8 +54,10 @@ class Parser
     NodeRef ParseNumber();
     NodeRef ParseIdentifier();
 
+    ParsingError FormatParsingError(const char* source, const char* errorMessage);
+
 public:
-    list<NodeRef> ParseExpressions(const string& code, ParsingError* outError = NULL);
+    ParsingError ParseExpressions(const string& source);
 
     static void TestParsing(const string& code);
     static void RunUnitTest();

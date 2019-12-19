@@ -66,22 +66,33 @@ struct FunctionInfo
     string _name;
 };
 
+struct RuntimeError : std::exception
+{
+    string _message;
+
+    virtual const char* what() const { return _message.c_str(); }
+};
+
+#define CELL_TABLE_EXPAND_THRESH (0.9f)
+
 class Runtime
 {
-    SlotPool<Cell>          _cell;
-    SlotPool<SymbolInfo>    _symbol;
-    SlotPool<FunctionInfo>  _function;
+    SlotPool<Cell, NO_AUTO_EXPAND> _cell;
+
     SlotPool<string>        _string;
+    SlotPool<FunctionInfo>  _function;
+    SlotPool<SymbolInfo>    _symbol;
 
-    unordered_map<THASH, SYMBOL_INDEX> _symbolIndex;
+    std::unordered_map<THASH, SYMBOL_INDEX> _symbolIndex;
 
-    CELL_INDEX          _nil;
-    CELL_INDEX          _true;
-
-    void Init();
+    CELL_INDEX  _nil;
+    CELL_INDEX  _true;
 
     SYMBOL_INDEX ResolveSymbol(const char* ident);
-    string CellToString(CELL_INDEX index);
+
+    CELL_INDEX AllocateCell();
+    void MarkCellsInUse(CELL_INDEX index);
+    size_t CollectGarbage();
 
     CELL_INDEX Quote(CELL_INDEX index) const;
     CELL_INDEX Atom(CELL_INDEX index) const;
@@ -98,4 +109,11 @@ class Runtime
 
     const char* LoadStringLiteral(CELL_INDEX index) const;
     void StoreStringLiteral(CELL_INDEX index, const char* str);
+
+public:
+    Runtime();
+    ~Runtime();
+
+    EvalResult EvaluateSyntaxTree(const NodeRef& root);
+    string GetPrintedValue(CELL_INDEX index);
 };

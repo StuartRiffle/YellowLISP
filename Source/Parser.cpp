@@ -9,61 +9,22 @@ const char CLOSE_PAREN = ')';
 const char MINUS_SIGN = '-';
 const char* SYMBOL_CHARS = "!$%&*+-./:<=>?@^_~";
 
-list<NodeRef> Parser::ParseExpressions(const string& code, ParsingError* outError)
+list<NodeRef> Parser::ParseExpressions(const string& source)
 {
     list<NodeRef> result;
-    _code = code.c_str();
+    _code = source.c_str();
 
     try
     {
-        list<NodeRef> expressions;
         while (*_code)
         {
-            expressions.push_back(ParseElement());
+            result.push_back(ParseElement());
             SkipWhitespace();
         }
-
-        result = expressions;
     }
     catch (const char* errorMessage)
     {
-        if (outError)
-        {
-            int line = 1;
-            int column = 1;
-            const char* errorLine = _code;
-
-            for (const char* cursor = code.c_str(); cursor < _code; cursor++)
-            {
-                if (*cursor == '\n')
-                {
-                    line++;
-                    column = 1;
-                    errorLine = cursor + 1;
-                }
-                else
-                    column++;
-            }
-
-
-            std::stringstream ss;
-
-            ss << "ERROR (line " << line << "): " << errorMessage << endl;
-
-            while (*errorLine && *errorLine != '\n')
-                ss << *errorLine++;
-            ss << endl;
-
-            for (int i = 1; i < column - 1; i++)
-                ss << ' ';
-            ss << '^' << endl;
-
-            outError->_message = ss.str();
-            outError->_line = line;
-            outError->_column = column;
-
-            cout << outError->_message;
-        }
+        throw FormatParsingError(source.c_str(), errorMessage);
     }
 
     return result;
@@ -158,6 +119,49 @@ NodeRef Parser::ParseIdentifier()
 
     return NodeRef(new IdentNode(ident));
 }
+
+ParsingError Parser::FormatParsingError(const char* source, const char* errorMessage)
+{
+    ParsingError result;
+    result._success = false;
+
+    int line = 1;
+    int column = 1;
+    const char* errorLine = _code;
+
+    for (const char* cursor = source; cursor < _code; cursor++)
+    {
+        if (*cursor == '\n')
+        {
+            line++;
+            column = 1;
+            errorLine = cursor + 1;
+        }
+        else
+            column++;
+    }
+
+    std::stringstream ss;
+
+    ss << "ERROR (line " << line << "): " << errorMessage;
+    ss << std::endl;
+
+    while (*errorLine && *errorLine != '\n')
+        ss << *errorLine++;
+    ss << std::endl;
+
+    for (int i = 1; i < column - 1; i++)
+        ss << ' ';
+    ss << '^';
+    ss << std::endl;
+
+    result._errorLine = line;
+    result._errorColumn = column;
+    result._errorMessage = ss.str();
+
+    return result;
+}
+
 
 // static
 void Parser::TestParsing(const string& code)

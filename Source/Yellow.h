@@ -2,6 +2,14 @@
 
 #pragma once
 
+#define VERSION_MAJOR   (0)
+#define VERSION_MINOR   (1)
+#define VERSION_PATCH   (0)
+
+#include <cstdint>
+using std::uint32_t;
+using std::uint64_t;
+
 #include <string>
 using std::string;
 
@@ -11,13 +19,15 @@ using std::vector;
 #include <list>
 using std::list;
 
-#include <cstdint>
-using std::uint32_t;
-using std::uint64_t;
+#include <map>
+using std::map;
+
+#include <unordered_map>
+using std::unordered_map;
 
 #include <memory>
 #include <cassert>
 #include <iostream>
 #include <sstream>
-#include <unordered_map>
+#include <exception>
 

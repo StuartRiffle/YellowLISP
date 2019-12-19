@@ -3,35 +3,32 @@
 #pragma once
 #include "Yellow.h"
 
-template< typename T >
+#define NO_AUTO_EXPAND (0)
+#define ENABLE_AUTO_EXPAND (1)
+
+template< 
+    typename T, 
+    int AUTO_EXPAND = ENABLE_AUTO_EXPAND,
+    int INITIAL_CAPACITY = 1024 
+>
 class SlotPool
 {
     vector<T> _elems;
-    TINDEX _freeIndex;
+    size_t _freeIndex;
 
-    static_assert(sizeof(T) >= sizeof(TINDEX), "Type too small to be linked into a free list");
-
-    void Expand()
-    {
-        assert(_elems.size() == _elems.capacity());
-        size_t firstNewElem = _elems.size();
-
-        _elems.push_back();
-        _elems.resize(_elems.capacity());
-
-        for (size_t i = firstNewElem; i < _elems.capacity(); i++)
-            Free((TINDEX)i);
-    }
+    static_assert(sizeof(T) >= sizeof(size_t), "Type too small to be linked into a free list");
 
 public:
 
     SlotPool()
     {
-        _elems.push_back(T());
+        _elems.reserve(INITIAL_CAPACITY);
+
+        _elems.push_back(T()); // element 0 is reserved as invalid
         _freeIndex = 0;
     }
 
-    inline T& operator[](TINDEX index) const
+    inline T& operator[](size_t index) const
     {
         assert(index > 0);
         assert(index < _elems.size());
@@ -39,29 +36,41 @@ public:
         return _elems[index];
     }
 
-    inline TINDEX Alloc()
+    inline size_t Alloc()
     {
         if (!_freeIndex)
-        {
-            Expand();
-            assert(_freeIndex);
-        }
+            if (AUTO_EXPAND)
+                ExpandPool();
 
         int index = _freeIndex;
-        TINDEX* freeLink = (TINDEX*)&_elems[index];
-        _freeIndex = *freeLink;
+        if (index)
+        {
+            size_t* freeLink = (size_t*)&_elems[index];
+            _freeIndex = *freeLink;
+            _elems[index] = T();
+        }
 
-        _elems[index] = T();
         return(index);
     }
 
-    inline void Free(TINDEX index)
+    inline void Free(size_t index)
     {
         assert(index < _elems.size());
 
-        TINDEX* freeLink = (TINDEX*)&_elems[index];
+        size_t* freeLink = (size_t*)&_elems[index];
         *freeLink = _freeIndex;
         _freeIndex = index;
+    }
+
+    void ExpandPool()
+    {
+        size_t firstNewElem = _elems.size();
+
+        _elems.push_back();
+        _elems.resize(_elems.capacity());
+
+        for (size_t i = firstNewElem; i < _elems.capacity(); i++)
+            Free((size_t)i);
     }
 
     size_t GetPoolSize() const
