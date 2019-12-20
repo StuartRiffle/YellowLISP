@@ -121,6 +121,7 @@
     <ClCompile Include="Source\Bootstrap.cpp" />
     <ClCompile Include="Source\Interpreter.cpp" />
     <ClCompile Include="Source\Parser.cpp" />
+    <ClCompile Include="Source\Primitives.cpp" />
     <ClCompile Include="Source\Runtime.cpp" />
     <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>
@@ -131,7 +132,7 @@
     <ClInclude Include="Source\Parser.h" />
     <ClInclude Include="Source\Runtime.h" />
     <ClInclude Include="Source\SlotPool.h" />
-    <ClInclude Include="Source\SyntaxTree.h" />
+    <ClInclude Include="Source\Testing.h" />
     <ClInclude Include="Source\Yellow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

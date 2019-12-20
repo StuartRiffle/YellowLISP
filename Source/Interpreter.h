@@ -9,6 +9,7 @@ class Interpreter
     Runtime _runtime;
     bool _interactive;
 
+    void PrintErrorMessage(const string& desc, const string& message);
     void EvaluateExpressions(const list<NodeRef>& exps);
 
 public:

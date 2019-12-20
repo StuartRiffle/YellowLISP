@@ -33,7 +33,16 @@ list<NodeRef> Parser::ParseExpressions(const string& source)
 NodeRef Parser::ParseElement()
 {
     if (Consume(QUOTE_CHAR))
-        return NodeRef(new QuoteNode(ParseElement()));
+    {
+        NodeRef quotePrimitive(new NodeVariant(AST_NODE_IDENTIFIER));
+        quotePrimitive->_identifier = "quote";
+
+        NodeRef quoteNode(new NodeVariant(AST_NODE_LIST));
+        quoteNode->_list.push_back(quotePrimitive);
+        quoteNode->_list.push_back(ParseElement());
+
+        return quoteNode;
+    }
 
     if (Peek(OPEN_PAREN))
         return ParseList();
@@ -46,14 +55,14 @@ NodeRef Parser::ParseList()
     if (!Consume(OPEN_PAREN))
         throw "List expected";
 
-    vector<NodeRef> elements;
+    NodeRef listNode(new NodeVariant(AST_NODE_LIST));
     while (!Peek(CLOSE_PAREN))
-        elements.push_back(ParseElement());
+        listNode->_list.push_back(ParseElement());
 
     if (!Consume(CLOSE_PAREN))
         throw "List is unterminated";
 
-    return NodeRef(new ListNode(elements));
+    return listNode;
 }
 
 NodeRef Parser::ParseAtom()
@@ -81,7 +90,9 @@ NodeRef Parser::ParseString()
     string str(_code, end - _code);
     _code = end + 1;
 
-    return NodeRef(new StringNode(str));
+    NodeRef stringNode(new NodeVariant(AST_NODE_STRING_LITERAL));
+    stringNode->_string = str;
+    return stringNode;
 }
 
 NodeRef Parser::ParseNumber()
@@ -89,18 +100,25 @@ NodeRef Parser::ParseNumber()
     assert(!isspace(*_code));
 
     char* end = NULL;
-    double val = strtod(_code, &end);
+    float val = strtod(_code, &end);
 
     if (end == _code)
         throw "Number expected";
 
     _code = end;
 
-    int64_t integer = (int64_t)val;
+    int integer = (int)val;
     if (integer == val)
-        return NodeRef(new IntNode(integer));
+    {
+        NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
+        intNode->_int = integer;
+        return intNode;
 
-    return NodeRef(new FloatNode(val));
+    }
+
+    NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));
+    floatNode->_float = val;
+    return floatNode;
 }
 
 NodeRef Parser::ParseIdentifier()
@@ -117,13 +135,14 @@ NodeRef Parser::ParseIdentifier()
     string ident(_code, end - _code);
     _code = end;
 
-    return NodeRef(new IdentNode(ident));
+    NodeRef identNode(new NodeVariant(AST_NODE_IDENTIFIER));
+    identNode->_identifier = ident;
+    return identNode;
 }
 
 ParsingError Parser::FormatParsingError(const char* source, const char* errorMessage)
 {
     ParsingError result;
-    result._success = false;
 
     int line = 1;
     int column = 1;
@@ -143,9 +162,6 @@ ParsingError Parser::FormatParsingError(const char* source, const char* errorMes
 
     std::stringstream ss;
 
-    ss << "ERROR (line " << line << "): " << errorMessage;
-    ss << std::endl;
-
     while (*errorLine && *errorLine != '\n')
         ss << *errorLine++;
     ss << std::endl;
@@ -155,77 +171,10 @@ ParsingError Parser::FormatParsingError(const char* source, const char* errorMes
     ss << '^';
     ss << std::endl;
 
-    result._errorLine = line;
-    result._errorColumn = column;
-    result._errorMessage = ss.str();
+    result._line = line;
+    result._column = column;
+    result._message = errorMessage;
+    result._extraInfo = ss.str();
 
     return result;
-}
-
-
-// static
-void Parser::TestParsing(const string& code)
-{
-    Parser parser;
-    ParsingError error;
-
-    list<NodeRef> expressions = parser.ParseExpressions(code, &error);
-    assert(expressions.size() == 1);
-    assert(expressions.front() != NULL);
-
-    string rebuilt = expressions.front()->Serialize();
-    assert(rebuilt == code);
-}
-
-// static
-void Parser::RunUnitTest()
-{
-    TestParsing("()");
-    TestParsing("'()");
-
-    TestParsing("(())");
-    TestParsing("('())");
-    TestParsing("'(())");
-    TestParsing("'((a))");
-
-    TestParsing("(a)");
-    TestParsing("'(a)");
-    TestParsing("('a)");
-    TestParsing("'('a)");
-
-    TestParsing("(ab)");
-    TestParsing("(ab (c de))");
-    TestParsing("(abc123)");
-
-    TestParsing("(a b)");
-    TestParsing("(a 'b)");
-    TestParsing("('a b)");
-    TestParsing("'(a b)");
-
-    TestParsing("(a (b))");
-    TestParsing("(a () b)");
-    TestParsing("((a) b)");
-    TestParsing("((a) (b))");
-    TestParsing("(a '(b))");
-    TestParsing("(a ('b))");
-
-    TestParsing("(a b c)");
-    TestParsing("((a) b c)");
-    TestParsing("(a (b) c)");
-    TestParsing("(a b (c))");
-    TestParsing("((a b) c)");
-    TestParsing("(a (b c))");
-    TestParsing("((a b c))");
-
-    TestParsing("(123)");
-    TestParsing("('123)");
-    TestParsing("'(123)");
-
-    TestParsing("(123.45)");
-    TestParsing("('123.45)");
-    TestParsing("'(123.45)");
-
-    TestParsing("(123 45)");
-    TestParsing("(123 45.67)");
-    TestParsing("(123 four (5.67 eight))");
 }

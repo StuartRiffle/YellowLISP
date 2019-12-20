@@ -10,6 +10,11 @@ Interpreter::~Interpreter()
 {
 }
 
+void Interpreter::PrintErrorMessage(const string& desc, const string& message)
+{
+    std::cout << COLOR_ERROR << desc << ": " << message << COLOR_RESET << std::endl;
+}
+
 void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 {
     try
@@ -25,7 +30,6 @@ void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
             catch (RuntimeError error)
             {
                 PrintErrorMessage("RUNTIME ERROR", error._message);
-
                 if (!_interactive)
                     exit(RETURN_RUNTIME_ERROR);
 
@@ -52,10 +56,8 @@ void Interpreter::RunCode(const string& source)
         std::stringstream desc;
         desc << "PARSING ERROR (line " << error._line << ")";
 
-        std::stringstream message;
-        message << error._message << std::endl << error._extraInfo;
-
-        PrintErrorMessage(desc.str(), message.str());
+        PrintErrorMessage(desc.str(), error._message);
+        std::cout << error._extraInfo << std::endl;
 
         if (!_interactive)
             exit(RETURN_PARSING_ERROR);

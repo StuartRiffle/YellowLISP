@@ -1,11 +1,38 @@
 // YellowLISP (c) 2019 Stuart Riffle
 
 #pragma once
-#include "SyntaxTree.h"
+#include "Yellow.h"
+
+enum NodeType
+{
+    AST_NODE_INVALID,
+    AST_NODE_IDENTIFIER,
+    AST_NODE_LIST,
+    AST_NODE_QUOTE,
+    AST_NODE_STRING_LITERAL,
+    AST_NODE_INT_LITERAL,
+    AST_NODE_FLOAT_LITERAL
+};
+
+struct NodeVariant;
+typedef std::shared_ptr<NodeVariant> NodeRef;
+
+struct NodeVariant
+{
+    NodeType _type;
+    NodeVariant(NodeType type) : _type(type) {}
+
+    vector<NodeRef> _list;
+    string _identifier;
+    string _string;
+    int    _int;
+    float  _float;
+};
 
 struct ParsingError : std::exception
 {
     string _message;
+    string _extraInfo;
     int _line;
     int _column;
 
@@ -57,7 +84,7 @@ class Parser
     ParsingError FormatParsingError(const char* source, const char* errorMessage);
 
 public:
-    ParsingError ParseExpressions(const string& source);
+    list<NodeRef> ParseExpressions(const string& source);
 
     static void TestParsing(const string& code);
     static void RunUnitTest();

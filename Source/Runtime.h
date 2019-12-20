@@ -1,7 +1,6 @@
 // YellowLISP (c) 2019 Stuart Riffle
 
 #pragma once
-#include "SyntaxTree.h"
 #include "SlotPool.h"
 #include "Hash.h"
 
@@ -61,14 +60,20 @@ struct SymbolInfo
     TINDEX _cellIndex;
 };
 
-struct FunctionInfo
+typedef vector<CELL_INDEX> ArgumentList;
+typedef CELL_INDEX(Runtime::*PrimitiveFunc)(const ArgumentList& args);
+
+struct PrimitiveInfo
 {
     string _name;
+    int _numArgs;
+    PrimitiveFunc _func;
 };
 
 struct RuntimeError : std::exception
 {
     string _message;
+    RuntimeError(const string& message) : _message(message) {}
 
     virtual const char* what() const { return _message.c_str(); }
 };
@@ -80,7 +85,7 @@ class Runtime
     SlotPool<Cell, NO_AUTO_EXPAND> _cell;
 
     SlotPool<string>        _string;
-    SlotPool<FunctionInfo>  _function;
+    SlotPool<PrimitiveInfo> _primitive;
     SlotPool<SymbolInfo>    _symbol;
 
     std::unordered_map<THASH, SYMBOL_INDEX> _symbolIndex;
@@ -94,13 +99,6 @@ class Runtime
     void MarkCellsInUse(CELL_INDEX index);
     size_t CollectGarbage();
 
-    CELL_INDEX Quote(CELL_INDEX index) const;
-    CELL_INDEX Atom(CELL_INDEX index) const;
-    CELL_INDEX Eq(CELL_INDEX a, CELL_INDEX b) const;
-    CELL_INDEX Car(CELL_INDEX index) const;
-    CELL_INDEX Cdr(CELL_INDEX index) const;
-    CELL_INDEX Cons(CELL_INDEX head, CELL_INDEX tail);
-
     int LoadIntLiteral(CELL_INDEX index) const;
     void StoreIntLiteral(CELL_INDEX index, int value);
 
@@ -110,10 +108,23 @@ class Runtime
     const char* LoadStringLiteral(CELL_INDEX index) const;
     void StoreStringLiteral(CELL_INDEX index, const char* str);
 
+    // Primitives
+
+    void ValidateArgumentCount(const ArgumentList& args, size_t expected);
+
+    CELL_INDEX Quote(const ArgumentList& args);
+    CELL_INDEX Atom(const ArgumentList& args);
+    CELL_INDEX Eq(const ArgumentList& args);
+    CELL_INDEX Car(const ArgumentList& args);
+    CELL_INDEX Cdr(const ArgumentList& args);
+    CELL_INDEX Cons(const ArgumentList& args);
+
+    void RegisterPrimitive(const PrimitiveInfo& prim);
+
 public:
     Runtime();
     ~Runtime();
 
-    EvalResult EvaluateSyntaxTree(const NodeRef& root);
+    CELL_INDEX EncodeSyntaxTree(const NodeRef& root);
     string GetPrintedValue(CELL_INDEX index);
 };

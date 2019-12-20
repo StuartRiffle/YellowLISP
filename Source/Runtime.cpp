@@ -5,78 +5,23 @@ Runtime::Runtime()
 {
     _nil  = ResolveSymbol("nil");
     _true = ResolveSymbol("t");
+
+    const PrimitiveInfo primitives[] =
+    {
+        "atom",  1, &this->Atom,
+        "car",   1, &this->Car,
+        "cdr",   1, &this->Cdr,
+        "cons",  2, &this->Cons,
+        "eq",    2, &this->Eq,
+        "quote", 1, &this->Quote,
+    };
+
+    for (auto& prim : primitives)
+        RegisterPrimitive(prim);
 }
 
 Runtime::~Runtime()
 {
-}
-
-CELL_INDEX Runtime::Quote(CELL_INDEX index) const
-{
-    return index;
-}
-
-CELL_INDEX Runtime::Atom(CELL_INDEX index) const
-{
-    const Cell& cell = _cell[index];
-    return cell._next ? _true : _nil;
-}
-
-CELL_INDEX Runtime::Eq(CELL_INDEX a, CELL_INDEX b) const
-{
-    if (a == b)
-        return _true;
-
-    const Cell& ca = _cell[a];
-    const Cell& cb = _cell[b];
-
-    if (ca._type == cb._type)
-    {
-        if (ca._tags & cb._tags & TAG_EMBEDDED)
-            if (ca._data == cb._data)
-                return _true;
-
-        if (ca._type == TYPE_STRING)
-        {
-            const char* vala = LoadStringLiteral(a);
-            const char* valb = LoadStringLiteral(b);
-
-            if (!strcmp(vala, valb))
-                return _true;
-        }
-    }
-
-    return _nil;
-}
-
-CELL_INDEX Runtime::Car(CELL_INDEX index) const
-{
-    const Cell& cell = _cell[index];
-    if (cell._type != TYPE_CELL_REF)
-        return _nil;
-
-    return cell._data;
-}
-
-CELL_INDEX Runtime::Cdr(CELL_INDEX index) const
-{
-    const Cell& cell = _cell[index];
-    if (cell._next)
-        return cell._next;
-
-    return _nil;
-}
-
-CELL_INDEX Runtime::Cons(CELL_INDEX head, CELL_INDEX tail)
-{
-    CELL_INDEX index = _cell.Alloc();
-    Cell& cell = _cell[index];
-
-    cell._type = TYPE_CELL_REF;
-    cell._data = head;
-    cell._next = tail;
-
-    return index;
 }
 
 int Runtime::LoadIntLiteral(CELL_INDEX index) const
