@@ -24,7 +24,7 @@ void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
             try
             {
                 CELL_INDEX valueCell = _runtime.EvaluateSyntaxTree(node);
-                string output = runtime.PrintedValue(valueCell);
+                string output = _runtime.PrintedValue(valueCell);
                 std::cout << output << std::endl;
             }
             catch (RuntimeError error)
@@ -44,7 +44,8 @@ void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
     }
 }
 
-void Interpreter::RunCode(const string& source)
+
+void Interpreter::RunSourceCode(const string& source)
 {
     try
     {
@@ -73,6 +74,6 @@ void Interpreter::REPL()
         string source;
         std::getline(std::cin, source);
 
-        RunCode(source);
+        RunSourceCode(source);
     }
 }

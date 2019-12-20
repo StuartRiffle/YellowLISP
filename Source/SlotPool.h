@@ -9,7 +9,7 @@
 template< 
     typename T, 
     int AUTO_EXPAND = ENABLE_AUTO_EXPAND,
-    int INITIAL_CAPACITY = 1024 
+    int INITIAL_CAPACITY = 1024, 
 >
 class SlotPool
 {

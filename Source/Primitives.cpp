@@ -2,7 +2,7 @@
 #include "Runtime.h"
 
 
-CELL_INDEX Runtime::Atom(const ArgumentList& args)
+CELL_INDEX Runtime::ATOM(const ArgumentList& args)
 {
     assert(args.size() == 1);
     CELL_INDEX index = args[0];
@@ -11,19 +11,19 @@ CELL_INDEX Runtime::Atom(const ArgumentList& args)
     return cell._next ? _true : _nil;
 }
 
-CELL_INDEX Runtime::Car(const ArgumentList& args)
+CELL_INDEX Runtime::CAR(const ArgumentList& args)
 {
     assert(args.size() == 1);
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    if (cell._type != TYPE_CELL_REF)
+    if (cell._type != TYPE_LIST)
         return _nil;
 
     return cell._data;
 }
 
-CELL_INDEX Runtime::Cdr(const ArgumentList& args)
+CELL_INDEX Runtime::CDR(const ArgumentList& args)
 {
     assert(args.size() == 1);
     CELL_INDEX index = args[0];
@@ -35,7 +35,7 @@ CELL_INDEX Runtime::Cdr(const ArgumentList& args)
     return _nil;
 }
 
-CELL_INDEX Runtime::Cons(const ArgumentList& args)
+CELL_INDEX Runtime::CONS(const ArgumentList& args)
 {
     assert(args.size() == 2);
     CELL_INDEX head = args[0];
@@ -44,14 +44,14 @@ CELL_INDEX Runtime::Cons(const ArgumentList& args)
     CELL_INDEX index = _cell.Alloc();
     Cell& cell = _cell[index];
 
-    cell._type = TYPE_CELL_REF;
+    cell._type = TYPE_LIST;
     cell._data = head;
     cell._next = tail;
 
     return index;
 }
 
-CELL_INDEX Runtime::Eq(const ArgumentList& args)
+CELL_INDEX Runtime::EQ(const ArgumentList& args)
 {
     assert(args.size() == 2);
     CELL_INDEX a = args[0];
@@ -82,7 +82,21 @@ CELL_INDEX Runtime::Eq(const ArgumentList& args)
     return _nil;
 }
 
-CELL_INDEX Runtime::Quote(const ArgumentList& args)
+CELL_INDEX Runtime::PRINT(const ArgumentList& args)
+{
+    return 0; // TODO
+}
+
+CELL_INDEX Runtime::EVAL(const ArgumentList& args)
+{
+    assert(args.size() == 1);
+    CELL_INDEX cellIndex = args[0];
+
+    Environment
+    return args[0];
+}
+
+CELL_INDEX Runtime::QUOTE(const ArgumentList& args)
 {
     assert(args.size() == 1);
     return args[0];

@@ -7,9 +7,8 @@
 enum Type           // The data stored in the cell is...
 {                   // 
     TYPE_VOID,      // zero, because the cell is uninitialized
-    TYPE_CELL_REF,  // an index into the cell table
+    TYPE_LIST,      // an index into the cell table
     TYPE_SYMBOL,    // an index into the symbol table
-    TYPE_FUNC,      // an index into the function table
     TYPE_STRING,    // a tiny string literal, or an index into the string table
     TYPE_INT,       // a signed integer literal
     TYPE_FLOAT,     // an IEEE floating point literal
@@ -57,7 +56,10 @@ struct Cell
 struct SymbolInfo
 {
     string _ident;
-    TINDEX _cellIndex;
+    TINDEX _primIndex;
+    CELL_INDEX _cellIndex;
+
+    SymbolInfo() : _primIndex(0), _cellIndex(0) {}
 };
 
 typedef vector<CELL_INDEX> ArgumentList;
@@ -74,7 +76,6 @@ struct RuntimeError : std::exception
 {
     string _message;
     RuntimeError(const string& message) : _message(message) {}
-
     virtual const char* what() const { return _message.c_str(); }
 };
 
@@ -88,12 +89,13 @@ class Runtime
     SlotPool<PrimitiveInfo> _primitive;
     SlotPool<SymbolInfo>    _symbol;
 
-    std::unordered_map<THASH, SYMBOL_INDEX> _symbolIndex;
+    std::unordered_map<THASH, SYMBOL_INDEX> _globalScope;
 
     CELL_INDEX  _nil;
     CELL_INDEX  _true;
 
     SYMBOL_INDEX ResolveSymbol(const char* ident);
+    void RegisterPrimitive(const PrimitiveInfo& prim);
 
     CELL_INDEX AllocateCell();
     void MarkCellsInUse(CELL_INDEX index);
@@ -110,16 +112,18 @@ class Runtime
 
     // Primitives
 
-    void ValidateArgumentCount(const ArgumentList& args, size_t expected);
-
-    CELL_INDEX Quote(const ArgumentList& args);
-    CELL_INDEX Atom(const ArgumentList& args);
-    CELL_INDEX Eq(const ArgumentList& args);
-    CELL_INDEX Car(const ArgumentList& args);
-    CELL_INDEX Cdr(const ArgumentList& args);
-    CELL_INDEX Cons(const ArgumentList& args);
-
-    void RegisterPrimitive(const PrimitiveInfo& prim);
+    CELL_INDEX EvaluateInScope(CELL_INDEX cellIndex, Scope& scope);
+        
+    CELL_INDEX ATOM(const ArgumentList& args);
+    CELL_INDEX CAR(const ArgumentList& args);
+    CELL_INDEX CDR(const ArgumentList& args);
+    CELL_INDEX COND(const ArgumentList& args);
+    CELL_INDEX CONS(const ArgumentList& args);
+    CELL_INDEX EQ(const ArgumentList& args);
+    CELL_INDEX EVAL(const ArgumentList& args);
+    CELL_INDEX LET(const ArgumentList& args);
+    CELL_INDEX PRINT(const ArgumentList& args);
+    CELL_INDEX QUOTE(const ArgumentList& args);
 
 public:
     Runtime();
