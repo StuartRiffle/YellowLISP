@@ -35,16 +35,21 @@ CELL_INDEX Runtime::CDR(const ArgumentList& args)
     return _nil;
 }
 
+CELL_INDEX Runtime::COND(const ArgumentList& args)
+{
+    assert(!"Not implemented");
+    return 0;
+}
+
 CELL_INDEX Runtime::CONS(const ArgumentList& args)
 {
     assert(args.size() == 2);
     CELL_INDEX head = args[0];
     CELL_INDEX tail = args[1];
 
-    CELL_INDEX index = _cell.Alloc();
-    Cell& cell = _cell[index];
+    CELL_INDEX index = (CELL_INDEX)AllocateCell(TYPE_LIST);
 
-    cell._type = TYPE_LIST;
+    Cell& cell = _cell[index];
     cell._data = head;
     cell._next = tail;
 
@@ -84,7 +89,8 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
 
 CELL_INDEX Runtime::PRINT(const ArgumentList& args)
 {
-    return 0; // TODO
+    assert(!"Not implemented");
+    return 0;
 }
 
 CELL_INDEX Runtime::EVAL(const ArgumentList& args)
@@ -92,8 +98,7 @@ CELL_INDEX Runtime::EVAL(const ArgumentList& args)
     assert(args.size() == 1);
     CELL_INDEX cellIndex = args[0];
 
-    Environment
-    return args[0];
+    return EvaluateCell(cellIndex);
 }
 
 CELL_INDEX Runtime::QUOTE(const ArgumentList& args)

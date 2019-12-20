@@ -70,7 +70,7 @@ NodeRef Parser::ParseAtom()
     if (Peek(STRING_DELIM))
         return ParseString();
 
-    if (isdigit(*_code))
+    if (isdigit(*_code) || ((_code[0] == '-') && isdigit(_code[1])))
         return ParseNumber();
 
     return ParseIdentifier();
@@ -100,7 +100,7 @@ NodeRef Parser::ParseNumber()
     assert(!isspace(*_code));
 
     char* end = NULL;
-    float val = strtod(_code, &end);
+    float val = strtof(_code, &end);
 
     if (end == _code)
         throw "Number expected";

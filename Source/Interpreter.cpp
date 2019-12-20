@@ -23,9 +23,14 @@ void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
         {
             try
             {
-                CELL_INDEX valueCell = _runtime.EvaluateSyntaxTree(node);
-                string output = _runtime.PrintedValue(valueCell);
-                std::cout << output << std::endl;
+                CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
+                CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
+
+                if (_interactive)
+                {
+                    string output = _runtime.GetPrintedValue(valueCell);
+                    std::cout << output << std::endl;
+                }
             }
             catch (RuntimeError error)
             {

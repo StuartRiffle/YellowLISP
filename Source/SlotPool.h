@@ -9,7 +9,7 @@
 template< 
     typename T, 
     int AUTO_EXPAND = ENABLE_AUTO_EXPAND,
-    int INITIAL_CAPACITY = 1024, 
+    int INITIAL_CAPACITY = 1024
 >
 class SlotPool
 {
@@ -28,7 +28,7 @@ public:
         _freeIndex = 0;
     }
 
-    inline T& operator[](size_t index) const
+    inline T& operator[](size_t index) 
     {
         assert(index > 0);
         assert(index < _elems.size());
@@ -42,7 +42,7 @@ public:
             if (AUTO_EXPAND)
                 ExpandPool();
 
-        int index = _freeIndex;
+        int index = (int) _freeIndex;
         if (index)
         {
             size_t* freeLink = (size_t*)&_elems[index];
@@ -66,7 +66,7 @@ public:
     {
         size_t firstNewElem = _elems.size();
 
-        _elems.push_back();
+        _elems.emplace_back();
         _elems.resize(_elems.capacity());
 
         for (size_t i = firstNewElem; i < _elems.capacity(); i++)

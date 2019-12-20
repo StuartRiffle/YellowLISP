@@ -2,6 +2,8 @@
 
 #pragma once
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #define VERSION_MAJOR   (0)
 #define VERSION_MINOR   (1)
 #define VERSION_PATCH   (0)

@@ -1,96 +1,26 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
-
-
-class Scope
-{
-    unordered_map<SYMBOL_INDEX, CELL_INDEX> _binding;
-
-public:
-    inline void Set(SYMBOL_INDEX symbolIndex, CELL_INDEX cellIndex)
-    {
-        _binding[symbolIndex] = cellIndex;
-    }
-
-    inline CELL_INDEX Lookup(SYMBOL_INDEX symbolIndex) const
-    {
-        CELL_INDEX cellIndex = 0;
-
-        auto iter = _binding.find(symbolIndex);
-        if (iter != _binding.end())
-            cellIndex = iter->second;
-
-        return cellIndex;
-    }
-
-    Scope() : _binding(16) {}
-};
-
-class Environment
-{
-    vector<Scope> _scopes;
-
-public:
-
-    Scope& PushScope()
-    {
-        _scopes.emplace_back(Scope());
-    }
-
-    void PopScope()
-    {
-        assert(_scopes.size() > 0);
-        _scopes.pop_back();
-    }
-
-    inline void Set(SYMBOL_INDEX symbolIndex, CELL_INDEX cellIndex)
-    {
-        assert(_scopes.size() > 0);
-        _scopes.back().Set(symbolIndex, cellIndex);
-    }
-
-    CELL_INDEX Get(SYMBOL_INDEX symbolIndex)
-    {
-        CELL_INDEX index = 0;
-
-        int count = (int)_scopes.size();
-        for( int i = count - 1; i >= 0; i-- )
-        {
-            index = _scopes[i].Get(symbolIndex);
-            if (index)
-                break;
-        }
-
-        return index;
-    }
-};
-
-
 Runtime::Runtime()
 {
     _nil  = ResolveSymbol("nil");
     _true = ResolveSymbol("t");
 
-    const PrimitiveInfo primitives[] =
-    {
-        "atom",  1, &this->Atom,
-        "car",   1, &this->Car,
-        "cdr",   1, &this->Cdr,
-        "cons",  2, &this->Cons,
-        "eq",    2, &this->Eq,
-        "quote", 1, &this->Quote,
-    };
-
-    for (auto& prim : primitives)
-        RegisterPrimitive(prim);
+    RegisterPrimitive("atom",  &Runtime::ATOM);
+    RegisterPrimitive("car",   &Runtime::CAR);
+    RegisterPrimitive("cdr",   &Runtime::CDR);
+    RegisterPrimitive("cond",  &Runtime::COND);
+    RegisterPrimitive("cons",  &Runtime::CONS);
+    RegisterPrimitive("eq",    &Runtime::EQ);
+    RegisterPrimitive("eval",  &Runtime::EVAL);
+    RegisterPrimitive("quote", &Runtime::QUOTE);
 }
 
 Runtime::~Runtime()
 {
 }
 
-int Runtime::LoadIntLiteral(CELL_INDEX index) const
+int Runtime::LoadIntLiteral(CELL_INDEX index) 
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_INT);
@@ -110,7 +40,7 @@ void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
     cell._tags = TAG_EMBEDDED | TAG_ATOM;
 }
 
-float Runtime::LoadFloatLiteral(CELL_INDEX index) const
+float Runtime::LoadFloatLiteral(CELL_INDEX index) 
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_FLOAT);
@@ -135,7 +65,7 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
     cell._tags = TAG_EMBEDDED | TAG_ATOM;
 }
 
-const char* Runtime::LoadStringLiteral(CELL_INDEX index) const
+const char* Runtime::LoadStringLiteral(CELL_INDEX index) 
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_STRING);
@@ -169,12 +99,12 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
     if(length < sizeof(cell._data))
     {
         cell._data = 0;
-        strcpy((char*)&cell._data, value);
+        strncpy((char*)&cell._data, value, sizeof(cell._data));
         cell._tags |= TAG_EMBEDDED;
     }
     else
     {
-        STRING_INDEX stringIndex = _string.Alloc();
+        STRING_INDEX stringIndex = (STRING_INDEX) _string.Alloc();
         _string[stringIndex] = value;
     }
 }
@@ -186,11 +116,10 @@ SYMBOL_INDEX Runtime::ResolveSymbol(const char* ident)
 
     if (!symbolIndex)
     {
-        symbolIndex = _symbol.Alloc();
+        symbolIndex = (SYMBOL_INDEX) _symbol.Alloc();
         _globalScope[hash] = symbolIndex;
 
-        CELL_INDEX cellIndex = _cell.Alloc();
-        _cell[cellIndex]._type = TYPE_SYMBOL;
+        CELL_INDEX cellIndex = AllocateCell(TYPE_SYMBOL);
         _cell[cellIndex]._data = symbolIndex;
 
         SymbolInfo& symbol = _symbol[symbolIndex];
@@ -201,10 +130,23 @@ SYMBOL_INDEX Runtime::ResolveSymbol(const char* ident)
     return symbolIndex;
 }
 
-CELL_INDEX Runtime::AllocateCell()
+SYMBOL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
 {
-    CELL_INDEX index = _cell.Alloc();
+    SYMBOL_INDEX symbolIndex = ResolveSymbol(ident);
+    SymbolInfo& symbol = _symbol[symbolIndex];
 
+    symbol._primIndex = (TINDEX) _primitive.Alloc();
+    PrimitiveInfo& primInfo = _primitive[symbol._primIndex];
+
+    primInfo._name = ident;
+    primInfo._func = func;
+
+    return symbolIndex;
+}
+
+CELL_INDEX Runtime::AllocateCell(Type type)
+{
+    CELL_INDEX index = (CELL_INDEX) _cell.Alloc();
     if (!index)
     {
         size_t numCellsFreed = CollectGarbage();
@@ -219,8 +161,11 @@ CELL_INDEX Runtime::AllocateCell()
             _cell.ExpandPool();
         }
 
-        index = _cell.Alloc();
+        index = (CELL_INDEX) _cell.Alloc();
     }
+
+    if (index)
+        _cell[index]._type = type;
 
     return index;
 }
@@ -246,7 +191,19 @@ size_t Runtime::CollectGarbage()
     size_t numCellsFreed = 0;
 
     for (TINDEX i = 1; i < _cell.GetPoolSize(); i++)
-        assert(_cell[i]._tags & TAG_GC_MARK == 0);
+        assert((_cell[i]._tags & TAG_GC_MARK) == 0);
+
+    // FIXME: right now can't distinguish cells in use, add a tag for that
+    // and implement the cell pool by chaining indices instead of pointers
+
+    for (auto iter : _globalScope)
+    {
+        SYMBOL_INDEX symbolIndex = iter.second;
+        SymbolInfo& symbol = _symbol[symbolIndex];
+
+        if (symbol._cellIndex)
+            MarkCellsInUse(symbol._cellIndex);
+    }
 
     // TODO: call MarkCellsInUse here
 
@@ -268,54 +225,69 @@ size_t Runtime::CollectGarbage()
     return numCellsFreed;
 }
 
-
-
-CELL_INDEX EncodeSyntaxTree(const NodeRef& node)
+CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
 {
-    
+    switch (node->_type)
+    {
+        case AST_NODE_INT_LITERAL:
+        {
+            CELL_INDEX intCell = AllocateCell(TYPE_INT);
+            StoreIntLiteral(intCell, node->_int);
+            return intCell;
+        }
+        case AST_NODE_FLOAT_LITERAL:
+        {
+            CELL_INDEX floatCell = AllocateCell(TYPE_FLOAT);
+            StoreFloatLiteral(floatCell, node->_float);
+            return floatCell;
+        }
+        case AST_NODE_STRING_LITERAL:
+        {
+            CELL_INDEX stringCell = AllocateCell(TYPE_STRING);
+            StoreStringLiteral(stringCell, node->_string.c_str());
+            return stringCell;
 
-    // Encode the entire tree into cells
-    // Call Eval() on the root
+        }
+        case AST_NODE_IDENTIFIER:
+        {
+            CELL_INDEX symbolCell = ResolveSymbol(node->_identifier.c_str());
+            return symbolCell;
+        }
+        case AST_NODE_LIST:
+        {
+            if (node->_list.empty())
+                return _nil;
 
-    // If it's a list...
+            CELL_INDEX listHeadCell = 0;
+            CELL_INDEX listPrevCell = 0;
 
-    // Start with one node type: integer
+            for (auto& elemNode : node->_list)
+            {
+                CELL_INDEX listCell = AllocateCell(TYPE_LIST);
+                _cell[listCell]._data = EncodeSyntaxTree(elemNode);
 
-    NodeRef node = root;
+                if (listPrevCell)
+                    _cell[listPrevCell]._next = listCell;
+                else
+                    listHeadCell = listCell;
 
-    EvalResult result;
+                listPrevCell = listCell;
+            }
+
+            return listHeadCell;
+        }
+    }
+
+    assert(!"TODO: raise runtime error here");
+    return 0;
 }
 
 string Runtime::GetPrintedValue(CELL_INDEX index)
 {
-    return "FIXME";
+    return "?";
 }
 
-
-/*
-
- define eval(expr, environment):
-   if is_literal(expr): return literal_value(expr)
-   if is_symbol(expr):  return lookup_symbol(expr, environment)
-   ;; other similar cases here
-   ;; remaining (and commonest) case: function application
-   function  = extract_function(expr)
-   arguments = extract_arguments(expr)
-   apply(eval(function, environment), eval_list(arguments, environment))
-
- define apply(function, arguments):
-   if is_primitive(function): return apply_primitive(function, arguments)
-   environment = augment(function_environment(function),
-                         formal_args(function), arguments)
-   return eval(function_body(function), environment)
-
- def eval_list(items, environment):
-   return map( { x -> eval(x, environment) }, items)
-
-*/
-
-
-CELL_INDEX Runtime::EvaluateInScope(CELL_INDEX cellIndex, Scope& scope)
+CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
 {
     if (!cellIndex || (cellIndex == _nil))
         return _nil;
@@ -337,10 +309,10 @@ CELL_INDEX Runtime::EvaluateInScope(CELL_INDEX cellIndex, Scope& scope)
         // Symbols in the current scope override globals
 
         SYMBOL_INDEX symbolIndex = cell._data;
-        SYMBOL_INDEX symbolMapping = scope.Lookup(symbolIndex);
+        SYMBOL_INDEX symbolOverride = scope.Lookup(symbolIndex);
 
-        if (symbolMapping)
-            symbolIndex = symbolMapping;
+        if (symbolOverride)
+            symbolIndex = symbolOverride;
 
         const SymbolInfo& symbol = _symbol[symbolIndex];
 
@@ -351,23 +323,23 @@ CELL_INDEX Runtime::EvaluateInScope(CELL_INDEX cellIndex, Scope& scope)
 
         // All others need to be evaluated
 
-        return EvaluateInScope(symbol._cellIndex, scope);
+        return EvaluateCell(symbol._cellIndex, scope);
     }
 
     if (cell._type == TYPE_LIST)
     {
         // Evaluate the function/operator (the first element)
 
-        CELL_INDEX function = EvaluateInScope(cell._data, scope);
+        CELL_INDEX function = EvaluateCell(cell._data, scope);
 
-        // Evaluate the arguments (the other elements)
+        // Evaluate the arguments (all the other elements)
 
         ArgumentList callArgs;
         CELL_INDEX onArg = cell._next;
 
         while (onArg)
         {
-            CELL_INDEX argValue = EvaluateInScope(onArg, scope);
+            CELL_INDEX argValue = EvaluateCell(onArg, scope);
             callArgs.push_back(argValue);
 
             Cell& argCell = _cell[onArg];
@@ -386,37 +358,16 @@ CELL_INDEX Runtime::EvaluateInScope(CELL_INDEX cellIndex, Scope& scope)
                 // This is a primitive operation
 
                 PrimitiveInfo& prim = _primitive[symbol._primIndex];
-                return prim._func(callArgs);
+                return (*this.*prim._func)(callArgs);
             }
         }
 
+        
+
         assert(0);
     }
+
+    return _nil;
 }
 
 
-
-
-/*
-string Runtime::CellToString(CELL_INDEX index)
-{
-    if (index == _nil)
-        return "()";
-
-    std::stringstream ss;
-
-    Cell& cell = _cell[index];
-    switch (cell._type)
-    {
-    case TYPE_LIST: ss << "(" << CellToString(cell._data) << " . " << "??" << ")"; break;
-    case TYPE_SYMBOL:   ss << _symbol[cell._data]._ident; break;
-    case TYPE_FUNC:     ss << _function[cell._data]._name; break;
-    case TYPE_STRING:   ss << "\"" << _string[cell._data] << "\""; break;
-    case TYPE_INT:      ss << cell.GetInteger(); break;
-    case TYPE_FLOAT:    ss << cell.GetFloat(); break;
-    default:            assert(!"Internal error");
-    }
-
-    return ss.str();
-}
-*/

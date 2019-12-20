@@ -3,6 +3,7 @@
 #pragma once
 #include "SlotPool.h"
 #include "Hash.h"
+#include "Parser.h"
 
 enum Type           // The data stored in the cell is...
 {                   // 
@@ -63,7 +64,9 @@ struct SymbolInfo
 };
 
 typedef vector<CELL_INDEX> ArgumentList;
-typedef CELL_INDEX(Runtime::*PrimitiveFunc)(const ArgumentList& args);
+
+class Runtime;
+typedef CELL_INDEX (Runtime::*PrimitiveFunc)(const ArgumentList& args);
 
 struct PrimitiveInfo
 {
@@ -77,6 +80,30 @@ struct RuntimeError : std::exception
     string _message;
     RuntimeError(const string& message) : _message(message) {}
     virtual const char* what() const { return _message.c_str(); }
+};
+
+class Scope
+{
+    unordered_map<SYMBOL_INDEX, CELL_INDEX> _binding;
+
+public:
+    inline void Set(SYMBOL_INDEX symbolIndex, CELL_INDEX cellIndex)
+    {
+        _binding[symbolIndex] = cellIndex;
+    }
+
+    inline CELL_INDEX Lookup(SYMBOL_INDEX symbolIndex) const
+    {
+        CELL_INDEX cellIndex = 0;
+
+        auto iter = _binding.find(symbolIndex);
+        if (iter != _binding.end())
+            cellIndex = iter->second;
+
+        return cellIndex;
+    }
+
+    Scope() : _binding(16) {}
 };
 
 #define CELL_TABLE_EXPAND_THRESH (0.9f)
@@ -95,25 +122,23 @@ class Runtime
     CELL_INDEX  _true;
 
     SYMBOL_INDEX ResolveSymbol(const char* ident);
-    void RegisterPrimitive(const PrimitiveInfo& prim);
+    SYMBOL_INDEX RegisterPrimitive(const char* ident, PrimitiveFunc func);
 
-    CELL_INDEX AllocateCell();
+    CELL_INDEX AllocateCell(Type Type);
     void MarkCellsInUse(CELL_INDEX index);
     size_t CollectGarbage();
 
-    int LoadIntLiteral(CELL_INDEX index) const;
+    int LoadIntLiteral(CELL_INDEX index);
     void StoreIntLiteral(CELL_INDEX index, int value);
 
-    float LoadFloatLiteral(CELL_INDEX index) const;
+    float LoadFloatLiteral(CELL_INDEX index);
     void StoreFloatLiteral(CELL_INDEX index, float value);
 
-    const char* LoadStringLiteral(CELL_INDEX index) const;
+    const char* LoadStringLiteral(CELL_INDEX index);
     void StoreStringLiteral(CELL_INDEX index, const char* str);
 
     // Primitives
 
-    CELL_INDEX EvaluateInScope(CELL_INDEX cellIndex, Scope& scope);
-        
     CELL_INDEX ATOM(const ArgumentList& args);
     CELL_INDEX CAR(const ArgumentList& args);
     CELL_INDEX CDR(const ArgumentList& args);
@@ -130,5 +155,7 @@ public:
     ~Runtime();
 
     CELL_INDEX EncodeSyntaxTree(const NodeRef& root);
+    CELL_INDEX EvaluateCell(CELL_INDEX cellIndex, const Scope& scope = Scope());
+
     string GetPrintedValue(CELL_INDEX index);
 };
