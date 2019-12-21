@@ -8,7 +8,7 @@ CELL_INDEX Runtime::ATOM(const ArgumentList& args)
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    return cell._next ? _true : _nil;
+    return cell._next ? _nil : _true;
 }
 
 CELL_INDEX Runtime::CAR(const ArgumentList& args)
@@ -70,7 +70,7 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
 
     if (ca._type == cb._type)
     {
-        if (ca._tags & cb._tags & TAG_EMBEDDED)
+        if (ca._tags & cb._tags & FLAG_EMBEDDED)
             if (ca._data == cb._data)
                 return _true;
 

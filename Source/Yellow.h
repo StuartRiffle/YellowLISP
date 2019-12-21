@@ -2,7 +2,12 @@
 
 #pragma once
 
-#define _CRT_SECURE_NO_WARNINGS
+#ifdef _MSC_VER
+    #define _CRT_SECURE_NO_WARNINGS
+    #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX
+    #include <Windows.h>
+#endif
 
 #define VERSION_MAJOR   (0)
 #define VERSION_MINOR   (1)
@@ -37,12 +42,4 @@ using std::unordered_map;
 #include <iostream>
 #include <sstream>
 #include <exception>
-
-
-// This crap should be somewhere else
-
-#define COLOR_TITLE  "\x1b[30m\x1b[43m" // Black on yellow
-#define COLOR_PROMPT "\x1b[33m"         // Yellow
-#define COLOR_ERROR  "\x1b[37m"         // White
-#define COLOR_RESET  "\x1b[0m"          // Default gray
 

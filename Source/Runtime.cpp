@@ -3,8 +3,11 @@
 
 Runtime::Runtime()
 {
-    _nil  = ResolveSymbol("nil");
-    _true = ResolveSymbol("t");
+    _cellFreeList = 0;
+    ExpandCellTable();
+
+    _nil  = RegisterSymbol("nil");
+    _true = RegisterSymbol("t");
 
     RegisterPrimitive("atom",  &Runtime::ATOM);
     RegisterPrimitive("car",   &Runtime::CAR);
@@ -20,13 +23,13 @@ Runtime::~Runtime()
 {
 }
 
-int Runtime::LoadIntLiteral(CELL_INDEX index) 
+int Runtime::LoadIntLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_INT);
-    assert(cell._tags & TAG_EMBEDDED);
+    assert(cell._tags & FLAG_EMBEDDED);
 
-    int value = (int) cell._data;
+    int value = (int)cell._data;
     return value;
 }
 
@@ -37,14 +40,14 @@ void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
 
     cell._data = value;
     cell._type = TYPE_INT;
-    cell._tags = TAG_EMBEDDED | TAG_ATOM;
+    cell._tags = FLAG_EMBEDDED;
 }
 
-float Runtime::LoadFloatLiteral(CELL_INDEX index) 
+float Runtime::LoadFloatLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_FLOAT);
-    assert(cell._tags & TAG_EMBEDDED);
+    assert(cell._tags & FLAG_EMBEDDED);
 
     union { TDATA raw; float value; } pun;
     pun.raw = cell._data;
@@ -62,15 +65,15 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
 
     cell._data = pun.raw;
     cell._type = TYPE_FLOAT;
-    cell._tags = TAG_EMBEDDED | TAG_ATOM;
+    cell._tags = FLAG_EMBEDDED;
 }
 
-const char* Runtime::LoadStringLiteral(CELL_INDEX index) 
+const char* Runtime::LoadStringLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_STRING);
 
-    if (cell._tags & TAG_EMBEDDED)
+    if (cell._tags & FLAG_EMBEDDED)
     {
         const char* tiny = (const char*)&cell._data;
         assert(strlen(tiny) < sizeof(cell._data));
@@ -93,30 +96,36 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
     assert((cell._type == TYPE_STRING) || (cell._type == TYPE_VOID));
 
     cell._type = TYPE_STRING;
-    cell._tags = TAG_ATOM;
 
     size_t length = strlen(value);
-    if(length < sizeof(cell._data))
+    if (length < sizeof(cell._data))
     {
         cell._data = 0;
         strncpy((char*)&cell._data, value, sizeof(cell._data));
-        cell._tags |= TAG_EMBEDDED;
+        cell._tags |= FLAG_EMBEDDED;
     }
     else
     {
-        STRING_INDEX stringIndex = (STRING_INDEX) _string.Alloc();
+        STRING_INDEX stringIndex = (STRING_INDEX)_string.Alloc();
         _string[stringIndex] = value;
     }
 }
 
-SYMBOL_INDEX Runtime::ResolveSymbol(const char* ident)
+CELL_INDEX Runtime::RegisterSymbol(const char* ident)
+{
+    SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
+    CELL_INDEX cellIndex = _symbol[symbolIndex]._cellIndex;
+    return cellIndex;
+}
+
+SYMBOL_INDEX Runtime::GetSymbolIndex(const char* ident)
 {
     THASH hash = HashString(ident);
     SYMBOL_INDEX symbolIndex = _globalScope[hash];
 
     if (!symbolIndex)
     {
-        symbolIndex = (SYMBOL_INDEX) _symbol.Alloc();
+        symbolIndex = (SYMBOL_INDEX)_symbol.Alloc();
         _globalScope[hash] = symbolIndex;
 
         CELL_INDEX cellIndex = AllocateCell(TYPE_SYMBOL);
@@ -130,54 +139,80 @@ SYMBOL_INDEX Runtime::ResolveSymbol(const char* ident)
     return symbolIndex;
 }
 
-SYMBOL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
+CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
 {
-    SYMBOL_INDEX symbolIndex = ResolveSymbol(ident);
+    SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     SymbolInfo& symbol = _symbol[symbolIndex];
 
-    symbol._primIndex = (TINDEX) _primitive.Alloc();
+    symbol._primIndex = (TINDEX)_primitive.Alloc();
     PrimitiveInfo& primInfo = _primitive[symbol._primIndex];
 
     primInfo._name = ident;
     primInfo._func = func;
 
-    return symbolIndex;
+    return symbol._cellIndex;
 }
+
 
 CELL_INDEX Runtime::AllocateCell(Type type)
 {
-    CELL_INDEX index = (CELL_INDEX) _cell.Alloc();
-    if (!index)
+    if (_cellFreeList == 0)
     {
+        /*
         size_t numCellsFreed = CollectGarbage();
-        float pctFreed = numCellsFreed * 1.0f / _cell.GetPoolSize();
+
+        float pctFreed = numCellsFreed * 1.0f / _cell.size();
         float pctUsed = 1 - pctFreed;
+        assert((pctUsed >= 0) && (pctUsed <= 1));
 
         if (pctUsed >= CELL_TABLE_EXPAND_THRESH)
-        {
-            // Garbage collection didn't help much. We will probably
-            // hit the wall again soon, so pre-emptively expand the pool.
-
-            _cell.ExpandPool();
-        }
-
-        index = (CELL_INDEX) _cell.Alloc();
+            ExpandCellTable();
+            */
+        ExpandCellTable();
     }
 
-    if (index)
-        _cell[index]._type = type;
+    if (_cellFreeList == 0)
+        return 0;
+
+    CELL_INDEX index = _cellFreeList;
+    _cellFreeList = _cell[_cellFreeList]._next;
+
+    _cell[index]._type = type;
+    _cell[index]._next = 0;
+    _cell[index]._tags = FLAG_IN_USE;
 
     return index;
+}
+
+void Runtime::FreeCell(CELL_INDEX index)
+{
+    _cell[index]._type = TYPE_VOID;
+    _cell[index]._tags = 0;
+    _cell[index]._data = 0;
+    _cell[index]._next = _cellFreeList;
+
+    _cellFreeList = index;
+}
+
+void Runtime::ExpandCellTable()
+{
+    size_t oldSize = _cell.size();
+    size_t newSize = oldSize + (oldSize / 2) + 1;
+
+    _cell.resize(newSize);
+
+    for (size_t i = oldSize; i < newSize; i++)
+        FreeCell((CELL_INDEX) i);
 }
 
 void Runtime::MarkCellsInUse(CELL_INDEX index)
 {
     Cell& cell = _cell[index];
 
-    if (cell._tags & TAG_GC_MARK)
+    if (cell._tags & FLAG_GC_MARK)
         return;
 
-    cell._tags |= TAG_GC_MARK;
+    cell._tags |= FLAG_GC_MARK;
 
     if (cell._type == TYPE_LIST)
         MarkCellsInUse(cell._data);
@@ -190,11 +225,10 @@ size_t Runtime::CollectGarbage()
 {
     size_t numCellsFreed = 0;
 
-    for (TINDEX i = 1; i < _cell.GetPoolSize(); i++)
-        assert((_cell[i]._tags & TAG_GC_MARK) == 0);
+    for (TINDEX i = 1; i < _cell.size(); i++)
+        assert((_cell[i]._tags & FLAG_GC_MARK) == 0);
 
-    // FIXME: right now can't distinguish cells in use, add a tag for that
-    // and implement the cell pool by chaining indices instead of pointers
+    // Mark
 
     for (auto iter : _globalScope)
     {
@@ -205,19 +239,20 @@ size_t Runtime::CollectGarbage()
             MarkCellsInUse(symbol._cellIndex);
     }
 
-    // TODO: call MarkCellsInUse here
+    // TODO: also mark cells used by all enclosing scopes
 
-    for (TINDEX i = 1; i < _cell.GetPoolSize(); i++)
+    // Sweep
+
+    for (TINDEX i = 1; i < _cell.size(); i++)
     {
-        Cell& cell = _cell[i];
-
-        if (cell._tags & TAG_GC_MARK)
+        if (_cell[i]._tags & FLAG_GC_MARK)
         {
-            cell._tags &= ~TAG_GC_MARK;
+            assert(_cell[i]._tags & FLAG_IN_USE);
+            _cell[i]._tags &= ~FLAG_GC_MARK;
         }
         else
         {
-            _cell.Free(i);
+            FreeCell(i);
             numCellsFreed++;
         }
     }
@@ -246,12 +281,12 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
             CELL_INDEX stringCell = AllocateCell(TYPE_STRING);
             StoreStringLiteral(stringCell, node->_string.c_str());
             return stringCell;
-
         }
         case AST_NODE_IDENTIFIER:
         {
-            CELL_INDEX symbolCell = ResolveSymbol(node->_identifier.c_str());
-            return symbolCell;
+            CELL_INDEX symbolCell = GetSymbolIndex(node->_identifier.c_str());
+            SymbolInfo& symbol = _symbol[symbolCell];
+            return symbol._cellIndex;
         }
         case AST_NODE_LIST:
         {
@@ -284,7 +319,34 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
 
 string Runtime::GetPrintedValue(CELL_INDEX index)
 {
-    return "?";
+    if (index == 0)
+        return "<ERROR>";
+
+    Cell& cell = _cell[index];
+    std::stringstream ss;
+
+    switch (cell._type)
+    {
+        case TYPE_LIST:
+        {
+            ss << '(';
+            CELL_INDEX curr = index;
+            while (curr)
+            {
+                ss << GetPrintedValue(_cell[curr]._data);
+                curr = _cell[curr]._next;
+            }
+            ss << ')';
+        }
+
+        case TYPE_INT:    ss << LoadIntLiteral(index); break;
+        case TYPE_FLOAT:  ss << LoadFloatLiteral(index); break;
+        case TYPE_STRING: ss << LoadStringLiteral(index); break;
+        case TYPE_SYMBOL: ss << _symbol[cell._data]._ident; break;
+        default:          assert(!"Internal error");
+    }
+
+    return ss.str();
 }
 
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
@@ -319,7 +381,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
         // Primitive symbols can be used directly
 
         if (symbol._primIndex > 0)
-            return symbolIndex;
+            return cellIndex;
 
         // All others need to be evaluated
 
@@ -330,6 +392,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
     {
         // Evaluate the function/operator (the first element)
 
+        // FIXME: interpreting as cell index, is actually symbol index
         CELL_INDEX function = EvaluateCell(cell._data, scope);
 
         // Evaluate the arguments (all the other elements)
@@ -339,7 +402,9 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
 
         while (onArg)
         {
-            CELL_INDEX argValue = EvaluateCell(onArg, scope);
+            assert(_cell[onArg]._type == TYPE_LIST);
+
+            CELL_INDEX argValue = EvaluateCell(_cell[onArg]._data, scope);
             callArgs.push_back(argValue);
 
             Cell& argCell = _cell[onArg];
@@ -350,7 +415,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
 
         if (_cell[function]._type == TYPE_SYMBOL)
         {
-            SYMBOL_INDEX symbolIndexFunc = cell._data;
+            SYMBOL_INDEX symbolIndexFunc = _cell[function]._data;
             const SymbolInfo& symbol = _symbol[symbolIndexFunc];
 
             if (symbol._primIndex)
@@ -358,11 +423,12 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
                 // This is a primitive operation
 
                 PrimitiveInfo& prim = _primitive[symbol._primIndex];
-                return (*this.*prim._func)(callArgs);
+                CELL_INDEX primResult = (*this.*prim._func)(callArgs);
+                return primResult;
             }
         }
 
-        
+
 
         assert(0);
     }

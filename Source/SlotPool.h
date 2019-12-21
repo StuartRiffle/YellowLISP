@@ -9,7 +9,7 @@
 template< 
     typename T, 
     int AUTO_EXPAND = ENABLE_AUTO_EXPAND,
-    int INITIAL_CAPACITY = 1024
+    int INITIAL_CAPACITY = 64   
 >
 class SlotPool
 {
@@ -47,7 +47,7 @@ public:
         {
             size_t* freeLink = (size_t*)&_elems[index];
             _freeIndex = *freeLink;
-            _elems[index] = T();
+//            _elems[index] = T();
         }
 
         return(index);

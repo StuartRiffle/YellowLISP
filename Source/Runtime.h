@@ -18,25 +18,23 @@ enum Type           // The data stored in the cell is...
     TYPE_BITS = 3
 };
 
-enum Tag
+enum Flag
 {
-    TAG_ATOM,       // Can be deduced from the type, but tagged for convenience
-    TAG_EMBEDDED,   // The value is contained in the cell (as opposed to indexed)
-    TAG_GC_MARK,    // Marks cell as "in use" during mark-and-sweep garbage collection
+    FLAG_IN_USE     = 1 << 0,   // Cell has been allocated
+    FLAG_GC_MARK    = 1 << 1,   // Marks cell as "reachable" during mark-and-sweep garbage collection
+    FLAG_EMBEDDED   = 1 << 2,   // The value is contained in the cell (as opposed to indexed)
 
-    TAG_COUNT,
-    TAG_BITS = 3
+    FLAG_BITS = 3
 };
 
 typedef uint32_t THEADER;   // Cell tag/type information and link to next
-typedef uint32_t TDATA;     // Cell value index, or embedded value if TAG_EMBEDDED
+typedef uint32_t TDATA;     // Cell value index, or embedded value if FLAG_EMBEDDED
 
 const int HEADER_BITS = sizeof(THEADER) * 8;
 const int DATA_BITS = sizeof(TDATA) * 8;
-const int EXTRA_BITS = TYPE_BITS + TAG_BITS;
-const int INDEX_BITS = HEADER_BITS - EXTRA_BITS;
+const int METADATA_BITS = TYPE_BITS + FLAG_BITS;
+const int INDEX_BITS = HEADER_BITS - METADATA_BITS;
 
-static_assert(TAG_COUNT  < (1 << TAG_BITS), "Not enough tag bits");
 static_assert(TYPE_COUNT < (1 << TYPE_BITS), "Not enough type bits");
 static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index");
 
@@ -48,7 +46,7 @@ typedef TINDEX STRING_INDEX;
 
 struct Cell
 {
-    uint32_t _tags : TAG_BITS;
+    uint32_t _tags : FLAG_BITS;
     uint32_t _type : TYPE_BITS;
     uint32_t _next : INDEX_BITS;
     uint32_t _data;
@@ -108,9 +106,13 @@ public:
 
 #define CELL_TABLE_EXPAND_THRESH (0.9f)
 
+
+#define RUNTIME_VERIFY(_COND, _MSG)     if (!(_COND)) throw RuntimeError(_MSG)
+
 class Runtime
 {
-    SlotPool<Cell, NO_AUTO_EXPAND> _cell;
+    vector<Cell> _cell;
+    CELL_INDEX _cellFreeList;
 
     SlotPool<string>        _string;
     SlotPool<PrimitiveInfo> _primitive;
@@ -121,10 +123,15 @@ class Runtime
     CELL_INDEX  _nil;
     CELL_INDEX  _true;
 
-    SYMBOL_INDEX ResolveSymbol(const char* ident);
-    SYMBOL_INDEX RegisterPrimitive(const char* ident, PrimitiveFunc func);
+
+    SYMBOL_INDEX GetSymbolIndex(const char* ident);
+    CELL_INDEX   RegisterSymbol(const char* ident);
+    CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
+    void RaiseRuntimeError(const char* msg);
 
     CELL_INDEX AllocateCell(Type Type);
+    void ExpandCellTable();
+    void FreeCell(CELL_INDEX index);
     void MarkCellsInUse(CELL_INDEX index);
     size_t CollectGarbage();
 

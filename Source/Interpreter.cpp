@@ -1,5 +1,6 @@
 #include "Yellow.h"
 #include "Interpreter.h"
+#include "Console.h"
 
 Interpreter::Interpreter() :
     _interactive(false)
@@ -12,7 +13,7 @@ Interpreter::~Interpreter()
 
 void Interpreter::PrintErrorMessage(const string& desc, const string& message)
 {
-    std::cout << COLOR_ERROR << desc << ": " << message << COLOR_RESET << std::endl;
+    std::cout << desc << ": " << message << std::endl;
 }
 
 void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
@@ -72,11 +73,16 @@ void Interpreter::RunSourceCode(const string& source)
 
 void Interpreter::REPL()
 {
+    _interactive = true;
+
     for (;;)
     {
-        std::cout << COLOR_PROMPT << "> " << COLOR_RESET;
-
         string source;
+
+        SetTextColor(ANSI_YELLOW);
+        std::cout << "> ";
+        ResetTextColor();
+
         std::getline(std::cin, source);
 
         RunSourceCode(source);

@@ -127,6 +127,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h" />
+    <ClInclude Include="Source\Console.h" />
     <ClInclude Include="Source\Hash.h" />
     <ClInclude Include="Source\Interpreter.h" />
     <ClInclude Include="Source\Parser.h" />

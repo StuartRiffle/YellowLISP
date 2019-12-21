@@ -2,16 +2,13 @@
 
 #include "Yellow.h"
 #include "Interpreter.h"
+#include "Console.h"
 
 int main(int argc, char** argv)
 {
-    std::cout << 
-        COLOR_TITLE << " YellowLISP " << 
-        VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH << " " <<
-        COLOR_RESET << std::endl;
-
-    std::cout << "(c) 2019 Stuart Riffle" << std::endl;
-    std::cout << std::endl;
+    SetTextColor(ANSI_YELLOW);
+    printf("YellowLISP %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+    ResetTextColor();
 
     Interpreter lisp;
     lisp.REPL();

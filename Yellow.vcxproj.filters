@@ -55,5 +55,8 @@
     <ClInclude Include="Source\Testing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
