@@ -73,6 +73,14 @@ struct PrimitiveInfo
     PrimitiveFunc _func;
 };
 
+struct StringInfo
+{
+    string _str;
+    int _refCount;
+
+    StringInfo() : _refCount(0) {}
+};
+
 struct RuntimeError : std::exception
 {
     string _message;
@@ -114,15 +122,15 @@ class Runtime
     vector<Cell> _cell;
     CELL_INDEX _cellFreeList;
 
-    SlotPool<string>        _string;
+    SlotPool<string> _string; // FIXME: refcount
     SlotPool<PrimitiveInfo> _primitive;
-    SlotPool<SymbolInfo>    _symbol;
 
+    SlotPool<SymbolInfo> _symbol;
     std::unordered_map<THASH, SYMBOL_INDEX> _globalScope;
 
     CELL_INDEX  _nil;
     CELL_INDEX  _true;
-
+    CELL_INDEX  _quote;
 
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterSymbol(const char* ident);
@@ -141,7 +149,7 @@ class Runtime
     float LoadFloatLiteral(CELL_INDEX index);
     void StoreFloatLiteral(CELL_INDEX index, float value);
 
-    const char* LoadStringLiteral(CELL_INDEX index);
+    string LoadStringLiteral(CELL_INDEX index);
     void StoreStringLiteral(CELL_INDEX index, const char* str);
 
     // Primitives
@@ -155,7 +163,7 @@ class Runtime
     CELL_INDEX EVAL(const ArgumentList& args);
     CELL_INDEX LET(const ArgumentList& args);
     CELL_INDEX PRINT(const ArgumentList& args);
-    CELL_INDEX QUOTE(const ArgumentList& args);
+    CELL_INDEX SETQ(const ArgumentList& args);
 
 public:
     Runtime();

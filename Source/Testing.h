@@ -1,6 +1,18 @@
 #pragma once
 
 /*
+
+
+"()",               "nil",
+"(atom 3)",         "t",
+"(atom (atom 3))",  "t",
+"(atom '(atom 3))", "nil",
+"(atom 'atom)",     "t",
+"(atom atom)",      "ERROR",
+
+
+
+
 // static
 void Parser::TestParsing(const string& code)
 {

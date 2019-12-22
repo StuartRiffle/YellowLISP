@@ -123,11 +123,13 @@
     <ClCompile Include="Source\Parser.cpp" />
     <ClCompile Include="Source\Primitives.cpp" />
     <ClCompile Include="Source\Runtime.cpp" />
+    <ClCompile Include="Source\Testing.cpp" />
     <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h" />
     <ClInclude Include="Source\Console.h" />
+    <ClInclude Include="Source\Embedded.h" />
     <ClInclude Include="Source\Hash.h" />
     <ClInclude Include="Source\Interpreter.h" />
     <ClInclude Include="Source\Parser.h" />
@@ -135,6 +137,11 @@
     <ClInclude Include="Source\SlotPool.h" />
     <ClInclude Include="Source\Testing.h" />
     <ClInclude Include="Source\Yellow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

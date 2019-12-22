@@ -16,8 +16,13 @@ void Interpreter::PrintErrorMessage(const string& desc, const string& message)
     std::cout << desc << ": " << message << std::endl;
 }
 
-void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
+vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 {
+    std::unique_lock<std::mutex> lock(_mutex);
+
+    vector<CELL_INDEX> outputs;
+    outputs.reserve(exps.size());
+
     try
     {
         for (auto& node : exps)
@@ -27,11 +32,7 @@ void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
                 CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
                 CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
 
-                if (_interactive)
-                {
-                    string output = _runtime.GetPrintedValue(valueCell);
-                    std::cout << output << std::endl;
-                }
+                outputs.push_back(valueCell);
             }
             catch (RuntimeError error)
             {
@@ -48,15 +49,22 @@ void Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
         PrintErrorMessage("INTERNAL ERROR", e.what());
         exit(RETURN_INTERNAL_ERROR);
     }
+
+    return outputs;
 }
 
 
-void Interpreter::RunSourceCode(const string& source)
+CELL_INDEX Interpreter::RunSourceCode(const string& source)
 {
+    std::unique_lock<std::mutex> lock(_mutex);
+
     try
     {
         list<NodeRef> exps = _parser.ParseExpressions(source);
-        EvaluateExpressions(exps);
+        vector<CELL_INDEX> values = EvaluateExpressions(exps);
+
+        if (!values.empty())
+            return values.back();
     }
     catch (ParsingError error)
     {
@@ -69,6 +77,8 @@ void Interpreter::RunSourceCode(const string& source)
         if (!_interactive)
             exit(RETURN_PARSING_ERROR);
     }
+
+    return 0;
 }
 
 void Interpreter::REPL()
@@ -85,6 +95,11 @@ void Interpreter::REPL()
 
         std::getline(std::cin, source);
 
-        RunSourceCode(source);
+        CELL_INDEX valueCell = RunSourceCode(source);
+        string output = _runtime.GetPrintedValue(valueCell);
+
+        std::cout << output << std::endl;
     }
 }
+
+

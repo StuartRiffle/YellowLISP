@@ -29,6 +29,9 @@
     <ClCompile Include="Source\Primitives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Testing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h">
@@ -58,5 +61,13 @@
     <ClInclude Include="Source\Console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Embedded.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
   </ItemGroup>
 </Project>

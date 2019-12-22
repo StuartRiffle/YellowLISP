@@ -8,7 +8,7 @@ CELL_INDEX Runtime::ATOM(const ArgumentList& args)
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    return cell._next ? _nil : _true;
+    return (cell._type == TYPE_LIST) ? _nil : _true;
 }
 
 CELL_INDEX Runtime::CAR(const ArgumentList& args)
@@ -76,10 +76,10 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
 
         if (ca._type == TYPE_STRING)
         {
-            const char* vala = LoadStringLiteral(a);
-            const char* valb = LoadStringLiteral(b);
+            string vala = LoadStringLiteral(a);
+            string valb = LoadStringLiteral(b);
 
-            if (!strcmp(vala, valb))
+            if (vala == valb)
                 return _true;
         }
     }
@@ -99,12 +99,6 @@ CELL_INDEX Runtime::EVAL(const ArgumentList& args)
     CELL_INDEX cellIndex = args[0];
 
     return EvaluateCell(cellIndex);
-}
-
-CELL_INDEX Runtime::QUOTE(const ArgumentList& args)
-{
-    assert(args.size() == 1);
-    return args[0];
 }
 
 

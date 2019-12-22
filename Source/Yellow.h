@@ -37,6 +37,7 @@ using std::map;
 #include <unordered_map>
 using std::unordered_map;
 
+#include <mutex>
 #include <memory>
 #include <cassert>
 #include <iostream>

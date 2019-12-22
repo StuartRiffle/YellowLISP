@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv)
 {
-    SetTextColor(ANSI_YELLOW);
+    //SetTextColor(ANSI_YELLOW);
     printf("YellowLISP %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
     ResetTextColor();
 

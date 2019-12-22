@@ -9,13 +9,15 @@ class Interpreter
     Runtime _runtime;
     bool    _interactive;
 
+    std::mutex _mutex;
+
     void PrintErrorMessage(const string& desc, const string& message);
-    void EvaluateExpressions(const list<NodeRef>& exps);
+    vector<CELL_INDEX> EvaluateExpressions(const list<NodeRef>& exps);
 
 public:
     Interpreter();
     ~Interpreter();
 
-    void RunSourceCode(const string& source);
+    CELL_INDEX RunSourceCode(const string& source);
     void REPL();
 };

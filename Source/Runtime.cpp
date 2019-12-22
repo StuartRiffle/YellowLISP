@@ -6,8 +6,9 @@ Runtime::Runtime()
     _cellFreeList = 0;
     ExpandCellTable();
 
-    _nil  = RegisterSymbol("nil");
-    _true = RegisterSymbol("t");
+    _nil   = RegisterSymbol("nil");
+    _true  = RegisterSymbol("t");
+    _quote = RegisterSymbol("quote");
 
     RegisterPrimitive("atom",  &Runtime::ATOM);
     RegisterPrimitive("car",   &Runtime::CAR);
@@ -16,7 +17,6 @@ Runtime::Runtime()
     RegisterPrimitive("cons",  &Runtime::CONS);
     RegisterPrimitive("eq",    &Runtime::EQ);
     RegisterPrimitive("eval",  &Runtime::EVAL);
-    RegisterPrimitive("quote", &Runtime::QUOTE);
 }
 
 Runtime::~Runtime()
@@ -68,7 +68,7 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
     cell._tags = FLAG_EMBEDDED;
 }
 
-const char* Runtime::LoadStringLiteral(CELL_INDEX index)
+string Runtime::LoadStringLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
     assert(cell._type == TYPE_STRING);
@@ -78,7 +78,8 @@ const char* Runtime::LoadStringLiteral(CELL_INDEX index)
         const char* tiny = (const char*)&cell._data;
         assert(strlen(tiny) < sizeof(cell._data));
 
-        return (const char*)&cell._data;
+        const char* chars = (const char*) &cell._data;
+        return string(chars, chars + sizeof(cell._data));
     }
 
     STRING_INDEX stringIndex = cell._data;
@@ -87,7 +88,7 @@ const char* Runtime::LoadStringLiteral(CELL_INDEX index)
     const string& value = _string[stringIndex];
     assert(value.length() >= sizeof(TDATA));
 
-    return value.c_str();
+    return value;
 }
 
 void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
@@ -98,7 +99,7 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
     cell._type = TYPE_STRING;
 
     size_t length = strlen(value);
-    if (length < sizeof(cell._data))
+    if (length <= sizeof(cell._data))
     {
         cell._data = 0;
         strncpy((char*)&cell._data, value, sizeof(cell._data));
@@ -385,17 +386,27 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
 
         // All others need to be evaluated
 
-        return EvaluateCell(symbol._cellIndex, scope);
+        if (symbol._cellIndex != cellIndex )
+            return EvaluateCell(symbol._cellIndex, scope);
+
+        return cellIndex;
     }
 
     if (cell._type == TYPE_LIST)
     {
         // Evaluate the function/operator (the first element)
 
-        // FIXME: interpreting as cell index, is actually symbol index
         CELL_INDEX function = EvaluateCell(cell._data, scope);
 
-        // Evaluate the arguments (all the other elements)
+        // Special form: quote
+
+        if (function == _quote)
+        {
+            CELL_INDEX quoted = cell._next;
+            return quoted;
+        }
+
+        // The remaining list elements are arguments
 
         ArgumentList callArgs;
         CELL_INDEX onArg = cell._next;
@@ -426,9 +437,11 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex, const Scope& scope)
                 CELL_INDEX primResult = (*this.*prim._func)(callArgs);
                 return primResult;
             }
+            else
+            {
+                assert(!"Not implemented");
+            }
         }
-
-
 
         assert(0);
     }
