@@ -36,13 +36,20 @@ Runtime errors are handled as exceptions, and are caught by the REPL. Asserts an
 
 ## Building
 
-On **Windows**, build and run the [Visual Studio](https://visualstudio.microsoft.com/downloads/) solution in the root of the repository.
-
-On **Linux** (or anything like that), build using [CMake](https://cmake.org/) by going into the `Build` folder and typing this:
+On **Linux** (or anything POSIX), build using [CMake](https://cmake.org/) by going into the `Build` folder and typing this:
 ```
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
+On **Windows**, you can also use CMake, but it's probably easier to build from the [Visual Studio](https://visualstudio.microsoft.com/vs/community/) solution in the root of the repository.
+
+Either way, you will find the executable in the `Build` folder.
+
+## Running
+
+Launching the executable with no parameters will give you an interactive prompt (the REPL).
+
+If any parameters are LISP files, with the extension `.lisp` or `.lsp`, they will be loaded and evaluated in the order given. The executable will exit after that.
 
 ## Embedding
 
@@ -54,7 +61,7 @@ You can embed YellowLISP into a larger program by including one header file:
 void HelloYellow()
 {
 	YellowLISP::Interpreter lisp;
-	printf("%s\n", lisp.Evaluate("(print (+ 1 2 3))"));
+	printf("%s\n", lisp.Evaluate("(+ 1 2 3)"));
 }
 ```
 

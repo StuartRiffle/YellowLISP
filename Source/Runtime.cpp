@@ -260,6 +260,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 Scope& scope = _environment.back();
 
                 // TODO: evaluate the function here
+                (scope);
                 
 
                 _environment.pop_back();

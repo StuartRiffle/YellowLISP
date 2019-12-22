@@ -15,9 +15,9 @@ enum
     ANSI_BACKGROUND = 40
 };
 
-inline int AnsiColorToWindows(int fg, int bg)
+inline WORD AnsiColorToWindows(int fg, int bg)
 {
-    int attr = 0;
+    WORD attr = 0;
 
     switch (fg)
     {
@@ -47,7 +47,7 @@ inline int AnsiColorToWindows(int fg, int bg)
 inline void SetTextColor(int fg, int bg = 0)
 {
 #ifdef _MSC_VER
-    int attr = AnsiColorToWindows(fg, bg);
+    WORD attr = AnsiColorToWindows(fg, bg);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), attr);
 #else
     std::cout << "\u001b[" << ANSI_FOREGROUND + fg << "m";
@@ -58,7 +58,7 @@ inline void SetTextColor(int fg, int bg = 0)
 inline void ResetTextColor()
 {
 #ifdef _MSC_VER
-    int attr = AnsiColorToWindows(ANSI_WHITE, ANSI_BLACK);
+    WORD attr = AnsiColorToWindows(ANSI_WHITE, ANSI_BLACK);
     attr &= ~FOREGROUND_INTENSITY;
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), attr);
 #else

@@ -36,6 +36,7 @@ CELL_INDEX Runtime::CDR(const ArgumentList& args)
 
 CELL_INDEX Runtime::COND(const ArgumentList& args)
 {
+    (args);
     assert(!"Not implemented");
     return 0;
 }
@@ -88,6 +89,7 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
 
 CELL_INDEX Runtime::PRINT(const ArgumentList& args)
 {
+    (args);
     assert(!"Not implemented");
     return 0;
 }

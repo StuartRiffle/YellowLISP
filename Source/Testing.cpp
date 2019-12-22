@@ -11,7 +11,7 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
         printf("SANITY CHECK FAILED: ");
         ResetTextColor();
 
-        printf("\"%s\" evaluated to \"%s\" instead of \"%s\"\n", source, output.c_str(), expectedOutput);
+        printf("\"%s\" evaluates to \"%s\" instead of \"%s\"\n", source, output.c_str(), expectedOutput);
     }
 }
 
@@ -24,7 +24,7 @@ bool SanityCheck()
         CheckOutput(lisp, "",                   "");
         CheckOutput(lisp, "\n",                 "");
         CheckOutput(lisp, "1",                  "1");
-        CheckOutput(lisp, "\t2",                "2");
+        CheckOutput(lisp, " 2 ",                "2");
         CheckOutput(lisp, "3.4",                "3.4");
         CheckOutput(lisp, "-5.6",               "-5.6");
         CheckOutput(lisp, "78e-3",              "0.078");
@@ -40,6 +40,8 @@ bool SanityCheck()
         CheckOutput(lisp, "\"foo\"",            "\"foo\"");
         CheckOutput(lisp, "\"FOO\"",            "\"FOO\"");
 
+        CheckOutput(lisp, "(atom ())",          "t");
+        CheckOutput(lisp, "(atom '())",         "t");
         CheckOutput(lisp, "(atom 3)",           "t");
         CheckOutput(lisp, "(atom 'atom)",       "t");
         CheckOutput(lisp, "(atom (atom 3))",    "t");

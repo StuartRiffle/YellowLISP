@@ -2,13 +2,10 @@
 #include "Interpreter.h"
 #include "Console.h"
 
-Interpreter::Interpreter() :
-    _interactive(false)
+Interpreter::Interpreter(const InterpreterSettings* settings)
 {
-}
-
-Interpreter::~Interpreter()
-{
+    if (settings)
+        _settings = *settings;
 }
 
 void Interpreter::PrintErrorMessage(const string& desc, const string& message)
@@ -39,7 +36,7 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
             #endif
 
                 PrintErrorMessage("RUNTIME ERROR", error._message);
-                if (!_interactive)
+                if (!_settings._repl)
                     exit(RETURN_RUNTIME_ERROR);
 
                 break;
@@ -82,7 +79,7 @@ CELL_INDEX Interpreter::RunSourceCode(const string& source)
         PrintErrorMessage(desc.str(), error._message);
         std::cout << error._extraInfo << std::endl;
 
-        if (!_interactive)
+        if (!_settings._repl)
             exit(RETURN_PARSING_ERROR);
     }
 
@@ -101,9 +98,9 @@ string Interpreter::Evaluate(const string& source)
     return output;
 }
 
-void Interpreter::REPL()
+void Interpreter::RunREPL()
 {
-    _interactive = true;
+    _settings._repl = true;
 
     for (;;)
     {

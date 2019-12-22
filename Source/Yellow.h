@@ -48,6 +48,7 @@ using std::unordered_map;
 #include <memory>
 #include <cassert>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <exception>
 

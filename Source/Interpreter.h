@@ -3,11 +3,22 @@
 #include "Parser.h"
 #include "Runtime.h"
 
+struct InterpreterSettings
+{
+    bool _debugMode;
+    bool _repl;
+
+    InterpreterSettings() :
+        _debugMode(false),
+        _repl(false) {}
+};
+
 class Interpreter
 {
+    InterpreterSettings _settings;
+
     Parser  _parser;
     Runtime _runtime;
-    bool    _interactive;
 
     std::recursive_mutex _mutex;
 
@@ -17,9 +28,8 @@ class Interpreter
     CELL_INDEX RunSourceCode(const string& source);
 
 public:
-    Interpreter();
-    ~Interpreter();
+    Interpreter(const InterpreterSettings* settings = NULL);
 
     string Evaluate(const string& source);
-    void REPL();
+    void RunREPL();
 };
