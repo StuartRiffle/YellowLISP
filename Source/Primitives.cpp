@@ -1,9 +1,11 @@
 #include "Yellow.h"
 #include "Runtime.h"
+#include "Errors.h"
 
 CELL_INDEX Runtime::ATOM(const ArgumentList& args)
 {
-    assert(args.size() == 1);
+    VERIFY_NUM_PARAMETERS(args.size(), 1, "ATOM");
+
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
@@ -12,7 +14,8 @@ CELL_INDEX Runtime::ATOM(const ArgumentList& args)
 
 CELL_INDEX Runtime::CAR(const ArgumentList& args)
 {
-    assert(args.size() == 1);
+    VERIFY_NUM_PARAMETERS(args.size(), 1, "CAR");
+
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
@@ -24,7 +27,8 @@ CELL_INDEX Runtime::CAR(const ArgumentList& args)
 
 CELL_INDEX Runtime::CDR(const ArgumentList& args)
 {
-    assert(args.size() == 1);
+    VERIFY_NUM_PARAMETERS(args.size(), 1, "CDR");
+
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
@@ -37,13 +41,14 @@ CELL_INDEX Runtime::CDR(const ArgumentList& args)
 CELL_INDEX Runtime::COND(const ArgumentList& args)
 {
     (args);
-    assert(!"Not implemented");
+    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
     return 0;
 }
 
 CELL_INDEX Runtime::CONS(const ArgumentList& args)
 {
-    assert(args.size() == 2);
+    VERIFY_NUM_PARAMETERS(args.size(), 2, "CONS");
+
     CELL_INDEX head = args[0];
     CELL_INDEX tail = args[1];
 
@@ -58,7 +63,8 @@ CELL_INDEX Runtime::CONS(const ArgumentList& args)
 
 CELL_INDEX Runtime::EQ(const ArgumentList& args)
 {
-    assert(args.size() == 2);
+    VERIFY_NUM_PARAMETERS(args.size(), 2, "EQ");
+
     CELL_INDEX a = args[0];
     CELL_INDEX b = args[1];
 
@@ -90,15 +96,15 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
 CELL_INDEX Runtime::PRINT(const ArgumentList& args)
 {
     (args);
-    assert(!"Not implemented");
+    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
     return 0;
 }
 
 CELL_INDEX Runtime::EVAL(const ArgumentList& args)
 {
-    assert(args.size() == 1);
-    CELL_INDEX cellIndex = args[0];
+    VERIFY_NUM_PARAMETERS(args.size(), 1, "EVAL");
 
+    CELL_INDEX cellIndex = args[0];
     return EvaluateCell(cellIndex);
 }
 

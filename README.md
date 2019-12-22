@@ -6,7 +6,7 @@ Well, I got you fam.
 
 # YellowLISP
 
-This is a LISP interpreter, written in C++11 for 64-bit machines. Of all the toy LISP implementations out there, it is easily the most yellow, but beyond that I don't know.
+This is a LISP interpreter, written in C++11 for 64-bit machines. Of all the toy LISP implementations out there, it is easily the most yellow, but beyond that I'm not sure.
 
 YellowLISP **is**:
 - small, portable, dependency free, namespaced, and available as a single header file, making it suitable for embedding or use as a configuration language

@@ -2,6 +2,7 @@
 
 #pragma once
 #include "Yellow.h"
+#include "Errors.h"
 
 template< typename T >
 class SlotPool
@@ -18,8 +19,7 @@ public:
 
     inline T& operator[](size_t index) 
     {
-        assert(index > 0);
-        assert(index < _elems.size());
+        RAISE_ERROR_IF((index < 1) || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
 
         return _elems[index];
     }
@@ -42,8 +42,9 @@ public:
 
     inline void Free(size_t index)
     {
-        assert(index < _elems.size());
         assert((uint32_t)index == index);
+
+        RAISE_ERROR_IF((index < 1) || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
 
         _freeSlots.push_back((uint32_t) index);
     }

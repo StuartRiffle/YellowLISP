@@ -130,7 +130,7 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
         }
     }
 
-    assert(!"TODO: raise runtime error here");
+    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
     return 0;
 }
 
@@ -160,7 +160,8 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
         case TYPE_FLOAT:  ss << LoadFloatLiteral(index); break;
         case TYPE_STRING: ss << '\"' << LoadStringLiteral(index) << '\"'; break;
         case TYPE_SYMBOL: ss << _symbol[cell._data]._ident; break;
-        default:          assert(!"Internal error");
+
+        default:          RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT); break;
     }
 
     return ss.str();
@@ -225,7 +226,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
         if (function == _quote)
         {
-            assert(cell._type == TYPE_LIST);
+            RAISE_ERROR_IF(cell._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
             CELL_INDEX quoted = cell._next;
             return _cell[quoted]._data;
@@ -238,7 +239,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
         while (onArg)
         {
-            assert(_cell[onArg]._type == TYPE_LIST);
+            RAISE_ERROR_IF(_cell[onArg]._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
             CELL_INDEX argValue = EvaluateCell(_cell[onArg]._data);
             callArgs.push_back(argValue);
@@ -273,11 +274,11 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                 _environment.pop_back();
 
-                assert(!"Not implemented");
+                RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
             }
         }
 
-        assert(0);
+        RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
     }
 
     return _nil;

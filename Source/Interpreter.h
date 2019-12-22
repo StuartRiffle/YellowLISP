@@ -7,10 +7,12 @@ struct InterpreterSettings
 {
     bool _debugMode;
     bool _repl;
+    bool _catchExceptions;
 
     InterpreterSettings() :
         _debugMode(false),
-        _repl(false) {}
+        _repl(false),
+        _catchExceptions(true) {}
 };
 
 class Interpreter
@@ -22,7 +24,7 @@ class Interpreter
 
     std::recursive_mutex _mutex;
 
-    void PrintErrorMessage(const string& desc, const string& message);
+    void PrintErrorMessage(int code, const string& desc, const string& message);
 
     vector<CELL_INDEX> EvaluateExpressions(const list<NodeRef>& exps);
     CELL_INDEX RunSourceCode(const string& source);

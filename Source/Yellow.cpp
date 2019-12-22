@@ -11,7 +11,7 @@ void PrintOptions()
     printf("__  __     ____              __    _________ ____ \n");
     printf("\\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
     printf(" \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
-    printf(" / /  __/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
+    printf(" / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
     printf("/_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n\n");
 
     printf("Usage: YellowLISP [options] [lisp files]\n\n");
@@ -38,7 +38,9 @@ void PrintOptions()
 
 int main(int argc, char** argv)
 {
+#ifndef NDEBUG
     SanityCheck();
+#endif
 
     CommandLine commandLine(argc, argv);
     InterpreterSettings settings;
@@ -66,51 +68,43 @@ int main(int argc, char** argv)
     if (commandLine.HasFlag("--debug"))
         settings._debugMode = true;
 
-    // Now try and LISP something
+    // Now let's try and LISP something
 
     Interpreter lisp(&settings);
 
-    try
+    vector<string> sourceFiles = commandLine.ArgsEndingWith(".lisp");
+    if (sourceFiles.size() > 0)
     {
-        vector<string> sourceFiles = commandLine.ArgsEndingWith(".lisp");
-        if (sourceFiles.size() > 0)
+        // LISP source code was specified, so run it all then exit
+
+        for (string& filename : sourceFiles)
         {
-            // LISP source was specified, so run it all then exit
-
-            for (string& filename : sourceFiles)
+            std::ifstream file(filename);
+            if (!file)
             {
-                std::ifstream file(filename);
-                if (!file)
-                {
-                    printf("ERROR: File not found: %s\n", filename.c_str());
-                    return -1; // FIXME: make this a proper return value
-                }
-
-                std::stringstream ss;
-                ss << file.rdbuf();
-                string source = ss.str();
-
-                string output = lisp.Evaluate(source);
-                printf("%s\n", output.c_str());
+                printf("ERROR: File not found: %s\n", filename.c_str());
+                return -1; // FIXME: make this a proper return value
             }
 
-            if (!settings._repl)
-                return RETURN_SUCCESS;
+            std::stringstream ss;
+            ss << file.rdbuf();
+            string source = ss.str();
+
+            string output = lisp.Evaluate(source);
+            printf("%s\n", output.c_str());
         }
 
-        // Otherwise, drop into the REPL
-
-        SetTextColor(ANSI_BLACK, ANSI_YELLOW);
-        printf("\n %s \n", versionStr);
-        ResetTextColor();
-
-        lisp.RunREPL();
+        if (!settings._repl)
+            return RETURN_SUCCESS;
     }
-    catch (std::exception e)
-    {
-        printf("%s\n", e.what());
-        return -1; // FIXME: make this a proper return value
-    }
+
+    // Otherwise, drop into the REPL
+
+    SetTextColor(ANSI_BLACK, ANSI_YELLOW);
+    printf("\n %s \n", versionStr);
+    ResetTextColor();
+
+    lisp.RunREPL();
 
     return RETURN_SUCCESS;
 }

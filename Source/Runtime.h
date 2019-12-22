@@ -4,6 +4,7 @@
 #include "SlotPool.h"
 #include "Hash.h"
 #include "Parser.h"
+#include "Errors.h"
 
 enum Type : uint32_t  
 {                       // The data stored in the cell is...
@@ -79,13 +80,6 @@ struct StringInfo
     int _refCount;
 
     StringInfo() : _refCount(0) {}
-};
-
-struct RuntimeError : std::exception
-{
-    string _message;
-    RuntimeError(const string& message) : _message(message) {}
-    virtual const char* what() const { return _message.c_str(); }
 };
 
 

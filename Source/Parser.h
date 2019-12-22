@@ -28,16 +28,6 @@ struct NodeVariant
     float  _float;
 };
 
-struct ParsingError : std::exception
-{
-    string _message;
-    string _extraInfo;
-    int _line;
-    int _column;
-
-    virtual const char* what() const { return _message.c_str(); }
-};
-
 class Parser
 {
     const char* _code;
@@ -79,8 +69,6 @@ class Parser
     NodeRef ParseString();
     NodeRef ParseNumber();
     NodeRef ParseIdentifier();
-
-    ParsingError FormatParsingError(const char* source, const char* errorMessage);
 
 public:
     list<NodeRef> ParseExpressions(const string& source);

@@ -1,5 +1,6 @@
 #include "Yellow.h"
 #include "Runtime.h"
+#include "Errors.h"
 
 CELL_INDEX Runtime::AllocateCell(Type type)
 {
@@ -10,6 +11,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
 
         float pctFreed = numCellsFreed * 1.0f / _cell.size();
         float pctUsed = 1 - pctFreed;
+
         assert((pctUsed >= 0) && (pctUsed <= 1));
 
         if (pctUsed >= CELL_TABLE_EXPAND_THRESH)
@@ -27,7 +29,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
 
     if (_cellFreeList == 0)
     {
-        assert(!"Out of memory");
+        RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY);
         return 0;
     }
 
@@ -111,7 +113,7 @@ size_t Runtime::CollectGarbage()
     {
         if (_cell[i]._tags & TAG_GC_MARK)
         {
-            assert(_cell[i]._tags & TAG_IN_USE);
+            RAISE_ERROR_IF((_cell[i]._tags & TAG_IN_USE) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
             _cell[i]._tags &= ~TAG_GC_MARK;
         }
         else
@@ -123,7 +125,7 @@ size_t Runtime::CollectGarbage()
                     STRING_INDEX stringIndex = _cell[i]._data;
                     StringInfo& info = _string[stringIndex];
 
-                    assert(info._refCount > 0);
+                    RAISE_ERROR_IF(info._refCount < 1, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
                     info._refCount--;
 
                     if (info._refCount == 0)
@@ -131,7 +133,8 @@ size_t Runtime::CollectGarbage()
                         _string.Free(stringIndex);
 
                         THASH hash = HashString(info._str.c_str());
-                        assert(_stringTable[hash] == stringIndex);
+                        RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
+
                         _stringTable.erase(hash);
                     }
                 }

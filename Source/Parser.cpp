@@ -1,6 +1,7 @@
 // YellowLISP (c) 2019 Stuart Riffle
 
 #include "Parser.h"
+#include "Errors.h"
 
 const char* SYMBOL_CHARS = "!$%&*+-./:<=>?@^_~";
 
@@ -9,23 +10,16 @@ list<NodeRef> Parser::ParseExpressions(const string& source)
     list<NodeRef> result;
     _code = source.c_str();
 
-    try
+    while (*_code)
     {
-        while (*_code)
-        {
-            NodeRef element = ParseElement();
-            if (!element)
-                break;
+        NodeRef element = ParseElement();
+        if (!element)
+            break;
 
-            result.push_back(element);
-            SkipWhitespace();
+        result.push_back(element);
+        SkipWhitespace();
 
-            //DumpSyntaxTree(element);
-        }
-    }
-    catch (const char* errorMessage)
-    {
-        throw FormatParsingError(source.c_str(), errorMessage);
+        //DumpSyntaxTree(element);
     }
 
     return result;
@@ -78,7 +72,7 @@ NodeRef Parser::ParseElement()
 NodeRef Parser::ParseList()
 {
     if (!Consume('(') && !Consume('['))
-        throw "List expected";
+        RAISE_ERROR(ERROR_PARSER_LIST_EXPECTED);
 
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
 
@@ -86,8 +80,8 @@ NodeRef Parser::ParseList()
         listNode->_list.push_back(ParseElement());
 
     if (!Consume(')') && !Consume(']'))
-        throw "List is unterminated";
-
+        RAISE_ERROR(ERROR_PARSER_LIST_UNTERMINATED);
+    
     return listNode;
 }
 
@@ -105,13 +99,13 @@ NodeRef Parser::ParseAtom()
 NodeRef Parser::ParseString()
 {
     if (!Consume('\"'))
-        throw "String expected";
+        RAISE_ERROR(ERROR_PARSER_STRING_EXPECTED);
 
     // TODO: handle escape chars
 
     const char* end = strchr(_code, '\"');
     if (!end)
-        throw "String is unterminated";
+        RAISE_ERROR(ERROR_PARSER_STRING_UNTERMINATED);
 
     string str(_code, end - _code);
     _code = end + 1;
@@ -123,13 +117,13 @@ NodeRef Parser::ParseString()
 
 NodeRef Parser::ParseNumber()
 {
-    assert(!isspace(*_code));
+    RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
 
     char* end = NULL;
     float val = strtof(_code, &end);
 
     if (end == _code)
-        throw "Number expected";
+        RAISE_ERROR(ERROR_PARSER_NUMBER_EXPECTED);
 
     _code = end;
 
@@ -149,14 +143,14 @@ NodeRef Parser::ParseNumber()
 
 NodeRef Parser::ParseIdentifier()
 {
-    assert(!isspace(*_code));
+    RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
 
     const char* end = _code;
     while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
         end++;
 
     if (end == _code)
-        throw "Invalid identifier";
+        RAISE_ERROR(ERROR_PARSER_INVALID_IDENTIFIER);
 
     string ident(_code, end - _code);
     _code = end;
@@ -164,45 +158,6 @@ NodeRef Parser::ParseIdentifier()
     NodeRef identNode(new NodeVariant(AST_NODE_IDENTIFIER));
     identNode->_identifier = ident;
     return identNode;
-}
-
-ParsingError Parser::FormatParsingError(const char* source, const char* errorMessage)
-{
-    ParsingError result;
-
-    int line = 1;
-    int column = 1;
-    const char* errorLine = _code;
-
-    for (const char* cursor = source; cursor < _code; cursor++)
-    {
-        if (*cursor == '\n')
-        {
-            line++;
-            column = 1;
-            errorLine = cursor + 1;
-        }
-        else
-            column++;
-    }
-
-    std::stringstream ss;
-
-    while (*errorLine && *errorLine != '\n')
-        ss << *errorLine++;
-    ss << std::endl;
-
-    for (int i = 1; i < column - 1; i++)
-        ss << ' ';
-    ss << '^';
-    ss << std::endl;
-
-    result._line = line;
-    result._column = column;
-    result._message = errorMessage;
-    result._extraInfo = ss.str();
-
-    return result;
 }
 
 void Parser::DumpSyntaxTree(NodeRef node, int indent)
@@ -236,7 +191,7 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
 
         case AST_NODE_INVALID:
         default:
-            std::cout << "[INVALID]" << std::endl;
+            RAISE_ERROR(ERROR_INTERNAL_AST_CORRUPT);
             break;
     }
 }

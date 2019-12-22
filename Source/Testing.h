@@ -1,2 +1,2 @@
 #pragma once
-extern bool SanityCheck();
+extern void SanityCheck();

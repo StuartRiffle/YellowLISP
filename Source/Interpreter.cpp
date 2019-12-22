@@ -8,9 +8,9 @@ Interpreter::Interpreter(const InterpreterSettings* settings)
         _settings = *settings;
 }
 
-void Interpreter::PrintErrorMessage(const string& desc, const string& message)
+void Interpreter::PrintErrorMessage(int code, const string& desc, const string& message)
 {
-    std::cout << desc << ": " << message << std::endl;
+    std::cout << desc << " " << code << ": " << message << std::endl;
 }
 
 vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
@@ -18,39 +18,12 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
     vector<CELL_INDEX> outputs;
     outputs.reserve(exps.size());
 
-    try
+    for (auto& node : exps)
     {
-        for (auto& node : exps)
-        {
-            try
-            {
-                CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
-                CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
+        CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
+        CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
 
-                outputs.push_back(valueCell);
-            }
-            catch (RuntimeError error)
-            {
-            #if !YELLOW_CATCH_EXCEPTIONS
-                throw error;
-            #endif
-
-                PrintErrorMessage("RUNTIME ERROR", error._message);
-                if (!_settings._repl)
-                    exit(RETURN_RUNTIME_ERROR);
-
-                break;
-            }
-        }
-    }
-    catch (std::exception e)
-    {
-    #if !YELLOW_CATCH_EXCEPTIONS
-        throw e;
-    #endif
-
-        PrintErrorMessage("INTERNAL ERROR", e.what());
-        exit(RETURN_INTERNAL_ERROR);
+        outputs.push_back(valueCell);
     }
 
     return outputs;
@@ -59,29 +32,11 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 
 CELL_INDEX Interpreter::RunSourceCode(const string& source)
 {
-    try
-    {
-        list<NodeRef> exps = _parser.ParseExpressions(source);
-        vector<CELL_INDEX> values = EvaluateExpressions(exps);
+    list<NodeRef> exps = _parser.ParseExpressions(source);
+    vector<CELL_INDEX> values = EvaluateExpressions(exps);
 
-        if (!values.empty())
-            return values.back();
-    }
-    catch (ParsingError error)
-    {
-    #if !YELLOW_CATCH_EXCEPTIONS
-        throw error;
-    #endif
-
-        std::stringstream desc;
-        desc << "PARSING ERROR (line " << error._line << ")";
-
-        PrintErrorMessage(desc.str(), error._message);
-        std::cout << error._extraInfo << std::endl;
-
-        if (!_settings._repl)
-            exit(RETURN_PARSING_ERROR);
-    }
+    if (!values.empty())
+        return values.back();
 
     return 0;
 }
@@ -92,8 +47,43 @@ string Interpreter::Evaluate(const string& source)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 #endif
 
-    CELL_INDEX valueCell = RunSourceCode(source);
-    string output = _runtime.GetPrintedValue(valueCell);
+    string output;
+
+    try
+    {
+        CELL_INDEX valueCell = RunSourceCode(source);
+        output = _runtime.GetPrintedValue(valueCell);
+    }
+    catch (YellowError error)
+    {
+    #if !YELLOW_CATCH_EXCEPTIONS
+        throw error;
+    #endif
+
+        if (!_settings._catchExceptions)
+            throw error;
+
+        output = error.what();
+
+        SetTextColor(ANSI_RED);
+        std::cout << error.what() << std::endl;
+        ResetTextColor();
+    }
+    catch (std::exception error)
+    {
+    #if !YELLOW_CATCH_EXCEPTIONS
+        throw error;
+    #endif
+
+        if (!_settings._catchExceptions)
+            throw error;
+
+        output = error.what();
+
+        SetTextColor(ANSI_RED);
+        std::cout << "CRITICAL ERROR: unhandled exception" << std::endl;
+        ResetTextColor();
+    }
 
     return output;
 }

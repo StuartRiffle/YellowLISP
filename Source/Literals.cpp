@@ -1,11 +1,13 @@
 #include "Yellow.h"
 #include "Runtime.h"
+#include "Errors.h"
 
 int Runtime::LoadIntLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
-    assert(cell._type == TYPE_INT);
-    assert(cell._tags & TAG_EMBEDDED);
+
+    RAISE_ERROR_IF(cell._type != TYPE_INT,           ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     int value = (int)cell._data;
     return value;
@@ -14,7 +16,8 @@ int Runtime::LoadIntLiteral(CELL_INDEX index)
 void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
 {
     Cell& cell = _cell[index];
-    assert((cell._type == TYPE_INT) || (cell._type == TYPE_VOID));
+
+    RAISE_ERROR_IF((cell._type != TYPE_INT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     cell._data = value;
     cell._type = TYPE_INT;
@@ -24,8 +27,9 @@ void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
 float Runtime::LoadFloatLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
-    assert(cell._type == TYPE_FLOAT);
-    assert(cell._tags & TAG_EMBEDDED);
+
+    RAISE_ERROR_IF(cell._type != TYPE_FLOAT,         ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     union { TDATA raw; float value; } pun;
     pun.raw = cell._data;
@@ -36,7 +40,8 @@ float Runtime::LoadFloatLiteral(CELL_INDEX index)
 void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
 {
     Cell& cell = _cell[index];
-    assert((cell._type == TYPE_FLOAT) || (cell._type == TYPE_VOID));
+
+    RAISE_ERROR_IF((cell._type != TYPE_FLOAT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     union { TDATA raw; float value; } pun;
     pun.value = value;
@@ -49,7 +54,8 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
 string Runtime::LoadStringLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];
-    assert(cell._type == TYPE_STRING);
+
+    RAISE_ERROR_IF(cell._type != TYPE_STRING, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     if (cell._tags & TAG_EMBEDDED)
     {
@@ -61,10 +67,10 @@ string Runtime::LoadStringLiteral(CELL_INDEX index)
     }
 
     STRING_INDEX stringIndex = cell._data;
-    assert((stringIndex > 0) && (stringIndex < _string.GetPoolSize()));
+    RAISE_ERROR_IF((stringIndex == 0) || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     const string& value = _string[stringIndex]._str;
-    assert(value.length() >= sizeof(TDATA));
+    RAISE_ERROR_IF(value.length() <= sizeof(TDATA), ERROR_INTERNAL_STRING_TABLE_CORRUPT);
 
     return value;
 }
@@ -72,7 +78,8 @@ string Runtime::LoadStringLiteral(CELL_INDEX index)
 void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
 {
     Cell& cell = _cell[index];
-    assert((cell._type == TYPE_STRING) || (cell._type == TYPE_VOID));
+
+    RAISE_ERROR_IF((cell._type != TYPE_STRING) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     cell._type = TYPE_STRING;
 
@@ -92,7 +99,8 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
         if (existing != _stringTable.end())
         {
             stringIndex = existing->second;
-            assert(_string[stringIndex]._str == value);
+
+            RAISE_ERROR_IF(_string[stringIndex]._str != value, ERROR_INTERNAL_HASH_COLLISION);
         }
         else
         {
