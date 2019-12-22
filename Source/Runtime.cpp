@@ -119,6 +119,7 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
         {
             stringIndex = (STRING_INDEX)_string.Alloc();
             _string[stringIndex]._str = value;
+            _stringTable[hash] = stringIndex;
         }
 
         _string[stringIndex]._refCount++;
@@ -267,6 +268,27 @@ size_t Runtime::CollectGarbage()
         }
         else
         {
+            if (!(_cell[i]._tags & FLAG_EMBEDDED))
+            {
+                if (_cell[i]._type == TYPE_STRING)
+                {
+                    STRING_INDEX stringIndex = _cell[i]._data;
+                    StringInfo& info = _string[stringIndex];
+
+                    assert(info._refCount > 0);
+                    info._refCount--;
+
+                    if (info._refCount == 0)
+                    {
+                        _string.Free(stringIndex);
+
+                        THASH hash = HashString(info._str.c_str());
+                        assert(_stringTable[hash] == stringIndex);
+                        _stringTable.erase(hash);
+                    }
+                }
+            }
+
             FreeCell(i);
             numCellsFreed++;
         }
