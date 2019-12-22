@@ -9,16 +9,19 @@ void TestInterpreter()
         "nil",                  "nil",
         "()",                   "nil",
         "1",                    "1",
-        "2.34",                 "2.34",
-        "56E-3",                "0.056",
+        "2.3",                  "2.3",
+        "-4.5",                 "-4.5",
+        "67e-3",                "0.067",
         "foo",                  "foo",
         "FOO",                  "FOO",
         "\"foo\"",              "\"foo\"",
         "\"FOO\"",              "\"FOO\"",
         "(atom 3)",             "t",
         "(atom (atom 3))",      "t",
-        "(atom '(atom 3))",     "nil",
         "(atom 'atom)",         "t",
+        "(atom '(atom 3))",     "nil",
+
+        // TODO: dot operator
 
         "(progn (setq a 7) a)", "7",
 

@@ -18,7 +18,9 @@ void Interpreter::PrintErrorMessage(const string& desc, const string& message)
 
 vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+#if YELLOW_THREAD_SAFE
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+#endif
 
     vector<CELL_INDEX> outputs;
     outputs.reserve(exps.size());
@@ -36,6 +38,10 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
             }
             catch (RuntimeError error)
             {
+            #if !YELLOW_CATCH_EXCEPTIONS
+                throw error;
+            #endif
+
                 PrintErrorMessage("RUNTIME ERROR", error._message);
                 if (!_interactive)
                     exit(RETURN_RUNTIME_ERROR);
@@ -46,6 +52,10 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
     }
     catch (std::exception e)
     {
+    #if !YELLOW_CATCH_EXCEPTIONS
+        throw e;
+    #endif
+
         PrintErrorMessage("INTERNAL ERROR", e.what());
         exit(RETURN_INTERNAL_ERROR);
     }
@@ -56,7 +66,9 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 
 CELL_INDEX Interpreter::RunSourceCode(const string& source)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+#if YELLOW_THREAD_SAFE
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+#endif
 
     try
     {
@@ -68,6 +80,10 @@ CELL_INDEX Interpreter::RunSourceCode(const string& source)
     }
     catch (ParsingError error)
     {
+    #if !YELLOW_CATCH_EXCEPTIONS
+        throw error;
+    #endif
+
         std::stringstream desc;
         desc << "PARSING ERROR (line " << error._line << ")";
 

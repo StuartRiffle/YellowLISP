@@ -9,7 +9,7 @@ class Interpreter
     Runtime _runtime;
     bool    _interactive;
 
-    std::mutex _mutex;
+    std::recursive_mutex _mutex;
 
     void PrintErrorMessage(const string& desc, const string& message);
     vector<CELL_INDEX> EvaluateExpressions(const list<NodeRef>& exps);

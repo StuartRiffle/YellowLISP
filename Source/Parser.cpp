@@ -2,11 +2,6 @@
 
 #include "Parser.h"
 
-const char QUOTE_CHAR = '\'';
-const char STRING_DELIM = '\"';
-const char OPEN_PAREN = '(';
-const char CLOSE_PAREN = ')';
-const char MINUS_SIGN = '-';
 const char* SYMBOL_CHARS = "!$%&*+-./:<=>?@^_~";
 
 list<NodeRef> Parser::ParseExpressions(const string& source)
@@ -32,34 +27,59 @@ list<NodeRef> Parser::ParseExpressions(const string& source)
 
 NodeRef Parser::ParseElement()
 {
-    if (Consume(QUOTE_CHAR))
+    NodeRef result;
+
+    if (Consume('\''))
     {
-        NodeRef quotePrimitive(new NodeVariant(AST_NODE_IDENTIFIER));
-        quotePrimitive->_identifier = "quote";
+        // Sugar: convert 'FOO to (quote FOO)
+
+        NodeRef quote(new NodeVariant(AST_NODE_IDENTIFIER));
+        quote->_identifier = "quote";
 
         NodeRef quoteNode(new NodeVariant(AST_NODE_LIST));
-        quoteNode->_list.push_back(quotePrimitive);
+        quoteNode->_list.push_back(quote);
         quoteNode->_list.push_back(ParseElement());
 
-        return quoteNode;
+        result = quoteNode;
+    }
+    else if (Peek('(') || Peek('['))
+    {
+        result = ParseList();
+    }
+    else
+    {
+        result = ParseAtom();
     }
 
-    if (Peek(OPEN_PAREN))
-        return ParseList();
+    if (Consume('.'))
+    {
+        // Sugar: convert A . B to (cons A B)
 
-    return ParseAtom();
+        NodeRef cons(new NodeVariant(AST_NODE_IDENTIFIER));
+        cons->_identifier = "cons";
+
+        NodeRef consNode(new NodeVariant(AST_NODE_LIST));
+        consNode->_list.push_back(cons);
+        consNode->_list.push_back(result);
+        consNode->_list.push_back(ParseElement());
+
+        result = consNode;
+    }
+
+    return result;
 }
 
 NodeRef Parser::ParseList()
 {
-    if (!Consume(OPEN_PAREN))
+    if (!Consume('(') && !Consume('['))
         throw "List expected";
 
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
-    while (!Peek(CLOSE_PAREN))
+
+    while (*_code && !Peek(')') && !Peek(']'))
         listNode->_list.push_back(ParseElement());
 
-    if (!Consume(CLOSE_PAREN))
+    if (!Consume(')') && !Consume(']'))
         throw "List is unterminated";
 
     return listNode;
@@ -67,7 +87,7 @@ NodeRef Parser::ParseList()
 
 NodeRef Parser::ParseAtom()
 {
-    if (Peek(STRING_DELIM))
+    if (Peek('\"'))
         return ParseString();
 
     if (isdigit(*_code) || ((_code[0] == '-') && isdigit(_code[1])))
@@ -78,12 +98,12 @@ NodeRef Parser::ParseAtom()
 
 NodeRef Parser::ParseString()
 {
-    if (!Consume(STRING_DELIM))
+    if (!Consume('\"'))
         throw "String expected";
 
     // TODO: handle escape chars
 
-    const char* end = strchr(_code, STRING_DELIM);
+    const char* end = strchr(_code, '\"');
     if (!end)
         throw "String is unterminated";
 
