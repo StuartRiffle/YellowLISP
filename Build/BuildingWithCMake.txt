@@ -1,0 +1,7 @@
+
+You can use CMake to build YellowLISP on both Linux and Windows.
+
+From the command line, change to this directory, and type:
+
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+	make

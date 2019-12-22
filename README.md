@@ -10,7 +10,7 @@ This is a LISP interpreter, written in C++11 for 64-bit machines. Of all the toy
 
 YellowLISP **is**:
 - small, portable, dependency free, namespaced, and available as a single header file, making it suitable for embedding or use as a configuration language
-- thread safe (in that it uses no global state, and interpreter access is serialized)
+- thread safe (in that it uses no global state, and access to the interpreter is serialized)
 - able to run simple LISP programs (I am aware that this is a low bar)
 
 It is **not**:
@@ -26,7 +26,7 @@ Cell references are stored as indices into a big table, not as pointers. This al
 
 The interpreter works in the normal way: it parses source into an AST of variant nodes, encodes that AST into CONS cells, and then evaluates them. Lexical scoping is implemented by keeping a map of symbol overrides on the stack as EVAL calls itself.
 
-Square brackets and parentheses are interchangeable. I like brackets better because you don't have to press shift to type them, and I can read code more easily for some reason. Backquote is also accepted as quote, because I type that by mistake a lot.
+Square brackets and parentheses are interchangeable. I like brackets better because you don't have to press shift to type them, and I can read code more easily for some reason.
 
 Garbage collection is mark-and-sweep, and considers everything that's in the global scope, and in the function scopes of the current callstack, to be reachable. If GC fails to free at least 10% of the cell table capacity, the table is expanded by 1.5x, to avoid situations where an almost-full cell table triggers GC over and over again.
 
@@ -34,11 +34,36 @@ Tiny strings (4 characters or less) are stored directly in the CONS cell. Longer
 
 Runtime errors are handled as exceptions, and are caught by the REPL. Asserts and unexpected C++ exceptions are surfaced as "internal" errors. Those cases are bugs and need fixing.
 
+## Building
+
+On **Windows**, build and run the Visual Studio solution in the root of the repository.
+
+On **Linux** (or anything else), build using CMake by going into the `Build` folder and typing this:
+```
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+	make
+```
+
+## Embedding
+
+You can embed YellowLISP into a larger program by including one header file, like this:
+
+```
+#include "YellowLISP/Source/Embedded.h"
+
+void HelloYellow()
+{
+	YellowLISP::Interpreter lisp;
+	printf("%s\n", lisp.Evaluate("(print (+ 1 2 3))"));
+}
+```
+
 ## Feature support
 
 - [x] Runs and appears to work so far
 - [x] Lexical scoping
 - [x] Garbage collection
+- [ ] Backquotes
 - [ ] Macros
 - [ ] Tail call recursion
 - [ ] Debugging
@@ -62,10 +87,9 @@ Runtime errors are handled as exceptions, and are caught by the REPL. Asserts an
 
 I started this project thinking that LISP-type languages were a kind of ivory tower of ideological purity. But "special forms" seems like a nice way to say "dirty hacks", and plenty of them are required. I feel like I'm missing something.
 
-LISP beginners (like me) are annoyed by all of the parentheses and the anachronistic identifiers. Experts think that those concerns are silly, and indicate a weak spirit. But non-trivial LISP is unreadable, even once you learn to sight-read "cddadr" (which I have not). I think this is a real liability, and limits its use for quick-and-dirty scripting.
+LISP beginners (like me) are also annoyed by all of the parentheses and the anachronistic identifiers. Experts think that those concerns are silly, and indicate a weak spirit. But non-trivial LISP is unreadable, even once you learn to sight-read "cddadr" (which I have not). I think this is a real liability, and limits its use for quick-and-dirty scripting.
 
 ## Status
 
-YellowLISP is very much a work in progress, and is **not** production-ready, or good. I appreciate you reading this far!
-
+YellowLISP is very much a work in progress, and is **not** production-ready, or good. So I appreciate you reading this far!
 
