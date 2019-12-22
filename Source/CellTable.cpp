@@ -82,7 +82,7 @@ size_t Runtime::CollectGarbage()
 {
     size_t numCellsFreed = 0;
 
-    // Mark the core symbols
+    // Mark our core symbols
 
     MarkCellsInUse(_nil);
     MarkCellsInUse(_true);

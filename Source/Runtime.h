@@ -116,9 +116,12 @@ class Runtime
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
     void RaiseRuntimeError(const char* msg);
 
+    // CellTable.cpp
+
     CELL_INDEX AllocateCell(Type Type);
     void ExpandCellTable();
     void FreeCell(CELL_INDEX index);
+
     void MarkCellsInUse(CELL_INDEX index);
     size_t CollectGarbage();
 

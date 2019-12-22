@@ -7,9 +7,7 @@ template< typename T >
 class SlotPool
 {
     vector<T> _elems;
-    vector<size_t> _freeSlots;
-
-    static_assert(sizeof(T) >= sizeof(size_t), "Type too small to be linked into a free list");
+    vector<uint32_t> _freeSlots;
 
 public:
 
@@ -45,7 +43,9 @@ public:
     inline void Free(size_t index)
     {
         assert(index < _elems.size());
-        _freeSlots.push_back(index);
+        assert((uint32_t)index == index);
+
+        _freeSlots.push_back((uint32_t) index);
     }
 
     void ExpandPool()
@@ -56,12 +56,22 @@ public:
         _elems.resize(_elems.capacity());
 
         for (size_t i = firstNewElem; i < _elems.capacity(); i++)
-            Free((size_t)i);
+            Free(i);
     }
 
     size_t GetPoolSize() const
     {
         return _elems.size();
+    }
+
+    size_t GetNumSlotsUsed() const
+    {
+        return _elems.size() - _freeSlots.size();
+    }
+
+    size_t GetMemoryFootprint() const
+    {
+        return (_elems.capacity() * sizeof(T)) + (_freeSlots.capacity() * sizeof(uint32_t));
     }
 };
 

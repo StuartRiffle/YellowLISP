@@ -20,7 +20,7 @@ It is **not**:
 
 ## Implementation details
 
-A CONS cell fits in one 64-bit machine word. 32 bits are used for data (cdr), and 26 bits to link to the next cell (car). The rest contain flags and type information.
+A CONS cell fits in one 64-bit machine word. 32 bits are used for data (CDR), and 26 bits to link to the next cell (CAR). The rest contain flags and type information.
 
 Cell references are stored as indices into a big table, not as pointers. This allows for up to 2^26 cells, which is about 64 million of them, having a maximum footprint of 512MB. It would probably be better to use 29 bits for each field, and just accept losing 3 bits of precision for numeric literals, to maximize the address space (2^29 is a half billion cells). But I wanted to keep things simple to start.
 
@@ -30,15 +30,15 @@ Square brackets and parentheses are interchangeable. I like brackets better beca
 
 Garbage collection is mark-and-sweep, and considers everything that's in the global scope, or referenced by the function scopes of the current callstack, to be reachable. If GC fails to free at least 10% of the cell table capacity, the table is expanded by 1.5x, to avoid situations where an almost-full cell table triggers GC over and over again.
 
-Tiny string values (4 characters or less) are stored directly in the CONS cell. Longer ones are stored in a string table and indexed. Identical strings are pooled and reference counted, and released by the GC when no longer needed.
+Tiny string values (4 characters or less) are stored directly in the CONS cell. Longer ones are stored in a string table and indexed. Identical strings are reference counted, and released by the GC when no longer needed.
 
 Runtime errors are handled as exceptions, and are caught by the REPL. Asserts and unexpected C++ exceptions are surfaced as "internal" errors. Those cases are bugs and need fixing.
 
 ## Building
 
-On **Windows**, build and run the Visual Studio solution in the root of the repository.
+On **Windows**, build and run the [Visual Studio](https://visualstudio.microsoft.com/downloads/) solution in the root of the repository.
 
-On **Linux** (or anything like that), build using CMake by going into the `Build` folder and typing this:
+On **Linux** (or anything like that), build using [CMake](https://cmake.org/) by going into the `Build` folder and typing this:
 ```
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make

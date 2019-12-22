@@ -22,18 +22,24 @@ bool SanityCheck()
         Interpreter lisp;
 
         CheckOutput(lisp, "",                   "");
-        CheckOutput(lisp, "\n\n\n",             "");
+        CheckOutput(lisp, "\n",                 "");
+        CheckOutput(lisp, "1",                  "1");
+        CheckOutput(lisp, "\t2",                "2");
+        CheckOutput(lisp, "3.4",                "3.4");
+        CheckOutput(lisp, "-5.6",               "-5.6");
+        CheckOutput(lisp, "78e-3",              "0.078");
+
         CheckOutput(lisp, "t",                  "t");
         CheckOutput(lisp, "nil",                "nil");
+        CheckOutput(lisp, "'nil",               "nil");
         CheckOutput(lisp, "()",                 "nil");
-        CheckOutput(lisp, "1",                  "1");
-        CheckOutput(lisp, "2.3",                "2.3");
-        CheckOutput(lisp, "-4.5",               "-4.5");
-        CheckOutput(lisp, "67e-3",              "0.067");
-        CheckOutput(lisp, "foo",                "foo");
-        CheckOutput(lisp, "FOO",                "FOO");
+        CheckOutput(lisp, "'()",                "nil");
+
+        CheckOutput(lisp, "'foo",               "foo");
+        CheckOutput(lisp, "'FOO",               "FOO");
         CheckOutput(lisp, "\"foo\"",            "\"foo\"");
         CheckOutput(lisp, "\"FOO\"",            "\"FOO\"");
+
         CheckOutput(lisp, "(atom 3)",           "t");
         CheckOutput(lisp, "(atom 'atom)",       "t");
         CheckOutput(lisp, "(atom (atom 3))",    "t");
