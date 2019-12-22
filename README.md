@@ -49,7 +49,7 @@ Either way, you will find the executable in the `Build` folder.
 
 Launching the executable with no parameters will give you an interactive prompt (the REPL).
 
-If any parameters are LISP files, with the extension `.lisp` or `.lsp`, they will be loaded and evaluated in the order given. The executable will exit after that.
+If any parameters are LISP files, with the extension `.lisp`, they will be loaded and evaluated in the order given. The executable will exit after that.
 
 ## Embedding
 
@@ -98,5 +98,5 @@ LISP beginners (like me) are also annoyed by all of the parentheses and the anac
 
 ## Status
 
-YellowLISP is very much a work in progress, and is **not** production-ready, or good. So I appreciate you reading this far!
+YellowLISP is still experimental, and is **not** production-ready, or good. So I appreciate you reading this far!
 
