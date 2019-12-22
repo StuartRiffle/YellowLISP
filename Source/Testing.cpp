@@ -1,45 +1,31 @@
 #include "Yellow.h"
+#include "Interpreter.h"
 
-void TestInterpreter()
+bool SanityCheck()
 {
-    const char* expectedOutputs[] =
-    {
-        "",                     "",
-        "t",                    "t",
-        "nil",                  "nil",
-        "()",                   "nil",
-        "1",                    "1",
-        "2.3",                  "2.3",
-        "-4.5",                 "-4.5",
-        "67e-3",                "0.067",
-        "foo",                  "foo",
-        "FOO",                  "FOO",
-        "\"foo\"",              "\"foo\"",
-        "\"FOO\"",              "\"FOO\"",
-        "(atom 3)",             "t",
-        "(atom (atom 3))",      "t",
-        "(atom 'atom)",         "t",
-        "(atom '(atom 3))",     "nil",
+    Interpreter lisp;
 
-        // TODO: dot operator
+    // Baby steps, Ellie
 
-        "(progn (setq a 7) a)", "7",
+    assert(lisp.Evaluate("")                     == "");
+    assert(lisp.Evaluate("\n\n\n")               == "");
+    assert(lisp.Evaluate("t")                    == "t");
+    assert(lisp.Evaluate("nil")                  == "nil");
+    assert(lisp.Evaluate("()")                   == "nil");
+    assert(lisp.Evaluate("1")                    == "1");
+    assert(lisp.Evaluate("2.3")                  == "2.3");
+    assert(lisp.Evaluate("-4.5")                 == "-4.5");
+    assert(lisp.Evaluate("67e-3")                == "0.067");
+    assert(lisp.Evaluate("foo")                  == "foo");
+    assert(lisp.Evaluate("FOO")                  == "FOO");
+    assert(lisp.Evaluate("(atom 3)")             == "t");
+    assert(lisp.Evaluate("(atom (atom 3))")      == "t");
+    assert(lisp.Evaluate("(atom '(atom 3))")     == "nil");
 
-        // TODO: test error cases too
-    };
+//    assert(lisp.Evaluate("\"foo\"") == "\"foo\"");
+//    assert(lisp.Evaluate("\"FOO\"") == "\"FOO\"");
+//    assert(lisp.Evaluate("(atom 'atom)") == "t");
 
-#if 0
-    // Run the tests twice to make sure we're not leaking cells
-
-    TestInterpreter(interpreter);
-    interpreter.CollectGarbage();
-
-    size_t cellsInUse = interpreter.GetCellsInUse();
-
-    TestInterpreter(interpreter);
-    interpreter.CollectGarbage();
-
-    assert(cellsInUse == interpreter.GetCellsInUse());
-#endif
+    return true;
 }
 

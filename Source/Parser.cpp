@@ -13,7 +13,11 @@ list<NodeRef> Parser::ParseExpressions(const string& source)
     {
         while (*_code)
         {
-            result.push_back(ParseElement());
+            NodeRef element = ParseElement();
+            if (!element)
+                break;
+
+            result.push_back(element);
             SkipWhitespace();
         }
     }
@@ -46,7 +50,7 @@ NodeRef Parser::ParseElement()
     {
         result = ParseList();
     }
-    else
+    else if (*_code)
     {
         result = ParseAtom();
     }

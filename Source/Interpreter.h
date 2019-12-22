@@ -12,12 +12,14 @@ class Interpreter
     std::recursive_mutex _mutex;
 
     void PrintErrorMessage(const string& desc, const string& message);
+
     vector<CELL_INDEX> EvaluateExpressions(const list<NodeRef>& exps);
+    CELL_INDEX RunSourceCode(const string& source);
 
 public:
     Interpreter();
     ~Interpreter();
 
-    CELL_INDEX RunSourceCode(const string& source);
+    string Evaluate(const string& source);
     void REPL();
 };

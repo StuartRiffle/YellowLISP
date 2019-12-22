@@ -18,10 +18,6 @@ void Interpreter::PrintErrorMessage(const string& desc, const string& message)
 
 vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 {
-#if YELLOW_THREAD_SAFE
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-#endif
-
     vector<CELL_INDEX> outputs;
     outputs.reserve(exps.size());
 
@@ -66,10 +62,6 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 
 CELL_INDEX Interpreter::RunSourceCode(const string& source)
 {
-#if YELLOW_THREAD_SAFE
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-#endif
-
     try
     {
         list<NodeRef> exps = _parser.ParseExpressions(source);
@@ -97,6 +89,19 @@ CELL_INDEX Interpreter::RunSourceCode(const string& source)
     return 0;
 }
 
+string Interpreter::Evaluate(const string& source)
+{
+#if YELLOW_THREAD_SAFE
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+#endif
+
+    CELL_INDEX valueCell = RunSourceCode(source);
+    string output = _runtime.GetPrintedValue(valueCell);
+    std::cout << output;
+
+    return output;
+}
+
 void Interpreter::REPL()
 {
     _interactive = true;
@@ -111,9 +116,7 @@ void Interpreter::REPL()
 
         std::getline(std::cin, source);
 
-        CELL_INDEX valueCell = RunSourceCode(source);
-        string output = _runtime.GetPrintedValue(valueCell);
-
+        string output = Evaluate(source);
         std::cout << output << std::endl;
     }
 }

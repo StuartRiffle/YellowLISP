@@ -321,7 +321,7 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
 string Runtime::GetPrintedValue(CELL_INDEX index)
 {
     if (index == 0)
-        return "<ERROR>";
+        return "";
 
     Cell& cell = _cell[index];
     std::stringstream ss;
