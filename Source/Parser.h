@@ -84,6 +84,7 @@ class Parser
 
 public:
     list<NodeRef> ParseExpressions(const string& source);
+    void DumpSyntaxTree(NodeRef node, int indent = 0);
 
     static void TestParsing(const string& code);
     static void RunUnitTest();

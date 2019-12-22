@@ -19,6 +19,8 @@ list<NodeRef> Parser::ParseExpressions(const string& source)
 
             result.push_back(element);
             SkipWhitespace();
+
+            //DumpSyntaxTree(element);
         }
     }
     catch (const char* errorMessage)
@@ -201,4 +203,40 @@ ParsingError Parser::FormatParsingError(const char* source, const char* errorMes
     result._extraInfo = ss.str();
 
     return result;
+}
+
+void Parser::DumpSyntaxTree(NodeRef node, int indent)
+{
+    for (int i = 0; i < indent; i++)
+        std::cout << ' ';
+
+    switch (node->_type)
+    {
+        case AST_NODE_INT_LITERAL: 
+            std::cout << "[int]    " << node->_int << std::endl; 
+            break;
+
+        case AST_NODE_FLOAT_LITERAL:
+            std::cout << "[float]  " << node->_float << std::endl;
+            break;
+
+        case AST_NODE_STRING_LITERAL:
+            std::cout << "[string] " << node->_string << std::endl;
+            break;
+
+        case AST_NODE_IDENTIFIER:
+            std::cout << "[symbol] " << node->_identifier << std::endl;
+            break;
+
+        case AST_NODE_LIST:
+            std::cout << "[list]" << std::endl;
+            for (auto& elem : node->_list)
+                DumpSyntaxTree(elem, indent + 4);
+            break;
+
+        case AST_NODE_INVALID:
+        default:
+            std::cout << "[INVALID]" << std::endl;
+            break;
+    }
 }

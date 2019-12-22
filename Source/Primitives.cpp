@@ -1,7 +1,6 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
-
 CELL_INDEX Runtime::ATOM(const ArgumentList& args)
 {
     assert(args.size() == 1);
@@ -70,7 +69,7 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
 
     if (ca._type == cb._type)
     {
-        if (ca._tags & cb._tags & FLAG_EMBEDDED)
+        if (ca._tags & cb._tags & TAG_EMBEDDED)
             if (ca._data == cb._data)
                 return _true;
 

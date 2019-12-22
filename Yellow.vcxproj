@@ -119,7 +119,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\Bootstrap.cpp" />
+    <ClCompile Include="Source\CellTable.cpp" />
     <ClCompile Include="Source\Interpreter.cpp" />
+    <ClCompile Include="Source\Literals.cpp" />
     <ClCompile Include="Source\Parser.cpp" />
     <ClCompile Include="Source\Primitives.cpp" />
     <ClCompile Include="Source\Runtime.cpp" />

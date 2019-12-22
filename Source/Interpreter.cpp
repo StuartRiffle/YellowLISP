@@ -110,7 +110,7 @@ void Interpreter::REPL()
         string source;
 
         SetTextColor(ANSI_YELLOW);
-        std::cout << "> ";
+        std::cout << "-> ";
         ResetTextColor();
 
         std::getline(std::cin, source);
