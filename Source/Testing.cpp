@@ -1,31 +1,55 @@
 #include "Yellow.h"
+#include "Console.h"
 #include "Interpreter.h"
+
+void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput)
+{
+    string output = lisp.Evaluate(source);
+    if (output != expectedOutput)
+    {
+        SetTextColor(ANSI_RED);
+        printf("SANITY CHECK FAILED: ");
+        ResetTextColor();
+
+        printf("\"%s\" evaluated to \"%s\" instead of \"%s\"\n", source, output.c_str(), expectedOutput);
+    }
+}
 
 bool SanityCheck()
 {
-    Interpreter lisp;
+    try
+    {
+        Interpreter lisp;
 
-    // Baby steps, Ellie
+        CheckOutput(lisp, "",                   "");
+        CheckOutput(lisp, "\n\n\n",             "");
+        CheckOutput(lisp, "t",                  "t");
+        CheckOutput(lisp, "nil",                "nil");
+        CheckOutput(lisp, "()",                 "nil");
+        CheckOutput(lisp, "1",                  "1");
+        CheckOutput(lisp, "2.3",                "2.3");
+        CheckOutput(lisp, "-4.5",               "-4.5");
+        CheckOutput(lisp, "67e-3",              "0.067");
+        CheckOutput(lisp, "foo",                "foo");
+        CheckOutput(lisp, "FOO",                "FOO");
+        CheckOutput(lisp, "\"foo\"",            "\"foo\"");
+        CheckOutput(lisp, "\"FOO\"",            "\"FOO\"");
+        CheckOutput(lisp, "(atom 3)",           "t");
+        CheckOutput(lisp, "(atom 'atom)",       "t");
+        CheckOutput(lisp, "(atom (atom 3))",    "t");
+        CheckOutput(lisp, "(atom '(atom 3))",   "nil");
 
-    assert(lisp.Evaluate("")                     == "");
-    assert(lisp.Evaluate("\n\n\n")               == "");
-    assert(lisp.Evaluate("t")                    == "t");
-    assert(lisp.Evaluate("nil")                  == "nil");
-    assert(lisp.Evaluate("()")                   == "nil");
-    assert(lisp.Evaluate("1")                    == "1");
-    assert(lisp.Evaluate("2.3")                  == "2.3");
-    assert(lisp.Evaluate("-4.5")                 == "-4.5");
-    assert(lisp.Evaluate("67e-3")                == "0.067");
-    assert(lisp.Evaluate("foo")                  == "foo");
-    assert(lisp.Evaluate("FOO")                  == "FOO");
-    assert(lisp.Evaluate("(atom 3)")             == "t");
-    assert(lisp.Evaluate("(atom (atom 3))")      == "t");
-    assert(lisp.Evaluate("(atom '(atom 3))")     == "nil");
+        return true;
+    }
+    catch (std::exception e)
+    {
+        SetTextColor(ANSI_RED);
+        printf("SANITY CHECK FAILED: ");
+        ResetTextColor();
 
-//    assert(lisp.Evaluate("\"foo\"") == "\"foo\"");
-//    assert(lisp.Evaluate("\"FOO\"") == "\"FOO\"");
-//    assert(lisp.Evaluate("(atom 'atom)") == "t");
+        printf("%s\n", e.what());
+    }
 
-    return true;
+    return false;
 }
 

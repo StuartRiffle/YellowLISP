@@ -122,11 +122,13 @@ class Runtime
     vector<Cell> _cell;
     CELL_INDEX _cellFreeList;
 
-    SlotPool<string> _string; // FIXME: refcount
-    SlotPool<PrimitiveInfo> _primitive;
+    vector<PrimitiveInfo> _primitive;
 
     SlotPool<SymbolInfo> _symbol;
     std::unordered_map<THASH, SYMBOL_INDEX> _globalScope;
+
+    SlotPool<StringInfo> _string;
+    std::unordered_map<THASH, STRING_INDEX> _stringTable;
 
     CELL_INDEX  _nil;
     CELL_INDEX  _true;

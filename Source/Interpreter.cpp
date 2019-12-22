@@ -97,7 +97,6 @@ string Interpreter::Evaluate(const string& source)
 
     CELL_INDEX valueCell = RunSourceCode(source);
     string output = _runtime.GetPrintedValue(valueCell);
-    std::cout << output;
 
     return output;
 }

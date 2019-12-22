@@ -7,11 +7,11 @@
 
 int main(int argc, char** argv)
 {
-    //SanityCheck();
-
     SetTextColor(ANSI_BLACK, ANSI_YELLOW);
     printf(" YellowLISP %d.%d.%d \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
     ResetTextColor();
+
+    SanityCheck();
 
     Interpreter lisp;
     lisp.REPL();

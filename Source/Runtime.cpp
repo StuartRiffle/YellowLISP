@@ -75,17 +75,17 @@ string Runtime::LoadStringLiteral(CELL_INDEX index)
 
     if (cell._tags & FLAG_EMBEDDED)
     {
-        const char* tiny = (const char*)&cell._data;
-        assert(strlen(tiny) < sizeof(cell._data));
-
+        char tiny[5] = { 0 };
         const char* chars = (const char*) &cell._data;
-        return string(chars, chars + sizeof(cell._data));
+        strncpy(tiny, chars, sizeof(cell._data));
+
+        return tiny;
     }
 
     STRING_INDEX stringIndex = cell._data;
     assert((stringIndex > 0) && (stringIndex < _string.GetPoolSize()));
 
-    const string& value = _string[stringIndex];
+    const string& value = _string[stringIndex]._str;
     assert(value.length() >= sizeof(TDATA));
 
     return value;
@@ -107,8 +107,21 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
     }
     else
     {
-        STRING_INDEX stringIndex = (STRING_INDEX)_string.Alloc();
-        _string[stringIndex] = value;
+        STRING_INDEX stringIndex = 0;
+
+        THASH hash = HashString(value);
+        auto existing = _stringTable.find(hash);
+        if (existing != _stringTable.end())
+        {
+            stringIndex = existing->second;
+        }
+        else
+        {
+            stringIndex = (STRING_INDEX)_string.Alloc();
+            _string[stringIndex]._str = value;
+        }
+
+        _string[stringIndex]._refCount++;
     }
 }
 
@@ -145,8 +158,9 @@ CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     SymbolInfo& symbol = _symbol[symbolIndex];
 
-    symbol._primIndex = (TINDEX)_primitive.Alloc();
-    PrimitiveInfo& primInfo = _primitive[symbol._primIndex];
+    symbol._primIndex = (TINDEX)_primitive.size();
+    _primitive.emplace_back();
+    PrimitiveInfo& primInfo = _primitive.back();
 
     primInfo._name = ident;
     primInfo._func = func;
@@ -342,7 +356,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
 
         case TYPE_INT:    ss << LoadIntLiteral(index); break;
         case TYPE_FLOAT:  ss << LoadFloatLiteral(index); break;
-        case TYPE_STRING: ss << LoadStringLiteral(index); break;
+        case TYPE_STRING: ss << '\"' << LoadStringLiteral(index) << '\"'; break;
         case TYPE_SYMBOL: ss << _symbol[cell._data]._ident; break;
         default:          assert(!"Internal error");
     }

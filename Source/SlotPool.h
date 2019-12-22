@@ -3,18 +3,11 @@
 #pragma once
 #include "Yellow.h"
 
-#define NO_AUTO_EXPAND (0)
-#define ENABLE_AUTO_EXPAND (1)
-
-template< 
-    typename T, 
-    int AUTO_EXPAND = ENABLE_AUTO_EXPAND,
-    int INITIAL_CAPACITY = 64   
->
+template< typename T >
 class SlotPool
 {
     vector<T> _elems;
-    size_t _freeIndex;
+    vector<size_t> _freeSlots;
 
     static_assert(sizeof(T) >= sizeof(size_t), "Type too small to be linked into a free list");
 
@@ -22,10 +15,7 @@ public:
 
     SlotPool()
     {
-        _elems.reserve(INITIAL_CAPACITY);
-
         _elems.push_back(T()); // element 0 is reserved as invalid
-        _freeIndex = 0;
     }
 
     inline T& operator[](size_t index) 
@@ -38,16 +28,15 @@ public:
 
     inline size_t Alloc()
     {
-        if (!_freeIndex)
-            if (AUTO_EXPAND)
-                ExpandPool();
+        size_t index = 0;
 
-        int index = (int) _freeIndex;
-        if (index)
+        if (_freeSlots.empty())
+            ExpandPool();
+
+        if (!_freeSlots.empty())
         {
-            size_t* freeLink = (size_t*)&_elems[index];
-            _freeIndex = *freeLink;
-//            _elems[index] = T();
+            index = _freeSlots.back();
+            _freeSlots.pop_back();
         }
 
         return(index);
@@ -56,10 +45,7 @@ public:
     inline void Free(size_t index)
     {
         assert(index < _elems.size());
-
-        size_t* freeLink = (size_t*)&_elems[index];
-        *freeLink = _freeIndex;
-        _freeIndex = index;
+        _freeSlots.push_back(index);
     }
 
     void ExpandPool()
