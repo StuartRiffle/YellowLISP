@@ -149,6 +149,11 @@ class Runtime
     CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
 
+    // Commands.cpp
+
+    CELL_INDEX Help(const ArgumentList& args);
+    CELL_INDEX Exit(const ArgumentList& args);
+
 public:
     Runtime();
     ~Runtime();

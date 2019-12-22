@@ -12,6 +12,8 @@ Runtime::Runtime()
     _true  = RegisterSymbol("t");
     _quote = RegisterSymbol("quote");
 
+    // Language primitives
+
     RegisterPrimitive("atom",  &Runtime::ATOM);
     RegisterPrimitive("car",   &Runtime::CAR);
     RegisterPrimitive("cdr",   &Runtime::CDR);
@@ -19,6 +21,12 @@ Runtime::Runtime()
     RegisterPrimitive("cons",  &Runtime::CONS);
     RegisterPrimitive("eq",    &Runtime::EQ);
     RegisterPrimitive("eval",  &Runtime::EVAL);
+
+    // Interpreter commands
+
+    RegisterPrimitive("help",  &Runtime::Help);
+    RegisterPrimitive("exit",  &Runtime::Exit);
+    RegisterPrimitive("quit",  &Runtime::Exit);
 }
 
 Runtime::~Runtime()

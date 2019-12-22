@@ -41,6 +41,9 @@
     <ClCompile Include="Source\Errors.h">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h">

@@ -13,6 +13,8 @@
 # Build results
 [Bb]uild/x64/
 [Bb]uild/x86/
+[Bb]uild/Temp/
+[Bb]uild/*/*
 [Bb]uild/*.exe
 
 # Visual Studio 2015 cache/options directory

@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Bootstrap.cpp" />
     <ClCompile Include="Source\CellTable.cpp" />
+    <ClCompile Include="Source\Commands.cpp" />
     <ClCompile Include="Source\Errors.h" />
     <ClCompile Include="Source\Interpreter.cpp" />
     <ClCompile Include="Source\Literals.cpp" />

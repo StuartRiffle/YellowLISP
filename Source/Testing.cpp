@@ -52,7 +52,7 @@ bool SanityCheck()
     catch (std::exception e)
     {
         SetTextColor(ANSI_RED);
-        printf("SANITY CHECK FAILED: ");
+        printf("SANITY CHECK EXCEPTION: ");
         ResetTextColor();
 
         printf("%s\n", e.what());
