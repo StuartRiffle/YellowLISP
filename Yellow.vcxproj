@@ -150,7 +150,7 @@
     <ClCompile Include="Source\Bootstrap.cpp" />
     <ClCompile Include="Source\CellTable.cpp" />
     <ClCompile Include="Source\Commands.cpp" />
-    <ClCompile Include="Source\Errors.h" />
+    <ClCompile Include="Source\Errors.cpp" />
     <ClCompile Include="Source\Interpreter.cpp" />
     <ClCompile Include="Source\Literals.cpp" />
     <ClCompile Include="Source\Parser.cpp" />
@@ -164,6 +164,7 @@
     <ClInclude Include="Source\CommandLine.h" />
     <ClInclude Include="Source\Console.h" />
     <ClInclude Include="Source\Embedded.h" />
+    <ClInclude Include="Source\Errors.h" />
     <ClInclude Include="Source\Hash.h" />
     <ClInclude Include="Source\Interpreter.h" />
     <ClInclude Include="Source\Parser.h" />

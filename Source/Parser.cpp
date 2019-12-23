@@ -123,9 +123,7 @@ NodeRef Parser::ParseNumber()
     char* end = NULL;
     float val = strtof(_code, &end);
 
-    if (end == _code)
-        RAISE_ERROR(ERROR_PARSER_NUMBER_EXPECTED);
-
+    assert(end > _code);
     _code = end;
 
     int integer = (int)val;
@@ -134,7 +132,6 @@ NodeRef Parser::ParseNumber()
         NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
         intNode->_int = integer;
         return intNode;
-
     }
 
     NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));

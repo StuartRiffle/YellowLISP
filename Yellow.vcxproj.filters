@@ -38,10 +38,10 @@
     <ClCompile Include="Source\CellTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Errors.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,6 +77,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\CommandLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Errors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

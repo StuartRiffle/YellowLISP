@@ -79,14 +79,13 @@ void SanityCheck()
     CheckOutput(lisp, "(atom (atom 3))",    "t");
     CheckOutput(lisp, "(atom '(atom 3))",   "nil");
 
-    CheckError(lisp, "-foo",                ERROR_PARSER_NUMBER_EXPECTED);
     CheckError(lisp, "\"foo",               ERROR_PARSER_STRING_UNTERMINATED);
     CheckError(lisp, "(",                   ERROR_PARSER_LIST_UNTERMINATED);
     CheckError(lisp, "(setq } 3)",          ERROR_PARSER_INVALID_IDENTIFIER);
     CheckError(lisp, "(atom 3]",            ERROR_PARSER_BRACE_MISMATCH);
 
     CheckError(lisp, "(quote 1 2)",         ERROR_RUNTIME_WRONG_NUM_PARAMS);
-    CheckError(lisp, "(atom foo)",          ERROR_RUNTIME_VARIABLE_UNBOUND);
+    CheckError(lisp, "(atom foo)",      ERROR_RUNTIME_VARIABLE_UNBOUND);
 
 }
 
