@@ -93,6 +93,28 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
     return _nil;
 }
 
+CELL_INDEX Runtime::LIST(const ArgumentList& args)
+{
+    if (args.empty())
+        return _nil;
+
+    vector<CELL_INDEX> listCells;
+    listCells.reserve(args.size());
+
+    for (CELL_INDEX elem : args)
+    {
+        CELL_INDEX elemCell = AllocateCell(TYPE_LIST);
+        _cell[elemCell]._data = elem;
+
+        if (!listCells.empty())
+            _cell[listCells.back()]._next = elemCell;
+
+        listCells.push_back(elemCell);
+    }
+
+    return listCells[0];
+}
+
 CELL_INDEX Runtime::PRINT(const ArgumentList& args)
 {
     (args);

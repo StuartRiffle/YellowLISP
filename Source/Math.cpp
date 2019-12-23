@@ -2,143 +2,27 @@
 #include "Runtime.h"
 #include "Errors.h"
 
-CELL_INDEX Runtime::ADD(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::SUB(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::MUL(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::DIV(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::MOD(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::REM(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::ROUND(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::TRUNC(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::FLOOR(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::CEILING(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::MIN(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::MAX(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::EXPT(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::LOG(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::SQRT(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::ABS(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::SIN(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::COS(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::TAN(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
-CELL_INDEX Runtime::RANDOM(const ArgumentList& args)
-{
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
-}
-
+STUB_UNIMPLEMENTED(ADD);
+STUB_UNIMPLEMENTED(SUB);
+STUB_UNIMPLEMENTED(MUL);
+STUB_UNIMPLEMENTED(DIV);
+STUB_UNIMPLEMENTED(MOD);
+STUB_UNIMPLEMENTED(REM);
+STUB_UNIMPLEMENTED(ROUND);
+STUB_UNIMPLEMENTED(TRUNCATE);
+STUB_UNIMPLEMENTED(FLOOR);
+STUB_UNIMPLEMENTED(CEILING);
+STUB_UNIMPLEMENTED(MIN);
+STUB_UNIMPLEMENTED(MAX);
+STUB_UNIMPLEMENTED(EXP);
+STUB_UNIMPLEMENTED(EXPT);
+STUB_UNIMPLEMENTED(LOG);
+STUB_UNIMPLEMENTED(SQRT);
+STUB_UNIMPLEMENTED(ABS);
+STUB_UNIMPLEMENTED(SIN);
+STUB_UNIMPLEMENTED(COS);
+STUB_UNIMPLEMENTED(TAN);
+STUB_UNIMPLEMENTED(ASIN);
+STUB_UNIMPLEMENTED(ACOS);
+STUB_UNIMPLEMENTED(ATAN);
+STUB_UNIMPLEMENTED(RANDOM);

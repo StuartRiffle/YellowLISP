@@ -21,22 +21,20 @@ Runtime::Runtime()
     RegisterPrimitive("cons",  &Runtime::CONS);
     RegisterPrimitive("eq",    &Runtime::EQ);
     RegisterPrimitive("eval",  &Runtime::EVAL);
+    RegisterPrimitive("list",  &Runtime::LIST);
+
+    RegisterPrimitive("+",       &Runtime::ADD);
+    RegisterPrimitive("-",       &Runtime::SUB);
+    RegisterPrimitive("*",       &Runtime::MUL);
+    RegisterPrimitive("/",       &Runtime::DIV);
+    RegisterPrimitive("%",       &Runtime::MOD);
+   //RegisterPrimitive("<",       &Runtime::LESS);
 
     // Math stuff
 
-    RegisterPrimitive("add",     &Runtime::ADD);
-    RegisterPrimitive("+",       &Runtime::ADD);
-    RegisterPrimitive("sub",     &Runtime::SUB);
-    RegisterPrimitive("-",       &Runtime::SUB);
-    RegisterPrimitive("mul",     &Runtime::MUL);
-    RegisterPrimitive("*",       &Runtime::MUL);
-    RegisterPrimitive("div",     &Runtime::DIV);
-    RegisterPrimitive("/",       &Runtime::DIV);
-    RegisterPrimitive("mod",     &Runtime::MOD);
-    RegisterPrimitive("%",       &Runtime::MOD);
     RegisterPrimitive("rem",     &Runtime::REM);
     RegisterPrimitive("round",   &Runtime::ROUND);
-    RegisterPrimitive("trunc",   &Runtime::TRUNC);
+    RegisterPrimitive("truncate",&Runtime::TRUNCATE);
     RegisterPrimitive("floor",   &Runtime::FLOOR);
     RegisterPrimitive("ceiling", &Runtime::CEILING);
     RegisterPrimitive("min",     &Runtime::MIN);
@@ -49,6 +47,10 @@ Runtime::Runtime()
     RegisterPrimitive("cos",     &Runtime::COS);
     RegisterPrimitive("tan",     &Runtime::TAN);
     RegisterPrimitive("random",  &Runtime::RANDOM);
+
+    // Predicates
+
+
 
     // Interpreter commands
 
@@ -179,9 +181,12 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
             while (curr)
             {
                 ss << GetPrintedValue(_cell[curr]._data);
+                if (_cell[curr]._next)
+                    ss << " ";
                 curr = _cell[curr]._next;
             }
             ss << ')';
+            break;
         }
 
         case TYPE_INT:    ss << LoadIntLiteral(index); break;

@@ -82,6 +82,13 @@ struct StringInfo
     StringInfo() : _refCount(0) {}
 };
 
+#define STUB_UNIMPLEMENTED(_FUNCNAME) \
+    CELL_INDEX Runtime::_FUNCNAME(const ArgumentList& args) \
+    { \
+        (args); \
+        RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED); \
+        return 0; \
+    }
 
 #define CELL_TABLE_EXPAND_THRESH (0.9f)
 
@@ -140,6 +147,7 @@ class Runtime
     CELL_INDEX EQ(const ArgumentList& args);
     CELL_INDEX EVAL(const ArgumentList& args);
     CELL_INDEX LET(const ArgumentList& args);
+    CELL_INDEX LIST(const ArgumentList& args);
     CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
 
@@ -152,11 +160,12 @@ class Runtime
     CELL_INDEX MOD(const ArgumentList& args);
     CELL_INDEX REM(const ArgumentList& args);
     CELL_INDEX ROUND(const ArgumentList& args);
-    CELL_INDEX TRUNC(const ArgumentList& args);
+    CELL_INDEX TRUNCATE(const ArgumentList& args);
     CELL_INDEX FLOOR(const ArgumentList& args);
     CELL_INDEX CEILING(const ArgumentList& args);
     CELL_INDEX MIN(const ArgumentList& args);
     CELL_INDEX MAX(const ArgumentList& args);
+    CELL_INDEX EXP(const ArgumentList& args);
     CELL_INDEX EXPT(const ArgumentList& args);
     CELL_INDEX LOG(const ArgumentList& args);
     CELL_INDEX SQRT(const ArgumentList& args);
@@ -164,7 +173,67 @@ class Runtime
     CELL_INDEX SIN(const ArgumentList& args);
     CELL_INDEX COS(const ArgumentList& args);
     CELL_INDEX TAN(const ArgumentList& args);
+    CELL_INDEX ASIN(const ArgumentList& args);
+    CELL_INDEX ACOS(const ArgumentList& args);
+    CELL_INDEX ATAN(const ArgumentList& args);
     CELL_INDEX RANDOM(const ArgumentList& args);
+
+    CELL_INDEX LISTP(const ArgumentList& args);
+    CELL_INDEX NUMBERP(const ArgumentList& args);
+    CELL_INDEX FLOATP(const ArgumentList& args);
+    CELL_INDEX STRINGP(const ArgumentList& args);
+    CELL_INDEX ENDP(const ArgumentList& args);
+
+    /*
+    INCF
+    DECF
+
+    DECLARE
+    DECLAIM
+
+    DEFVAR
+    DEFUNC
+    DEFCONSTANT
+    DEFMACRO
+
+    NOT
+    AND
+    OR
+    WHEN
+    UNLESS
+    IF
+    CASE
+
+    SETF
+    SETQ
+
+    LET
+    FLET
+
+    PROG
+    PROGN
+
+    LOGAND
+    LOGIOR
+    LOGXOR
+    LOGNOR
+    LOGEQV
+
+    DOLIST
+    DOTIMES
+    LOOP
+
+
+    LIST
+    APPEND
+    LENGTH
+    REVERSE
+    MEMBER
+    POSITION
+    FIND
+    COUNT
+    REMOVE
+    */
 
     // Commands.cpp
 

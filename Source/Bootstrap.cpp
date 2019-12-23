@@ -1,19 +1,20 @@
 const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 
-(label defun (lambda args body))
+;;;; YellowLISP
+;;;; Copyright (C) 2019 Stuart Riffle
 
-(defun caar   (x) (car (car x)))
-(defun cadr   (x) (car (cdr x)))
-(defun cdar   (x) (cdr (car x)))
-(defun cddr   (x) (cdr (cdr x)))
-(defun caaar  (x) (car (caar x)))
-(defun caadr  (x) (car (cadr x)))
-(defun cadar  (x) (car (cdar x)))
-(defun caddr  (x) (car (cddr x)))
-(defun cdaar  (x) (cdr (caar x)))
-(defun cdadr  (x) (cdr (cadr x)))
-(defun cddar  (x) (cdr (cdar x)))
-(defun cdddr  (x) (cdr (cddr x)))
+(defun caar   (x) (car (car   x)))
+(defun cadr   (x) (car (cdr   x)))
+(defun cdar   (x) (cdr (car   x)))
+(defun cddr   (x) (cdr (cdr   x)))
+(defun caaar  (x) (car (caar  x)))
+(defun caadr  (x) (car (cadr  x)))
+(defun cadar  (x) (car (cdar  x)))
+(defun caddr  (x) (car (cddr  x)))
+(defun cdaar  (x) (cdr (caar  x)))
+(defun cdadr  (x) (cdr (cadr  x)))
+(defun cddar  (x) (cdr (cdar  x)))
+(defun cdddr  (x) (cdr (cddr  x)))
 (defun caaaar (x) (car (caaar x)))
 (defun caaadr (x) (car (caadr x)))
 (defun caadar (x) (car (cadar x)))
@@ -30,6 +31,24 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cddadr (x) (cdr (cdadr x)))
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
+
+(defun <= (a b) (or (< a b) (= a b)))
+(defun >  (a b) (< b a))
+(defun >= (a b) (<= b a))
+(defun /= (a b) (not (= a b)))
+
+(defun zerop  (x) (= x 0))
+(defun plusp  (x) (> x 0))
+(defun minusp (x) (< x 0))
+(defun null   (x) (eq x nil))
+
+(defconstant +PI+ 3.141592653589793)
+
+; greaterp - It takes one or more argument and returns t if either there is a single argument or the arguments are successively larger from left to right, or nil if otherwise.
+; lessp
+
+
+
 
 ; The following code is from "The Roots of Lisp" by Paul Graham (2002)
 
