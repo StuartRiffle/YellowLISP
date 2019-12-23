@@ -53,41 +53,51 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
 
-    CheckOutput(lisp, "",                   "");
-    CheckOutput(lisp, ";(",                 "");
-    CheckOutput(lisp, "\n",                 "");
-    CheckOutput(lisp, "1",                  "1");
-    CheckOutput(lisp, " 2 ",                "2");
-    CheckOutput(lisp, "3.4",                "3.4");
-    CheckOutput(lisp, "-5.6",               "-5.6");
-    CheckOutput(lisp, "78e-3",              "0.078");
-    CheckOutput(lisp, "9 ; (",              "9");
+    CheckOutput(lisp, "", "");
+    CheckOutput(lisp, ";(", "");
+    CheckOutput(lisp, "\n", "");
+    CheckOutput(lisp, "1", "1");
+    CheckOutput(lisp, " 2 ", "2");
+    CheckOutput(lisp, "3.4", "3.4");
+    CheckOutput(lisp, "-5.6", "-5.6");
+    CheckOutput(lisp, "78e-3", "0.078");
+    CheckOutput(lisp, "9 ; (", "9");
 
-    CheckOutput(lisp, "t",                  "t");
-    CheckOutput(lisp, "nil",                "nil");
-    CheckOutput(lisp, "'nil",               "nil");
-    CheckOutput(lisp, "()",                 "nil");
-    CheckOutput(lisp, "'()",                "nil");
+    CheckOutput(lisp, "t", "t");
+    CheckOutput(lisp, "nil", "nil");
+    CheckOutput(lisp, "'nil", "nil");
+    CheckOutput(lisp, "()", "nil");
+    CheckOutput(lisp, "'()", "nil");
 
-    CheckOutput(lisp, "'foo",               "foo");
-    CheckOutput(lisp, "'FOO",               "FOO");
-    CheckOutput(lisp, "\"foo\"",            "\"foo\"");
-    CheckOutput(lisp, "\"FOO\"",            "\"FOO\"");
+    CheckOutput(lisp, "'foo", "foo");
+    CheckOutput(lisp, "'FOO", "FOO");
+    CheckOutput(lisp, "\"foo\"", "\"foo\"");
+    CheckOutput(lisp, "\"FOO\"", "\"FOO\"");
 
-    CheckOutput(lisp, "(atom ())",          "t");
-    CheckOutput(lisp, "(atom '())",         "t");
-    CheckOutput(lisp, "(atom 3)",           "t");
-    CheckOutput(lisp, "(atom 'foo)",        "t");
-    CheckOutput(lisp, "(atom (atom 3))",    "t");
-    CheckOutput(lisp, "(atom [atom 3])",    "t");
-    CheckOutput(lisp, "[atom [atom 3]]",    "t");
-    CheckOutput(lisp, "[atom (atom 3)]",    "t");
-    CheckOutput(lisp, "(atom '(atom 3))",   "nil");
+    CheckOutput(lisp, "(quote ('1 2))", "((quote 1) 2)");
 
-    CheckOutput(lisp, "(list)",             "nil");
-    CheckOutput(lisp, "(list 1)",           "(1)");
-    CheckOutput(lisp, "(list 1 'foo 3)",    "(1 foo 3)");
-    CheckOutput(lisp, "(atom (list 1 2))",  "nil");
+    CheckOutput(lisp, "(atom ())", "t");
+    CheckOutput(lisp, "(atom '())", "t");
+    CheckOutput(lisp, "(atom 3)", "t");
+    CheckOutput(lisp, "(atom 'foo)", "t");
+    CheckOutput(lisp, "(atom (atom 3))", "t");
+    CheckOutput(lisp, "(atom [atom 3])", "t");
+    CheckOutput(lisp, "[atom [atom 3]]", "t");
+    CheckOutput(lisp, "[atom (atom 3)]", "t");
+    CheckOutput(lisp, "(atom '(atom 3))", "nil");
+    CheckOutput(lisp, "(atom (list 1 2))", "nil");
+
+    CheckOutput(lisp, "(car (list 1 2))", "1");
+    CheckOutput(lisp, "(cdr (list 1 2))", "(2)");
+    CheckOutput(lisp, "(car ())", "nil");
+    CheckOutput(lisp, "(cdr ())", "nil");
+    CheckOutput(lisp, "(car (cdr (list 1 2 3)))", "2");
+    CheckOutput(lisp, "(cdr (cdr (list 1 2 3)))", "(3)");
+
+    CheckOutput(lisp, "(list)", "nil");
+    CheckOutput(lisp, "(list 1)", "(1)");
+    CheckOutput(lisp, "(list 1 'foo 3)", "(1 foo 3)");
+    CheckOutput(lisp, "(list (list ()))", "((nil))");
 
     CheckError(lisp, "\"foo",               ERROR_PARSER_STRING_UNTERMINATED);
     CheckError(lisp, "(",                   ERROR_PARSER_LIST_UNTERMINATED);

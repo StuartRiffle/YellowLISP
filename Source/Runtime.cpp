@@ -262,6 +262,8 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             RAISE_ERROR_IF(cell._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
             CELL_INDEX quoted = cell._next;
+            RAISE_ERROR_IF(_cell[quoted]._next, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
             return _cell[quoted]._data;
         }
 
