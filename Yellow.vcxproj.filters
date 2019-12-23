@@ -44,6 +44,9 @@
     <ClCompile Include="Source\Errors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h">
@@ -87,6 +90,7 @@
     <None Include=".gitignore" />
     <None Include="LICENSE" />
     <None Include="README.md" />
+    <None Include=".gitattributes" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

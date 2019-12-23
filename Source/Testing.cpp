@@ -37,7 +37,7 @@ void CheckError(Interpreter& lisp, const char* source, ErrorCode expectedError)
         if (caughtError)
             ss << ", but raised " << caughtError;
         else
-            ss << ", but returned \"" << output << '\"';
+            ss << ", but evaluated to \"" << output << '\"';
 
         SetTextColor(ANSI_RED);
         printf("SANITY CHECK FAILED: %s\n", ss.str().c_str());
@@ -54,12 +54,14 @@ void SanityCheck()
     Interpreter lisp(&settings);
 
     CheckOutput(lisp, "",                   "");
+    CheckOutput(lisp, ";(",                 "");
     CheckOutput(lisp, "\n",                 "");
     CheckOutput(lisp, "1",                  "1");
     CheckOutput(lisp, " 2 ",                "2");
     CheckOutput(lisp, "3.4",                "3.4");
     CheckOutput(lisp, "-5.6",               "-5.6");
     CheckOutput(lisp, "78e-3",              "0.078");
+    CheckOutput(lisp, "9 ; (",              "9");
 
     CheckOutput(lisp, "t",                  "t");
     CheckOutput(lisp, "nil",                "nil");
@@ -85,7 +87,6 @@ void SanityCheck()
     CheckError(lisp, "(atom 3]",            ERROR_PARSER_BRACE_MISMATCH);
 
     CheckError(lisp, "(quote 1 2)",         ERROR_RUNTIME_WRONG_NUM_PARAMS);
-    CheckError(lisp, "(atom foo)",      ERROR_RUNTIME_VARIABLE_UNBOUND);
-
+    CheckError(lisp, "(atom foo)",          ERROR_RUNTIME_VARIABLE_UNBOUND);
 }
 

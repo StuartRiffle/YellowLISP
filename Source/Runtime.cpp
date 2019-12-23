@@ -22,6 +22,34 @@ Runtime::Runtime()
     RegisterPrimitive("eq",    &Runtime::EQ);
     RegisterPrimitive("eval",  &Runtime::EVAL);
 
+    // Math stuff
+
+    RegisterPrimitive("add",     &Runtime::ADD);
+    RegisterPrimitive("+",       &Runtime::ADD);
+    RegisterPrimitive("sub",     &Runtime::SUB);
+    RegisterPrimitive("-",       &Runtime::SUB);
+    RegisterPrimitive("mul",     &Runtime::MUL);
+    RegisterPrimitive("*",       &Runtime::MUL);
+    RegisterPrimitive("div",     &Runtime::DIV);
+    RegisterPrimitive("/",       &Runtime::DIV);
+    RegisterPrimitive("mod",     &Runtime::MOD);
+    RegisterPrimitive("%",       &Runtime::MOD);
+    RegisterPrimitive("rem",     &Runtime::REM);
+    RegisterPrimitive("round",   &Runtime::ROUND);
+    RegisterPrimitive("trunc",   &Runtime::TRUNC);
+    RegisterPrimitive("floor",   &Runtime::FLOOR);
+    RegisterPrimitive("ceiling", &Runtime::CEILING);
+    RegisterPrimitive("min",     &Runtime::MIN);
+    RegisterPrimitive("max",     &Runtime::MAX);
+    RegisterPrimitive("expt",    &Runtime::EXPT);
+    RegisterPrimitive("log",     &Runtime::LOG);
+    RegisterPrimitive("sqrt",    &Runtime::SQRT);
+    RegisterPrimitive("abs",     &Runtime::ABS);
+    RegisterPrimitive("sin",     &Runtime::SIN);
+    RegisterPrimitive("cos",     &Runtime::COS);
+    RegisterPrimitive("tan",     &Runtime::TAN);
+    RegisterPrimitive("random",  &Runtime::RANDOM);
+
     // Interpreter commands
 
     RegisterPrimitive("help",  &Runtime::Help);

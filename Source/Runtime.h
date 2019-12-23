@@ -143,6 +143,29 @@ class Runtime
     CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
 
+    // Math.cpp
+
+    CELL_INDEX ADD(const ArgumentList& args);
+    CELL_INDEX SUB(const ArgumentList& args);
+    CELL_INDEX MUL(const ArgumentList& args);
+    CELL_INDEX DIV(const ArgumentList& args);
+    CELL_INDEX MOD(const ArgumentList& args);
+    CELL_INDEX REM(const ArgumentList& args);
+    CELL_INDEX ROUND(const ArgumentList& args);
+    CELL_INDEX TRUNC(const ArgumentList& args);
+    CELL_INDEX FLOOR(const ArgumentList& args);
+    CELL_INDEX CEILING(const ArgumentList& args);
+    CELL_INDEX MIN(const ArgumentList& args);
+    CELL_INDEX MAX(const ArgumentList& args);
+    CELL_INDEX EXPT(const ArgumentList& args);
+    CELL_INDEX LOG(const ArgumentList& args);
+    CELL_INDEX SQRT(const ArgumentList& args);
+    CELL_INDEX ABS(const ArgumentList& args);
+    CELL_INDEX SIN(const ArgumentList& args);
+    CELL_INDEX COS(const ArgumentList& args);
+    CELL_INDEX TAN(const ArgumentList& args);
+    CELL_INDEX RANDOM(const ArgumentList& args);
+
     // Commands.cpp
 
     CELL_INDEX Help(const ArgumentList& args);

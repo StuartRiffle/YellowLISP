@@ -19,9 +19,8 @@ void PrintOptions()
     printf("This is an interpreter for a [very] small subset of LISP. It is a work in\n");
     printf("progress, and should not be used for production work.\n\n");
 
-    printf("LISP sources have the extension \".lisp\". If any are specified, they will\n"); 
+    printf("LISP files have the extension \".lisp\". If any are specified, they will\n"); 
     printf("be loaded and evaluated in the order given. YellowLISP will exit after that.\n\n");
-
     printf("Type \"(help)\" at the interactive prompt to see the runtime options.\n");
     printf("Type \"(exit)\" (or hit CTRL-C) to end your session.\n\n");
 
