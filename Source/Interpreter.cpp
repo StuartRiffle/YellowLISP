@@ -93,13 +93,15 @@ void Interpreter::RunREPL()
         string source;
 
         SetTextColor(ANSI_YELLOW);
-        std::cout << "-> ";
+        std::cout << std::endl << "-> ";
         ResetTextColor();
 
         std::getline(std::cin, source);
 
         string output = Evaluate(source);
-        std::cout << output << std::endl;
+
+        if (output.length() > 0)
+            std::cout << output << std::endl;
     }
 }
 
