@@ -63,8 +63,6 @@ string Interpreter::Evaluate(const string& source)
         if (!_settings._catchExceptions)
             throw error;
 
-        output = error.what();
-
         SetTextColor(ANSI_RED);
         std::cout << error.what() << std::endl;
         ResetTextColor();
@@ -77,8 +75,6 @@ string Interpreter::Evaluate(const string& source)
 
         if (!_settings._catchExceptions)
             throw error;
-
-        output = error.what();
 
         SetTextColor(ANSI_RED);
         std::cout << "CRITICAL ERROR: unhandled exception" << std::endl;

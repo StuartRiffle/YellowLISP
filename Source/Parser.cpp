@@ -71,15 +71,19 @@ NodeRef Parser::ParseElement()
 
 NodeRef Parser::ParseList()
 {
-    if (!Consume('(') && !Consume('['))
-        RAISE_ERROR(ERROR_PARSER_LIST_EXPECTED);
+    char matchingBrace = Consume('(') ? ')' : Consume('[') ? ']' : 0;
+    char wrongBrace = (matchingBrace == ')') ? ']' : ')';
+    assert(matchingBrace);
 
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
 
     while (*_code && !Peek(')') && !Peek(']'))
         listNode->_list.push_back(ParseElement());
 
-    if (!Consume(')') && !Consume(']'))
+    if (Consume(wrongBrace))
+        RAISE_ERROR(ERROR_PARSER_BRACE_MISMATCH);
+
+    if (!Consume(matchingBrace))
         RAISE_ERROR(ERROR_PARSER_LIST_UNTERMINATED);
     
     return listNode;
@@ -87,7 +91,7 @@ NodeRef Parser::ParseList()
 
 NodeRef Parser::ParseAtom()
 {
-    if (Peek('\"'))
+    if (Consume('\"'))
         return ParseString();
 
     if (isdigit(*_code) || ((_code[0] == '-') && isdigit(_code[1])))
@@ -98,9 +102,6 @@ NodeRef Parser::ParseAtom()
 
 NodeRef Parser::ParseString()
 {
-    if (!Consume('\"'))
-        RAISE_ERROR(ERROR_PARSER_STRING_EXPECTED);
-
     // TODO: handle escape chars
 
     const char* end = strchr(_code, '\"');

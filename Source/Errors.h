@@ -6,15 +6,14 @@ enum ErrorCode
     ERROR_NONE,
 
     ERROR_PARSER_NUMBER_EXPECTED = 100,
-    ERROR_PARSER_STRING_EXPECTED,
     ERROR_PARSER_STRING_UNTERMINATED,
-    ERROR_PARSER_LIST_EXPECTED,
     ERROR_PARSER_LIST_UNTERMINATED,
     ERROR_PARSER_INVALID_IDENTIFIER,
+    ERROR_PARSER_BRACE_MISMATCH,
 
     ERROR_RUNTIME_NOT_IMPLEMENTED = 200,
     ERROR_RUNTIME_WRONG_NUM_PARAMS,
-    ERROR_RUNTIME_INVALID_PARAMETER_TYPE,
+    ERROR_RUNTIME_VARIABLE_UNBOUND,
 
     ERROR_INTERNAL_OUT_OF_MEMORY = 300,
     ERROR_INTERNAL_PARSER_FAILURE,
@@ -39,15 +38,14 @@ struct YellowError : std::exception
         switch (_code)
         {
             case ERROR_PARSER_NUMBER_EXPECTED:          ss << "Number expected"; break;
-            case ERROR_PARSER_STRING_EXPECTED:          ss << "String expected"; break;
             case ERROR_PARSER_STRING_UNTERMINATED:      ss << "String unterminated"; break;
-            case ERROR_PARSER_LIST_EXPECTED:            ss << "List expected"; break;
             case ERROR_PARSER_LIST_UNTERMINATED:        ss << "List unterminated"; break;
             case ERROR_PARSER_INVALID_IDENTIFIER:       ss << "Invalid identifier"; break;
+            case ERROR_PARSER_BRACE_MISMATCH:           ss << "Brace mismatch"; break;
 
             case ERROR_RUNTIME_NOT_IMPLEMENTED:         ss << "Not implemented"; break;
             case ERROR_RUNTIME_WRONG_NUM_PARAMS:        ss << "Wrong number of parameters"; break;
-            case ERROR_RUNTIME_INVALID_PARAMETER_TYPE:  ss << "Wrong parameter type"; break;
+            case ERROR_RUNTIME_VARIABLE_UNBOUND:        ss << "Variable is unbound"; break;
 
             case ERROR_INTERNAL_OUT_OF_MEMORY:          ss << "[INTERNAL] Out of memory"; break;
             case ERROR_INTERNAL_PARSER_FAILURE:         ss << "[INTERNAL] Parsing failure"; break;
