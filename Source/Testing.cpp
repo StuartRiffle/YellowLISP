@@ -51,7 +51,6 @@ void SanityCheck()
 {
     InterpreterSettings settings;
     settings._repl = false;
-    settings._catchExceptions = false;
 
     Interpreter lisp(&settings);
 
@@ -106,6 +105,8 @@ void SanityCheck()
     CheckOutput(lisp, "(< 1 1)",    "nil");
     CheckOutput(lisp, "(< -2 -1)",  "t");
     CheckOutput(lisp, "(< -1 -2)",  "nil");
+
+    settings._catchExceptions = false;
 
     CheckError(lisp, "\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
     CheckError(lisp, "(",           ERROR_PARSER_LIST_UNTERMINATED);

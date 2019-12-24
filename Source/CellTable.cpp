@@ -97,8 +97,11 @@ size_t Runtime::CollectGarbage()
         SYMBOL_INDEX symbolIndex = iter.second;
         SymbolInfo& symbol = _symbol[symbolIndex];
 
-        if (symbol._cellIndex)
-            MarkCellsInUse(symbol._cellIndex);
+        if (symbol._symbolCell)
+        {
+            MarkCellsInUse(symbol._symbolCell);
+            MarkCellsInUse(symbol._valueCell);
+        }
     }
 
     // Mark cells with references on the callstack that got us here

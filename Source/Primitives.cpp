@@ -140,7 +140,9 @@ CELL_INDEX Runtime::SETQ(const ArgumentList& args)
 
     SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
     SymbolInfo& symbol = _symbol[symbolIndex];
-    symbol._cellIndex = valueCell;
+    assert(symbol._symbolCell == symbolCell);
+
+    symbol._valueCell = valueCell;
 
     return valueCell;
 }

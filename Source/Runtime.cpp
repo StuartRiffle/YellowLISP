@@ -67,7 +67,7 @@ Runtime::~Runtime()
 CELL_INDEX Runtime::RegisterSymbol(const char* ident)
 {
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
-    CELL_INDEX cellIndex = _symbol[symbolIndex]._cellIndex;
+    CELL_INDEX cellIndex = _symbol[symbolIndex]._symbolCell;
     return cellIndex;
 }
 
@@ -86,7 +86,8 @@ SYMBOL_INDEX Runtime::GetSymbolIndex(const char* ident)
 
         SymbolInfo& symbol = _symbol[symbolIndex];
         symbol._ident = ident;
-        symbol._cellIndex = cellIndex;
+        symbol._symbolCell = cellIndex;
+        symbol._valueCell = _nil;
     }
 
     return symbolIndex;
@@ -104,7 +105,7 @@ CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
     primInfo._name = ident;
     primInfo._func = func;
 
-    return symbol._cellIndex;
+    return symbol._symbolCell;
 }
 
 
@@ -134,7 +135,7 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
         {
             CELL_INDEX symbolCell = GetSymbolIndex(node->_identifier.c_str());
             SymbolInfo& symbol = _symbol[symbolCell];
-            return symbol._cellIndex;
+            return symbol._symbolCell;
         }
         case AST_NODE_LIST:
         {
@@ -201,10 +202,25 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
     return ss.str();
 }
 
+
+
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 {
     if (!cellIndex || (cellIndex == _nil))
         return _nil;
+
+#ifndef NDEBUG
+    static bool sDumpDebugGraph = false;
+    if (sDumpDebugGraph)
+    {
+        sDumpDebugGraph = false;
+        // For debugging, this generates a graph of cell connections for GraphViz to render
+
+        char filename[80];
+        sprintf(filename, "cell%d.dot", cellIndex);
+        DumpCellGraph(cellIndex, filename);
+    }
+#endif
 
     const Cell& cell = _cell[cellIndex];
 
@@ -239,15 +255,19 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         // Primitive symbols can be used directly
 
         const SymbolInfo& symbol = _symbol[symbolIndex];
+        assert(symbol._symbolCell == cellIndex);
+
         if (symbol._primIndex > 0)
+        {
+            assert(symbol._valueCell == _nil);
             return cellIndex;
+        }
 
         // All others need to be evaluated
 
-        if (symbol._cellIndex != cellIndex )
-            return EvaluateCell(symbol._cellIndex);
+        return EvaluateCell(symbol._valueCell);
 
-        return cellIndex;
+//        return symbol._valueCell;
     }
 
     if (cell._type == TYPE_LIST)

@@ -57,9 +57,10 @@ struct SymbolInfo
 {
     string _ident;
     TINDEX _primIndex;
-    CELL_INDEX _cellIndex;
+    CELL_INDEX _symbolCell;
+    CELL_INDEX _valueCell;
 
-    SymbolInfo() : _primIndex(0), _cellIndex(0) {}
+    SymbolInfo() : _primIndex(0), _symbolCell(0) {}
 };
 
 typedef vector<CELL_INDEX> ArgumentList;
@@ -115,7 +116,7 @@ class Runtime
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterSymbol(const char* ident);
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
-    void RaiseRuntimeError(const char* msg);
+
 
     // CellTable.cpp
 
@@ -125,6 +126,12 @@ class Runtime
 
     void MarkCellsInUse(CELL_INDEX index);
     size_t CollectGarbage();
+
+    // CellGraph.cpp
+
+    void FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone);
+    void FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone);
+    void DumpCellGraph(CELL_INDEX cellIndex, const string& filename);
 
     // Literals.cpp
 
