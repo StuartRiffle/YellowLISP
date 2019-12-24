@@ -51,6 +51,23 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
     cell._tags = TAG_EMBEDDED;
 }
 
+double Runtime::LoadNumericLiteral(CELL_INDEX index)
+{
+    const Cell& cell = _cell[index];
+    double value = 0;
+
+    switch (cell._type)
+    {
+        case TYPE_INT:   value = LoadIntLiteral(index); break;
+        case TYPE_FLOAT: value = LoadFloatLiteral(index); break;
+
+        default: RAISE_ERROR(ERROR_RUNTIME_TYPE_MISMATCH, "numeric type expected");
+
+    }
+
+    return value;
+}
+
 string Runtime::LoadStringLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];

@@ -93,6 +93,19 @@ CELL_INDEX Runtime::EQ(const ArgumentList& args)
     return _nil;
 }
 
+CELL_INDEX Runtime::LESS(const ArgumentList& args)
+{
+    VERIFY_NUM_PARAMETERS(args.size(), 2, "<");
+
+    double a = LoadNumericLiteral(args[0]);
+    double b = LoadNumericLiteral(args[1]);
+
+    if (a < b)
+        return _true;
+
+    return _nil;
+}
+
 CELL_INDEX Runtime::LIST(const ArgumentList& args)
 {
     if (args.empty())
@@ -113,6 +126,23 @@ CELL_INDEX Runtime::LIST(const ArgumentList& args)
     }
 
     return listCells[0];
+}
+
+CELL_INDEX Runtime::SETQ(const ArgumentList& args)
+{
+    VERIFY_NUM_PARAMETERS(args.size(), 2, "SETQ");
+
+    CELL_INDEX symbolCell   = args[0];
+    CELL_INDEX valueCell = args[1];
+
+    if (_cell[symbolCell]._type != TYPE_SYMBOL)
+        RAISE_ERROR(ERROR_RUNTIME_TYPE_MISMATCH, "symbol expected");
+
+    SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
+    SymbolInfo& symbol = _symbol[symbolIndex];
+    symbol._cellIndex = valueCell;
+
+    return valueCell;
 }
 
 CELL_INDEX Runtime::PRINT(const ArgumentList& args)

@@ -14,21 +14,22 @@ Runtime::Runtime()
 
     // Language primitives
 
-    RegisterPrimitive("atom",  &Runtime::ATOM);
-    RegisterPrimitive("car",   &Runtime::CAR);
-    RegisterPrimitive("cdr",   &Runtime::CDR);
-    RegisterPrimitive("cond",  &Runtime::COND);
-    RegisterPrimitive("cons",  &Runtime::CONS);
-    RegisterPrimitive("eq",    &Runtime::EQ);
-    RegisterPrimitive("eval",  &Runtime::EVAL);
-    RegisterPrimitive("list",  &Runtime::LIST);
+    RegisterPrimitive("atom",    &Runtime::ATOM);
+    RegisterPrimitive("car",     &Runtime::CAR);
+    RegisterPrimitive("cdr",     &Runtime::CDR);
+    RegisterPrimitive("cond",    &Runtime::COND);
+    RegisterPrimitive("cons",    &Runtime::CONS);
+    RegisterPrimitive("eq",      &Runtime::EQ);
+    RegisterPrimitive("eval",    &Runtime::EVAL);
+    RegisterPrimitive("list",    &Runtime::LIST);
+    RegisterPrimitive("setq",    &Runtime::SETQ);
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);
     RegisterPrimitive("*",       &Runtime::MUL);
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
-   //RegisterPrimitive("<",       &Runtime::LESS);
+    RegisterPrimitive("<",       &Runtime::LESS);
 
     // Math stuff
 
@@ -267,28 +268,40 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             return _cell[quoted]._data;
         }
 
-        // The remaining list elements are arguments
-
-        ArgumentList callArgs;
-        CELL_INDEX onArg = cell._next;
-
-        while (onArg)
-        {
-            RAISE_ERROR_IF(_cell[onArg]._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
-
-            CELL_INDEX argValue = EvaluateCell(_cell[onArg]._data);
-            callArgs.push_back(argValue);
-
-            Cell& argCell = _cell[onArg];
-            onArg = argCell._next;
-        }
-
         // Call the function
 
         if (_cell[function]._type == TYPE_SYMBOL)
         {
             SYMBOL_INDEX symbolIndexFunc = _cell[function]._data;
             const SymbolInfo& symbol = _symbol[symbolIndexFunc];
+
+            // The remaining list elements are arguments, so evaluate them
+
+            ArgumentList callArgs;
+            CELL_INDEX onArg = cell._next;
+            int argIndex = 1;
+
+            while (onArg)
+            {
+                RAISE_ERROR_IF(_cell[onArg]._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+
+                // HACK! until macros work, implicitly quote the first argument of SETQ
+
+                bool evaluateThisArg = true;
+                if (argIndex == 1)
+                    if (symbol._ident == "setq")
+                        evaluateThisArg = false;
+
+                CELL_INDEX argValue = _cell[onArg]._data;
+                if (evaluateThisArg)
+                    argValue = EvaluateCell(argValue);
+
+                callArgs.push_back(argValue);
+
+                Cell& argCell = _cell[onArg];
+                onArg = argCell._next;
+                argIndex++;
+            }
 
             if (symbol._primIndex)
             {

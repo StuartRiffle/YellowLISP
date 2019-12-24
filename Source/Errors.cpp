@@ -18,6 +18,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
         case ERROR_RUNTIME_NOT_IMPLEMENTED:         ss << "Not implemented"; break;
         case ERROR_RUNTIME_WRONG_NUM_PARAMS:        ss << "Wrong number of parameters"; break;
         case ERROR_RUNTIME_VARIABLE_UNBOUND:        ss << "Variable is unbound"; break;
+        case ERROR_RUNTIME_TYPE_MISMATCH:           ss << "Type mismatch"; break;
 
         case ERROR_INTERNAL_OUT_OF_MEMORY:          ss << "[INTERNAL] Out of memory"; break;
         case ERROR_INTERNAL_PARSER_FAILURE:         ss << "[INTERNAL] Parsing failure"; break;

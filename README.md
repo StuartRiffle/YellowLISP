@@ -26,7 +26,7 @@ Cell references are stored as indices into a big table, not as pointers. This al
 
 The interpreter works in the normal way: it parses source into an AST of variant nodes, encodes that AST into CONS cells, and then evaluates them. Lexical scoping is implemented by keeping a stack of symbol overrides as EVAL calls itself.
 
-Square brackets and parentheses are interchangeable. I like brackets better because you don't have to press shift to type them, and I can read code more easily for some reason.
+Square brackets and parentheses are interchangeable, but need to match each other. I like brackets better because you don't have to press shift to type them.
 
 Garbage collection is mark-and-sweep, and considers everything that's in the global scope, or referenced by the function scopes of the current callstack, to be reachable. If GC fails to free at least 10% of the cell table capacity, the table is expanded by 1.5x, to avoid situations where an almost-full cell table triggers GC over and over again.
 
@@ -51,6 +51,8 @@ Launching the executable with no parameters will give you an interactive prompt 
 
 If any parameters are LISP files, with the extension `.lisp`, they will be loaded and evaluated in the order given. The executable will exit after that.
 
+Run `YellowLISP --help` for a complete list of options.
+
 ## Embedding
 
 You can embed YellowLISP into a larger program by including one header file:
@@ -72,23 +74,10 @@ void HelloYellow()
 - [x] Garbage collection
 - [ ] Backquotes
 - [ ] Macros
+- [ ] Vectors
 - [ ] Tail call recursion
-- [ ] Debugging
-
-### Primitives
-
-- [x] Fundamental (atom car cdr cons eq eval quote)
-- [ ] Arithmetic (add sub mul div ...)
-- [ ] Comparison (ne gt ge lt le ...)
-
-### Native types
-
-- [x] Integer
-- [x] Floating point
-- [ ] Character
-- [x] String
-- [x] List
-- [ ] Vector
+- [ ] Native function bindings
+- [ ] Debugging from the REPL
 
 ## Unsolicited opinions
 

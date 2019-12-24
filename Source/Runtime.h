@@ -134,6 +134,8 @@ class Runtime
     float LoadFloatLiteral(CELL_INDEX index);
     void StoreFloatLiteral(CELL_INDEX index, float value);
 
+    double LoadNumericLiteral(CELL_INDEX index);
+
     string LoadStringLiteral(CELL_INDEX index);
     void StoreStringLiteral(CELL_INDEX index, const char* str);
 
@@ -146,6 +148,7 @@ class Runtime
     CELL_INDEX CONS(const ArgumentList& args);
     CELL_INDEX EQ(const ArgumentList& args);
     CELL_INDEX EVAL(const ArgumentList& args);
+    CELL_INDEX LESS(const ArgumentList& args);
     CELL_INDEX LET(const ArgumentList& args);
     CELL_INDEX LIST(const ArgumentList& args);
     CELL_INDEX PRINT(const ArgumentList& args);

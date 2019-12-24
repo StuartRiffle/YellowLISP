@@ -3,6 +3,19 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 ;;;; YellowLISP
 ;;;; Copyright (C) 2019 Stuart Riffle
 
+(defun >      (a b) (< b a))
+(defun <=     (a b) (or (< a b) (= a b)))
+(defun >=     (a b) (or (> a b) (= a b)))
+(defun /=     (a b) (not (= a b)))
+
+(defun zerop  (x) (=  x 0))
+(defun plusp  (x) (<  0 x))
+(defun minusp (x) (<  x 0))
+(defun null   (x) (eq x nil))
+
+
+;;; Really?
+
 (defun caar   (x) (car (car   x)))
 (defun cadr   (x) (car (cdr   x)))
 (defun cdar   (x) (cdr (car   x)))
@@ -32,23 +45,10 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
 
-(defun <= (a b) (or (< a b) (= a b)))
-(defun >  (a b) (< b a))
-(defun >= (a b) (<= b a))
-(defun /= (a b) (not (= a b)))
-
-(defun zerop  (x) (= x 0))
-(defun plusp  (x) (> x 0))
-(defun minusp (x) (< x 0))
-(defun null   (x) (eq x nil))
-
 (defconstant +PI+ 3.141592653589793)
 
 ; greaterp - It takes one or more argument and returns t if either there is a single argument or the arguments are successively larger from left to right, or nil if otherwise.
 ; lessp
-
-
-
 
 ; The following code is from "The Roots of Lisp" by Paul Graham (2002)
 

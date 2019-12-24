@@ -40,8 +40,10 @@ void CheckError(Interpreter& lisp, const char* source, ErrorCode expectedError)
             ss << ", but evaluated to \"" << output << '\"';
 
         SetTextColor(ANSI_RED);
-        printf("SANITY CHECK FAILED: %s\n", ss.str().c_str());
+        printf("SANITY CHECK FAILED: "); 
         ResetTextColor();
+
+        printf("% s\n", ss.str().c_str());
     }
 }
 
@@ -99,12 +101,19 @@ void SanityCheck()
     CheckOutput(lisp, "(list 1 'foo 3)", "(1 foo 3)");
     CheckOutput(lisp, "(list (list ()))", "((nil))");
 
-    CheckError(lisp, "\"foo",               ERROR_PARSER_STRING_UNTERMINATED);
-    CheckError(lisp, "(",                   ERROR_PARSER_LIST_UNTERMINATED);
-    CheckError(lisp, "(setq } 3)",          ERROR_PARSER_INVALID_IDENTIFIER);
-    CheckError(lisp, "(atom 3]",            ERROR_PARSER_BRACE_MISMATCH);
-    CheckError(lisp, "(atom [3)]",          ERROR_PARSER_BRACE_MISMATCH);
-    CheckError(lisp, "(quote 1 2)",         ERROR_RUNTIME_WRONG_NUM_PARAMS);
-    CheckError(lisp, "(atom foo)",          ERROR_RUNTIME_VARIABLE_UNBOUND);
+    CheckOutput(lisp, "(< 1 2)",    "t");
+    CheckOutput(lisp, "(< 2 1)",    "nil");
+    CheckOutput(lisp, "(< 1 1)",    "nil");
+    CheckOutput(lisp, "(< -2 -1)",  "t");
+    CheckOutput(lisp, "(< -1 -2)",  "nil");
+
+    CheckError(lisp, "\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
+    CheckError(lisp, "(",           ERROR_PARSER_LIST_UNTERMINATED);
+    CheckError(lisp, "(setq } 3)",  ERROR_PARSER_INVALID_IDENTIFIER);
+    CheckError(lisp, "(atom 3]",    ERROR_PARSER_BRACE_MISMATCH);
+    CheckError(lisp, "(atom [3)]",  ERROR_PARSER_BRACE_MISMATCH);
+    CheckError(lisp, "(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);
+    CheckError(lisp, "(atom foo)",  ERROR_RUNTIME_VARIABLE_UNBOUND);
+    CheckError(lisp, "(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
 }
 
