@@ -19,6 +19,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
         case ERROR_RUNTIME_WRONG_NUM_PARAMS:        ss << "Wrong number of parameters"; break;
         case ERROR_RUNTIME_VARIABLE_UNBOUND:        ss << "Variable is unbound"; break;
         case ERROR_RUNTIME_TYPE_MISMATCH:           ss << "Type mismatch"; break;
+        case ERROR_RUNTIME_RESERVED_SYMBOL:         ss << "Reserved symbol"; break;
 
         case ERROR_INTERNAL_OUT_OF_MEMORY:          ss << "[INTERNAL] Out of memory"; break;
         case ERROR_INTERNAL_PARSER_FAILURE:         ss << "[INTERNAL] Parsing failure"; break;
@@ -28,7 +29,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
         case ERROR_INTERNAL_CELL_TABLE_CORRUPT:     ss << "[INTERNAL] CONS cell is corrupt"; break;
         case ERROR_INTERNAL_STRING_TABLE_CORRUPT:   ss << "[INTERNAL] String table is corrupt"; break;
 
-        default:                                    ss << "Unknown error"; break;
+        default:                                    ss << "Unknown error!"; break;
     }
 
     if (_details.length() > 0)

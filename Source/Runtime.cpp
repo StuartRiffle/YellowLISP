@@ -10,7 +10,7 @@ Runtime::Runtime()
 
     _nil   = RegisterSymbol("nil");
     _true  = RegisterSymbol("t");
-    _quote = RegisterSymbol("quote");
+    _quote = RegisterPrimitive("quote", NULL);
 
     // Language primitives
 
@@ -68,6 +68,8 @@ CELL_INDEX Runtime::RegisterSymbol(const char* ident)
 {
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     CELL_INDEX cellIndex = _symbol[symbolIndex]._symbolCell;
+
+    _symbol[symbolIndex]._primIndex = SymbolInfo::RESERVED;
     return cellIndex;
 }
 
@@ -265,9 +267,9 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
         // All others need to be evaluated
 
-        return EvaluateCell(symbol._valueCell);
+        //return EvaluateCell(symbol._valueCell);
 
-//        return symbol._valueCell;
+        return symbol._valueCell;
     }
 
     if (cell._type == TYPE_LIST)

@@ -100,17 +100,29 @@ void SanityCheck()
     CheckOutput(lisp, "(list 1 'foo 3)", "(1 foo 3)");
     CheckOutput(lisp, "(list (list ()))", "((nil))");
 
+    CheckOutput(lisp, "(setq x (list 4 5 6))", "(4 5 6)");
+    CheckOutput(lisp, "(setq x '(4 5 6))", "(4 5 6)");
+    CheckOutput(lisp, "(atom x)", "nil");
+    CheckOutput(lisp, "(setq y x", "(4 5 6)");
+    CheckOutput(lisp, "(setq y 'x", "x");
+    CheckOutput(lisp, "(atom y)", "t");
+
     CheckOutput(lisp, "(< 1 2)",    "t");
     CheckOutput(lisp, "(< 2 1)",    "nil");
     CheckOutput(lisp, "(< 1 1)",    "nil");
     CheckOutput(lisp, "(< -2 -1)",  "t");
     CheckOutput(lisp, "(< -1 -2)",  "nil");
 
+    CheckOutput(lisp, "(< 1.1 2.1)", "t");
+    CheckOutput(lisp, "(< 1 2.1)", "t");
+    CheckOutput(lisp, "(< 1.1 2)", "t");
+
     settings._catchExceptions = false;
 
     CheckError(lisp, "\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
     CheckError(lisp, "(",           ERROR_PARSER_LIST_UNTERMINATED);
     CheckError(lisp, "(setq } 3)",  ERROR_PARSER_INVALID_IDENTIFIER);
+    CheckError(lisp, "(setq quote 3)", ERROR_RUNTIME_RESERVED_SYMBOL);
     CheckError(lisp, "(atom 3]",    ERROR_PARSER_BRACE_MISMATCH);
     CheckError(lisp, "(atom [3)]",  ERROR_PARSER_BRACE_MISMATCH);
     CheckError(lisp, "(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);

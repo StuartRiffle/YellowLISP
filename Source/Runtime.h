@@ -55,6 +55,8 @@ struct Cell
 
 struct SymbolInfo
 {
+    static const TINDEX RESERVED = ~TINDEX(0);
+
     string _ident;
     TINDEX _primIndex;
     CELL_INDEX _symbolCell;

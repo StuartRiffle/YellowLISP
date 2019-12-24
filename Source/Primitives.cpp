@@ -132,7 +132,7 @@ CELL_INDEX Runtime::SETQ(const ArgumentList& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 2, "SETQ");
 
-    CELL_INDEX symbolCell   = args[0];
+    CELL_INDEX symbolCell = args[0];
     CELL_INDEX valueCell = args[1];
 
     if (_cell[symbolCell]._type != TYPE_SYMBOL)
@@ -141,6 +141,9 @@ CELL_INDEX Runtime::SETQ(const ArgumentList& args)
     SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
     SymbolInfo& symbol = _symbol[symbolIndex];
     assert(symbol._symbolCell == symbolCell);
+
+    if (symbol._primIndex)
+        RAISE_ERROR(ERROR_RUNTIME_RESERVED_SYMBOL, symbol._ident.c_str());
 
     symbol._valueCell = valueCell;
 

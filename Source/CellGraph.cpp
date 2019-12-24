@@ -25,9 +25,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
 
     ss << ") | { { next | data } | { <next>";
 
-    if ((cell._next == 0) || (cell._next == _nil))
-        ss << "nil";
-    else
+    if (cell._next && (cell._next != _nil))
         ss << "cell " << cell._next;
 
     ss << "| <data>" << ssValue.str() << " } }\"];" << std::endl;
@@ -66,7 +64,12 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
 
     ss << "symbol" << symbolIndex << " [shape=record,label=\"<header>SYMBOL " << symbolIndex << " | ";
     ss << "{ { ident | primIndex | symbolCell | valueCell } | ";
-    ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | <valueCell>cell " << symbol._valueCell << " } }\"];" << std::endl;
+    ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | ";
+
+    if (symbol._valueCell && (symbol._valueCell != _nil))
+        ss << "<valueCell>cell " << symbol._valueCell;
+
+    ss << " } }\"];" << std::endl;
 
     symbolsDone.insert(symbolIndex);
 
