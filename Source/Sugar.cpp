@@ -1,6 +1,7 @@
 // YellowLISP (c) 2019 Stuart Riffle (MIT license)
 
 #include "Yellow.h"
+#include "Parser.h"
 #include "Errors.h"
 
 NodeRef Parser::ParseArithmeticExpression()

@@ -106,8 +106,8 @@ void SanityCheck()
     CheckOutput(lisp, "(setq x (list 4 5 6))", "(4 5 6)");
     CheckOutput(lisp, "(setq x '(4 5 6))", "(4 5 6)");
     CheckOutput(lisp, "(atom x)", "nil");
-    CheckOutput(lisp, "(setq y x", "(4 5 6)");
-    CheckOutput(lisp, "(setq y 'x", "x");
+    CheckOutput(lisp, "(setq y x)", "(4 5 6)");
+    CheckOutput(lisp, "(setq y 'x)", "x");
     CheckOutput(lisp, "(atom y)", "t");
 
     CheckOutput(lisp, "(< 1 2)", "t");
@@ -120,10 +120,18 @@ void SanityCheck()
     CheckOutput(lisp, "(< 1 2.1)", "t");
     CheckOutput(lisp, "(< -1.1 2)", "t");
 
+    // Need more arithmetic test cases
+
     CheckOutput(lisp, "{ 1 }", "1");
-    CheckOutput(lisp, "{ 1 + 1 }", "1");
+    CheckOutput(lisp, "{ 3+4 }", "7");
+    CheckOutput(lisp, "{ 3 + 4 }", "7");
     CheckOutput(lisp, "{ 3 + 4 * 5 }", "23");
+    CheckOutput(lisp, "{ 3 + (4) * 5 }", "23");
+    CheckOutput(lisp, "{ 3 + (((4))) * 5 }", "23");
     CheckOutput(lisp, "{ (3 + 4) * 5 }", "35");
+    CheckOutput(lisp, "{ -(3 + 4) * 5 }", "-35");
+    CheckOutput(lisp, "{ -3 + 4 * 5 }", "5");
+    CheckOutput(lisp, "{ -(3 + 4 * 5) }", "-23");
 
     // The error section needs a *lot* more test cases
 
