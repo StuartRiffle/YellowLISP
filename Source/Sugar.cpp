@@ -67,7 +67,7 @@ NodeRef Parser::ParseArithmeticUnary()
         opNode->_identifier = '*';
 
         NodeRef negativeOne(new NodeVariant(AST_NODE_INT_LITERAL));
-        opNode->_int = -1;
+        negativeOne->_int = -1;
 
         NodeRef listNode(new NodeVariant(AST_NODE_LIST));
         listNode->_list.push_back(opNode);
