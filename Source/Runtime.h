@@ -62,7 +62,7 @@ struct SymbolInfo
     CELL_INDEX _symbolCell;
     CELL_INDEX _valueCell;
 
-    SymbolInfo() : _primIndex(0), _symbolCell(0) {}
+    SymbolInfo() : _primIndex(0), _symbolCell(0), _valueCell(0) {}
 };
 
 typedef vector<CELL_INDEX> ArgumentList;
@@ -144,6 +144,7 @@ class Runtime
     void StoreFloatLiteral(CELL_INDEX index, float value);
 
     double LoadNumericLiteral(CELL_INDEX index);
+    CELL_INDEX CreateNumericLiteral(double value);
 
     string LoadStringLiteral(CELL_INDEX index);
     void StoreStringLiteral(CELL_INDEX index, const char* str);

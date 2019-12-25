@@ -70,6 +70,15 @@ class Parser
     NodeRef ParseNumber();
     NodeRef ParseIdentifier();
 
+    // These are for parsing "normal" arithmetic expressions and
+    // converting them to a LISP representation
+
+    NodeRef ParseArithmeticExpression();
+    NodeRef ParseArithmeticAddSub();
+    NodeRef ParseArithmeticMulDiv();
+    NodeRef ParseArithmeticUnary();
+    NodeRef ParseArithmeticTerm();
+
 public:
     list<NodeRef> ParseExpressions(const string& source);
     void DumpSyntaxTree(NodeRef node, int indent = 0);

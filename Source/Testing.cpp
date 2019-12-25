@@ -76,6 +76,7 @@ void SanityCheck()
     CheckOutput(lisp, "\"FOO\"", "\"FOO\"");
 
     CheckOutput(lisp, "(quote ('1 2))", "((quote 1) 2)");
+    CheckOutput(lisp, "'('1 2))", "((quote 1) 2)");
 
     CheckOutput(lisp, "(atom ())", "t");
     CheckOutput(lisp, "(atom '())", "t");
@@ -107,15 +108,22 @@ void SanityCheck()
     CheckOutput(lisp, "(setq y 'x", "x");
     CheckOutput(lisp, "(atom y)", "t");
 
-    CheckOutput(lisp, "(< 1 2)",    "t");
-    CheckOutput(lisp, "(< 2 1)",    "nil");
-    CheckOutput(lisp, "(< 1 1)",    "nil");
-    CheckOutput(lisp, "(< -2 -1)",  "t");
-    CheckOutput(lisp, "(< -1 -2)",  "nil");
+    CheckOutput(lisp, "(< 1 2)", "t");
+    CheckOutput(lisp, "(< 2 1)", "nil");
+    CheckOutput(lisp, "(< 1 1)", "nil");
+    CheckOutput(lisp, "(< -2 -1)", "t");
+    CheckOutput(lisp, "(< -1 -2)", "nil");
 
     CheckOutput(lisp, "(< 1.1 2.1)", "t");
     CheckOutput(lisp, "(< 1 2.1)", "t");
-    CheckOutput(lisp, "(< 1.1 2)", "t");
+    CheckOutput(lisp, "(< -1.1 2)", "t");
+
+    CheckOutput(lisp, "{ 1 }", "1");
+    CheckOutput(lisp, "{ 1 + 1 }", "1");
+    CheckOutput(lisp, "{ 3 + 4 * 5 }", "23");
+    CheckOutput(lisp, "{ (3 + 4) * 5 }", "35");
+
+    // The error section needs a *lot* more test cases
 
     settings._catchExceptions = false;
 
@@ -123,6 +131,7 @@ void SanityCheck()
     CheckError(lisp, "(",           ERROR_PARSER_LIST_UNTERMINATED);
     CheckError(lisp, "(setq } 3)",  ERROR_PARSER_INVALID_IDENTIFIER);
     CheckError(lisp, "(setq quote 3)", ERROR_RUNTIME_RESERVED_SYMBOL);
+    CheckError(lisp, "(foo 1 2)",   ERROR_RUNTIME_UNDEFINED_FUNCTION);
     CheckError(lisp, "(atom 3]",    ERROR_PARSER_BRACE_MISMATCH);
     CheckError(lisp, "(atom [3)]",  ERROR_PARSER_BRACE_MISMATCH);
     CheckError(lisp, "(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);

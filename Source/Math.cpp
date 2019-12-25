@@ -2,27 +2,29 @@
 #include "Runtime.h"
 #include "Errors.h"
 
-STUB_UNIMPLEMENTED(ADD);
-STUB_UNIMPLEMENTED(SUB);
-STUB_UNIMPLEMENTED(MUL);
-STUB_UNIMPLEMENTED(DIV);
-STUB_UNIMPLEMENTED(MOD);
-STUB_UNIMPLEMENTED(REM);
-STUB_UNIMPLEMENTED(ROUND);
-STUB_UNIMPLEMENTED(TRUNCATE);
-STUB_UNIMPLEMENTED(FLOOR);
-STUB_UNIMPLEMENTED(CEILING);
-STUB_UNIMPLEMENTED(MIN);
-STUB_UNIMPLEMENTED(MAX);
-STUB_UNIMPLEMENTED(EXP);
-STUB_UNIMPLEMENTED(EXPT);
-STUB_UNIMPLEMENTED(LOG);
-STUB_UNIMPLEMENTED(SQRT);
-STUB_UNIMPLEMENTED(ABS);
-STUB_UNIMPLEMENTED(SIN);
-STUB_UNIMPLEMENTED(COS);
-STUB_UNIMPLEMENTED(TAN);
-STUB_UNIMPLEMENTED(ASIN);
-STUB_UNIMPLEMENTED(ACOS);
-STUB_UNIMPLEMENTED(ATAN);
-STUB_UNIMPLEMENTED(RANDOM);
+#define IMPLEMENT_BINARY_OP(_FUNCNAME, _EXPR) \
+CELL_INDEX Runtime::_FUNCNAME(const ArgumentList& args) \
+{ \
+    VERIFY_NUM_PARAMETERS(args.size(), 2, #_FUNCNAME); \
+    double a = LoadNumericLiteral(args[0]); \
+    double b = LoadNumericLiteral(args[1]); \
+    double value = (_EXPR); \
+    return CreateNumericLiteral(value); \
+}
+
+IMPLEMENT_BINARY_OP(ADD, (a + b))
+IMPLEMENT_BINARY_OP(SUB, (a - b))
+IMPLEMENT_BINARY_OP(MUL, (a * b))
+IMPLEMENT_BINARY_OP(DIV, (a / b))
+
+CELL_INDEX Runtime::MOD(const ArgumentList& args)
+{
+    VERIFY_NUM_PARAMETERS(args.size(), 2, "MOD");
+    double a = LoadNumericLiteral(args[0]);
+    double b = LoadNumericLiteral(args[1]);
+
+    if ((_cell[args[0]]._type == TYPE_INT) && (_cell[args[1]]._type == TYPE_INT))
+        return CreateNumericLiteral((int)a % (int)b);
+
+    return CreateNumericLiteral(fmod(a, b));
+}

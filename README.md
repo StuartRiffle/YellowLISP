@@ -74,7 +74,6 @@ void HelloYellow()
 - [x] Garbage collection
 - [ ] Backquotes
 - [ ] Macros
-- [ ] Vectors
 - [ ] Tail call recursion
 - [ ] Native function bindings
 - [ ] Debugging from the REPL
@@ -84,6 +83,8 @@ void HelloYellow()
 I started this project thinking that LISP-type languages were a kind of ivory tower of ideological purity. But "special forms" seems like a nice way to say "dirty hacks", and a few of them are required. I feel like I'm missing something.
 
 LISP beginners (like me) are also annoyed by all of the parentheses and the anachronistic identifiers. Experts think that those concerns are silly, and indicate a weak spirit. But non-trivial LISP is basically unreadable, even once you learn to sight-read "cddadr", which I have not. I think this is a real liability, and limits its use for quick-and-dirty scripting.
+
+Having different semantics for eq, eql, equal, equalp and the = operator is nuts. There is 
 
 ## Status
 

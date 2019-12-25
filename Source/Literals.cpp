@@ -68,6 +68,21 @@ double Runtime::LoadNumericLiteral(CELL_INDEX index)
     return value;
 }
 
+CELL_INDEX Runtime::CreateNumericLiteral(double value)
+{
+    int asInt = (int)value;
+    if (asInt == value)
+    {
+        CELL_INDEX index = AllocateCell(TYPE_INT);
+        StoreIntLiteral(index, asInt);
+        return index;
+    }
+
+    CELL_INDEX index = AllocateCell(TYPE_FLOAT);
+    StoreFloatLiteral(index, (float) value);
+    return index;
+}
+
 string Runtime::LoadStringLiteral(CELL_INDEX index)
 {
     const Cell& cell = _cell[index];

@@ -10,7 +10,7 @@ Runtime::Runtime()
 
     _nil   = RegisterSymbol("nil");
     _true  = RegisterSymbol("t");
-    _quote = RegisterPrimitive("quote", NULL);
+    _quote = RegisterSymbol("quote");
 
     // Language primitives
 
@@ -30,28 +30,6 @@ Runtime::Runtime()
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
     RegisterPrimitive("<",       &Runtime::LESS);
-
-    // Math stuff
-
-    RegisterPrimitive("rem",     &Runtime::REM);
-    RegisterPrimitive("round",   &Runtime::ROUND);
-    RegisterPrimitive("truncate",&Runtime::TRUNCATE);
-    RegisterPrimitive("floor",   &Runtime::FLOOR);
-    RegisterPrimitive("ceiling", &Runtime::CEILING);
-    RegisterPrimitive("min",     &Runtime::MIN);
-    RegisterPrimitive("max",     &Runtime::MAX);
-    RegisterPrimitive("expt",    &Runtime::EXPT);
-    RegisterPrimitive("log",     &Runtime::LOG);
-    RegisterPrimitive("sqrt",    &Runtime::SQRT);
-    RegisterPrimitive("abs",     &Runtime::ABS);
-    RegisterPrimitive("sin",     &Runtime::SIN);
-    RegisterPrimitive("cos",     &Runtime::COS);
-    RegisterPrimitive("tan",     &Runtime::TAN);
-    RegisterPrimitive("random",  &Runtime::RANDOM);
-
-    // Predicates
-
-
 
     // Interpreter commands
 
@@ -324,6 +302,8 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 onArg = argCell._next;
                 argIndex++;
             }
+
+            RAISE_ERROR_IF(symbol._primIndex == SymbolInfo::RESERVED, ERROR_RUNTIME_UNDEFINED_FUNCTION, symbol._ident.c_str());
 
             if (symbol._primIndex)
             {

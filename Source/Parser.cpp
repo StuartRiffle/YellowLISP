@@ -42,6 +42,22 @@ NodeRef Parser::ParseElement()
 
         result = quoteNode;
     }
+    else if (Consume('{'))
+    {
+        // Sugar: evaluate expressions between curly braces
+        // using normal arithmetic, using the normal meaning
+        // of parentheses as grouping, like normal people.
+        //
+        // These expressions are equivalent in YellowLISP:
+        //
+        //      (+ (* (+ a b) c) 123) 
+        //      { (a + b) * c + 123 }
+
+        result = ParseArithmeticExpression();
+
+        if (!Consume('}'))
+            RAISE_ERROR(ERROR_PARSER_SYNTAX, "expected '}'");
+    }
     else if (Peek('(') || Peek('['))
     {
         result = ParseList();
@@ -193,3 +209,4 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
             break;
     }
 }
+

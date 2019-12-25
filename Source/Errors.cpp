@@ -10,6 +10,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
 
     switch (_code)
     {
+        case ERROR_PARSER_SYNTAX:                   ss << "Syntax error"; break;
         case ERROR_PARSER_STRING_UNTERMINATED:      ss << "String unterminated"; break;
         case ERROR_PARSER_LIST_UNTERMINATED:        ss << "List unterminated"; break;
         case ERROR_PARSER_INVALID_IDENTIFIER:       ss << "Invalid identifier"; break;
@@ -20,6 +21,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
         case ERROR_RUNTIME_VARIABLE_UNBOUND:        ss << "Variable is unbound"; break;
         case ERROR_RUNTIME_TYPE_MISMATCH:           ss << "Type mismatch"; break;
         case ERROR_RUNTIME_RESERVED_SYMBOL:         ss << "Reserved symbol"; break;
+        case ERROR_RUNTIME_UNDEFINED_FUNCTION:      ss << "Undefined function"; break;
 
         case ERROR_INTERNAL_OUT_OF_MEMORY:          ss << "[INTERNAL] Out of memory"; break;
         case ERROR_INTERNAL_PARSER_FAILURE:         ss << "[INTERNAL] Parsing failure"; break;
