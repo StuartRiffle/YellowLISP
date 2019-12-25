@@ -179,7 +179,7 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
     SymbolInfo& macroSymbol = _symbol[symbolIndex];
 
     CELL_INDEX bindingListCell = args[1];
-    RAISE_ERROR_IF(_cell[bindingListCell]._type != TYPE_LIST, ERROR_RUNTIME_TYPE_MISMATCH, "macro arguments");
+    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "macro arguments");
     macroSymbol._bindingListCell = bindingListCell;
 
     assert(macroSymbol._symbolCell == symbolCell);
@@ -196,10 +196,11 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
     RAISE_ERROR_IF(args.size() < onArg, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
     CELL_INDEX bodyCell = args[onArg];
 
-    RAISE_ERROR_IF(_cell[bodyCell]._type != TYPE_LIST, ERROR_RUNTIME_TYPE_MISMATCH, "macro body");
+    RAISE_ERROR_IF((bodyCell != _nil) && (_cell[bodyCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "macro body");
 
     macroSymbol._type = SYMBOL_MACRO;
     macroSymbol._valueCell = bodyCell;
-    return symbolIndex;
+
+    return symbolCell;
 }
 

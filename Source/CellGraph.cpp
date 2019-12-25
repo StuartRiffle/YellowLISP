@@ -96,13 +96,13 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
     if (symbol._valueCell && (symbol._valueCell != _nil))
     {
         ss << "symbol" << symbolIndex << ":valueCell -> cell" << symbol._valueCell << ":header;" << std::endl;
-        FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone);
+        FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone, true);
     }
 
     if (symbol._bindingListCell && (symbol._bindingListCell != _nil))
     {
         ss << "symbol" << symbolIndex << ":bindingListCell -> cell" << symbol._bindingListCell << ":header;" << std::endl;
-        FormatCellLabel(symbol._bindingListCell, ss, cellsDone, symbolsDone);
+        FormatCellLabel(symbol._bindingListCell, ss, cellsDone, symbolsDone, true);
     }
 }
 

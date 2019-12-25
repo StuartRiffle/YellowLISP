@@ -9,11 +9,11 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         return _nil;
 
 #ifndef NDEBUG
-    static int sDumpDebugGraph = 0;
-    static int sExpandSymbols = 0;
+    static int sDumpDebugGraph = 1;
+    static int sExpandSymbols = 1;
     if (sDumpDebugGraph)
     {
-        sDumpDebugGraph = 0;
+        //sDumpDebugGraph = 0;
         // For debugging, this generates a graph of cell connections for GraphViz to render
 
         char filename[80];
@@ -44,7 +44,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         {
             Scope& scope = _environment.back();
 
-            auto iter = scope.find(symbolIndex);
+            auto iter = scope.find(cellIndex);
             if (iter != scope.end())
             {
                 CELL_INDEX localValue = iter->second;
@@ -52,21 +52,23 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             }
         }
 
-        // Primitive symbols can be used directly
+        // Primitive symbols are used directly
 
         const SymbolInfo& symbol = _symbol[symbolIndex];
         assert(symbol._symbolCell == cellIndex);
 
-        bool isPrim = (symbol._type == SYMBOL_PRIMITIVE) && symbol._primIndex;
+        bool isPrim     = (symbol._type == SYMBOL_PRIMITIVE) && symbol._primIndex;
         bool isReserved = (symbol._type == SYMBOL_RESERVED);
+        bool isMacro    = (symbol._type == SYMBOL_MACRO);
 
-        if (isPrim || isReserved)
-        {
-            assert(symbol._valueCell == _nil);
+        if (isPrim || isReserved || isMacro)
             return cellIndex;
-        }
 
-        return symbol._valueCell;
+        CELL_INDEX value = symbol._valueCell;
+        if (symbol._type == SYMBOL_MACRO)
+            value = EvaluateCell(value);
+
+        return value;
     }
 
     if (cell._type == TYPE_LIST)
@@ -131,18 +133,19 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             if (symbol._bindingListCell)
             {
                 CELL_INDEX argSymbolCell = symbol._bindingListCell;
-                CELL_INDEX bindingCell = cell._next;
+                CELL_INDEX bindingCell = symbol._valueCell;
 
                 while (argSymbolCell)
                 {
                     RAISE_ERROR_IF(!bindingCell, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
-                    SYMBOL_INDEX argSymbolIndex = _cell[argSymbolCell]._data;
-                    SymbolInfo& argSymbol = _symbol[argSymbolIndex];
+                    CELL_INDEX   argCellIndex   = _cell[argSymbolCell]._data;
+                    SYMBOL_INDEX argSymbolIndex = _cell[argCellIndex]._data;
+                    SymbolInfo&  argSymbol      = _symbol[argSymbolIndex];
 
                     // Evaluate the argument (if this isn't a macro)
 
-                    CELL_INDEX boundCell = _cell[bindingCell]._data;
+                    CELL_INDEX boundCell = _cell[cell._next]._data;
                     if (symbol._type != SYMBOL_MACRO)
                         boundCell = EvaluateCell(boundCell);
 
@@ -152,7 +155,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     bindingCell = _cell[bindingCell]._next;
                 }
 
-                RAISE_ERROR_IF(bindingCell, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                //RAISE_ERROR_IF(bindingCell, ERROR_RUNTIME_WRONG_NUM_PARAMS);
             }
 
             // Evaluate the function body

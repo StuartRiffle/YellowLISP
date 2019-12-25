@@ -60,9 +60,6 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
 
-    CheckOutput(lisp, "(atom ())", "t");
-
-
     CheckOutput(lisp, "", "");
     CheckOutput(lisp, ";(", "");
     CheckOutput(lisp, "\n", "");

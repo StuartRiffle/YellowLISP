@@ -141,7 +141,6 @@ class Runtime
     CELL_INDEX   RegisterSymbol(const char* ident);
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
 
-
     // CellTable.cpp
 
     CELL_INDEX AllocateCell(Type Type);
