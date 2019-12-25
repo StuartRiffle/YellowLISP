@@ -14,6 +14,8 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
         ResetTextColor();
 
         printf("\"%s\" evaluates to \"%s\" instead of \"%s\"\n", source, output.c_str(), expectedOutput);
+
+        //CheckOutput(lisp, source, expectedOutput);
     }
 }
 
@@ -53,6 +55,7 @@ void SanityCheck()
 {
     InterpreterSettings settings;
     settings._repl = false;
+    settings._catchExceptions = false;
 
     Interpreter lisp(&settings);
 
@@ -60,6 +63,7 @@ void SanityCheck()
     CheckOutput(lisp, ";(", "");
     CheckOutput(lisp, "\n", "");
     CheckOutput(lisp, "1", "1");
+    CheckOutput(lisp, "-1", "-1");
     CheckOutput(lisp, " 2 ", "2");
     CheckOutput(lisp, "3.4", "3.4");
     CheckOutput(lisp, "-5.6", "-5.6");
@@ -78,7 +82,7 @@ void SanityCheck()
     CheckOutput(lisp, "\"FOO\"", "\"FOO\"");
 
     CheckOutput(lisp, "(quote ('1 2))", "((quote 1) 2)");
-    CheckOutput(lisp, "'('1 2))", "((quote 1) 2)");
+    CheckOutput(lisp, "'('1 2)", "((quote 1) 2)");
 
     CheckOutput(lisp, "(atom ())", "t");
     CheckOutput(lisp, "(atom '())", "t");
@@ -130,12 +134,10 @@ void SanityCheck()
     CheckOutput(lisp, "{ 3 + (((4))) * 5 }", "23");
     CheckOutput(lisp, "{ (3 + 4) * 5 }", "35");
     CheckOutput(lisp, "{ -(3 + 4) * 5 }", "-35");
-    CheckOutput(lisp, "{ -3 + 4 * 5 }", "5");
+    CheckOutput(lisp, "{ -3 + 4 * 5 }", "17");
     CheckOutput(lisp, "{ -(3 + 4 * 5) }", "-23");
 
     // The error section needs a *lot* more test cases
-
-    settings._catchExceptions = false;
 
     CheckError(lisp, "\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
     CheckError(lisp, "(",           ERROR_PARSER_LIST_UNTERMINATED);

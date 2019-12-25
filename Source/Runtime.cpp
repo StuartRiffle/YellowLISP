@@ -12,7 +12,7 @@ Runtime::Runtime()
 
     _nil   = RegisterSymbol("nil");
     _true  = RegisterSymbol("t");
-    _quote = RegisterSymbol("quote");
+    _quote = RegisterPrimitive("quote", NULL);
 
     // Language primitives
 

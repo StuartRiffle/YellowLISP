@@ -35,6 +35,7 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 CELL_INDEX Interpreter::RunSourceCode(const string& source)
 {
     list<NodeRef> exps = _parser.ParseExpressions(source);
+
     vector<CELL_INDEX> values = EvaluateExpressions(exps);
 
     if (!values.empty())
