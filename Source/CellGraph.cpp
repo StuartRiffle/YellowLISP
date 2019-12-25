@@ -6,7 +6,7 @@
 // This is for debugging. It generates a .dot file that can be rendered by GraphViz,
 // to visualize cell connections. 
 
-void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone)
+void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone, bool expandSymbols)
 {
     if (cellsDone.count(cellIndex))
         return;
@@ -14,18 +14,34 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
     Cell& cell = _cell[cellIndex];
     std::stringstream ssValue;
 
-    ss << "cell" << cellIndex << " [shape=record,label=\"<header>CELL " << cellIndex << " (";
+    string fillColor = "white";
+    string cellTypeName;
 
     switch (cell._type)
     {
-        case TYPE_LIST:   ss << "LIST";   ssValue << "cell " << cell._data; break;
-        case TYPE_INT:    ss << "INT";    ssValue << LoadIntLiteral(cellIndex); break;
-        case TYPE_FLOAT:  ss << "FLOAT";  ssValue << LoadFloatLiteral(cellIndex); break;
-        case TYPE_STRING: ss << "STRING"; ssValue << LoadStringLiteral(cellIndex); break;
-        case TYPE_SYMBOL: ss << "SYMBOL"; ssValue << "symbol " << cell._data; break;
+        case TYPE_LIST:   cellTypeName = "LIST";   ssValue << "cell " << cell._data; fillColor = "lemonchiffon"; break;
+        case TYPE_INT:    cellTypeName = "INT";    ssValue << LoadIntLiteral(cellIndex); break;
+        case TYPE_FLOAT:  cellTypeName = "FLOAT";  ssValue << LoadFloatLiteral(cellIndex); break;
+        case TYPE_STRING: cellTypeName = "STRING"; ssValue << LoadStringLiteral(cellIndex);  break;
+        case TYPE_SYMBOL: cellTypeName = "SYMBOL"; ssValue << "symbol " << cell._data; fillColor = "lightcyan";  break;
     }
 
-    ss << ") | { { next | data } | { <next>";
+    ss << "cell" << cellIndex << " [shape=record,style=filled,fillcolor=" << fillColor << ",label=\"<header>CELL " << cellIndex << " (";
+    ss << cellTypeName;
+
+    ss << ") | { { ";
+
+    bool includeIdent = !expandSymbols && (cell._type == TYPE_SYMBOL);
+
+    if (includeIdent)
+        ss << "ident | ";
+
+    ss << "next | data } | { ";
+        
+    if (includeIdent)
+        ss << _symbol[cell._data]._ident << " | ";
+        
+    ss << "<next>";
 
     if (cell._next && (cell._next != _nil))
         ss << "cell " << cell._next;
@@ -34,7 +50,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
 
     cellsDone.insert(cellIndex);
 
-    if (cell._type == TYPE_SYMBOL)
+    if (expandSymbols && (cell._type == TYPE_SYMBOL))
     {
         SYMBOL_INDEX symbolIndex = cell._data;
         ss << "cell" << cellIndex << ":data -> symbol" << symbolIndex << ":header;" << std::endl;
@@ -45,13 +61,13 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
     if (cell._type == TYPE_LIST)
     {
         ss << "cell" << cellIndex << ":data -> cell" << cell._data << ":header;" << std::endl;
-        FormatCellLabel(cell._data, ss, cellsDone, symbolsDone);
+        FormatCellLabel(cell._data, ss, cellsDone, symbolsDone, expandSymbols);
     }
 
     if (cell._next)
     {
         ss << "cell" << cellIndex << ":next -> cell" << cell._next << ":header;" << std::endl;
-        FormatCellLabel(cell._next, ss, cellsDone, symbolsDone);
+        FormatCellLabel(cell._next, ss, cellsDone, symbolsDone, expandSymbols);
     }
 }
 
@@ -64,12 +80,14 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
 
     std::stringstream ssValue;
 
-    ss << "symbol" << symbolIndex << " [shape=record,label=\"<header>SYMBOL " << symbolIndex << " | ";
-    ss << "{ { ident | primIndex | symbolCell | valueCell } | ";
+    ss << "symbol" << symbolIndex << " [shape=Mrecord,style=filled,fillcolor=lightblue1,label=\"<header>SYMBOL " << symbolIndex << " | ";
+    ss << "{ { ident | primIndex | symbolCell | valueCell | bindingListCell } | ";
     ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | ";
 
     if (symbol._valueCell && (symbol._valueCell != _nil))
         ss << "<valueCell>cell " << symbol._valueCell;
+
+    ss << "| <bindingListCell>" << symbol._bindingListCell;
 
     ss << " } }\"];" << std::endl;
 
@@ -80,9 +98,15 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
         ss << "symbol" << symbolIndex << ":valueCell -> cell" << symbol._valueCell << ":header;" << std::endl;
         FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone);
     }
+
+    if (symbol._bindingListCell && (symbol._bindingListCell != _nil))
+    {
+        ss << "symbol" << symbolIndex << ":bindingListCell -> cell" << symbol._bindingListCell << ":header;" << std::endl;
+        FormatCellLabel(symbol._bindingListCell, ss, cellsDone, symbolsDone);
+    }
 }
 
-void Runtime::DumpCellGraph(CELL_INDEX cellIndex, const string& filename)
+void Runtime::DumpCellGraph(CELL_INDEX cellIndex, const string& filename, bool expandSymbols)
 {
     std::stringstream ss;
     set<CELL_INDEX> cellsDone;
@@ -91,7 +115,7 @@ void Runtime::DumpCellGraph(CELL_INDEX cellIndex, const string& filename)
     ss << "digraph G {" << std::endl;
     ss << "graph[rankdir = \"LR\"];" << std::endl;
 
-    FormatCellLabel(cellIndex, ss, cellsDone, symbolsDone);
+    FormatCellLabel(cellIndex, ss, cellsDone, symbolsDone, expandSymbols);
 
     ss << "} " << std::endl;
 

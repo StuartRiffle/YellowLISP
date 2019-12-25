@@ -53,16 +53,27 @@ struct Cell
     uint32_t _data;
 };
 
+enum SymbolType
+{
+    SYMBOL_INVALID,
+    SYMBOL_RESERVED,
+    SYMBOL_PRIMITIVE,
+    SYMBOL_VARIABLE,
+    SYMBOL_FUNCTION,
+    SYMBOL_MACRO
+};
+
 struct SymbolInfo
 {
-    static const TINDEX RESERVED = ~TINDEX(0);
-
+    SymbolType _type;
     string _ident;
+    string _comment;
     TINDEX _primIndex;
     CELL_INDEX _symbolCell;
     CELL_INDEX _valueCell;
+    CELL_INDEX _bindingListCell;
 
-    SymbolInfo() : _primIndex(0), _symbolCell(0), _valueCell(0) {}
+    SymbolInfo() : _type(SYMBOL_INVALID), _primIndex(0), _symbolCell(0), _valueCell(0), _bindingListCell(0) {}
 };
 
 typedef vector<CELL_INDEX> ArgumentList;
@@ -75,6 +86,16 @@ struct PrimitiveInfo
     string _name;
     int _numArgs;
     PrimitiveFunc _func;
+};
+
+struct FunctionInfo
+{
+    string _name;
+    bool _isMacro;
+    CELL_INDEX _argListCell;
+    CELL_INDEX _bodyCell;
+
+    FunctionInfo() : _isMacro(0), _argListCell(0), _bodyCell(0) {}
 };
 
 struct StringInfo
@@ -114,6 +135,7 @@ class Runtime
     CELL_INDEX  _nil;
     CELL_INDEX  _true;
     CELL_INDEX  _quote;
+    CELL_INDEX  _defmacro;
 
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterSymbol(const char* ident);
@@ -131,9 +153,9 @@ class Runtime
 
     // CellGraph.cpp
 
-    void FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone);
+    void FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone, bool expandSymbols = false);
     void FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone);
-    void DumpCellGraph(CELL_INDEX cellIndex, const string& filename);
+    void DumpCellGraph(CELL_INDEX cellIndex, const string& filename, bool expandSymbols = false);
 
     // Literals.cpp
 
@@ -163,6 +185,7 @@ class Runtime
     CELL_INDEX LIST(const ArgumentList& args);
     CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
+    CELL_INDEX DEFMACRO(const ArgumentList& args);
 
     // Math.cpp
 

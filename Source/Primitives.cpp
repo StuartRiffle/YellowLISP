@@ -147,6 +147,7 @@ CELL_INDEX Runtime::SETQ(const ArgumentList& args)
     if (symbol._primIndex)
         RAISE_ERROR(ERROR_RUNTIME_RESERVED_SYMBOL, symbol._ident.c_str());
 
+    symbol._type = SYMBOL_VARIABLE;
     symbol._valueCell = valueCell;
 
     return valueCell;
@@ -165,5 +166,40 @@ CELL_INDEX Runtime::EVAL(const ArgumentList& args)
 
     CELL_INDEX cellIndex = args[0];
     return EvaluateCell(cellIndex);
+}
+
+CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
+{
+    RAISE_ERROR_IF(args.size() < 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
+
+    CELL_INDEX symbolCell = args[0];
+    RAISE_ERROR_IF(_cell[symbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_TYPE_MISMATCH, "macro name");
+
+    SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
+    SymbolInfo& macroSymbol = _symbol[symbolIndex];
+
+    CELL_INDEX bindingListCell = args[1];
+    RAISE_ERROR_IF(_cell[bindingListCell]._type != TYPE_LIST, ERROR_RUNTIME_TYPE_MISMATCH, "macro arguments");
+    macroSymbol._bindingListCell = bindingListCell;
+
+    assert(macroSymbol._symbolCell == symbolCell);
+
+    int onArg = 2;
+
+    CELL_INDEX commentCell = args[onArg];
+    if (_cell[commentCell]._type == TYPE_STRING)
+    {
+        macroSymbol._comment = LoadStringLiteral(commentCell);
+        onArg++;
+    }
+
+    RAISE_ERROR_IF(args.size() < onArg, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
+    CELL_INDEX bodyCell = args[onArg];
+
+    RAISE_ERROR_IF(_cell[bodyCell]._type != TYPE_LIST, ERROR_RUNTIME_TYPE_MISMATCH, "macro body");
+
+    macroSymbol._type = SYMBOL_MACRO;
+    macroSymbol._valueCell = bodyCell;
+    return symbolIndex;
 }
 

@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\CellGraph.cpp" />
+    <ClCompile Include="Source\Evaluation.cpp" />
     <ClCompile Include="Source\Math.cpp" />
     <ClCompile Include="Source\Bootstrap.cpp" />
     <ClCompile Include="Source\CellTable.cpp" />

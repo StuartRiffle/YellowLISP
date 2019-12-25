@@ -6,6 +6,7 @@
 
 void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput)
 {
+    printf("-> %s\n", source);
     string output = lisp.Evaluate(source);
     if (output != expectedOutput)
     {
@@ -58,6 +59,9 @@ void SanityCheck()
     settings._catchExceptions = false;
 
     Interpreter lisp(&settings);
+
+    CheckOutput(lisp, "(atom ())", "t");
+
 
     CheckOutput(lisp, "", "");
     CheckOutput(lisp, ";(", "");
@@ -137,6 +141,8 @@ void SanityCheck()
     CheckOutput(lisp, "{ -3 + 4 * 5 }", "17");
     CheckOutput(lisp, "{ -(3 + 4 * 5) }", "-23");
 
+    CheckOutput(lisp, "(defmacro eight() '(+ 3 5))", "asdf");
+
     // The error section needs a *lot* more test cases
 
     CheckError(lisp, "\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
@@ -151,3 +157,7 @@ void SanityCheck()
     CheckError(lisp, "(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
 }
 
+
+/*
+
+*/

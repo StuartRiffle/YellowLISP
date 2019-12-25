@@ -33,6 +33,9 @@ Runtime::Runtime()
     RegisterPrimitive("%",       &Runtime::MOD);
     RegisterPrimitive("<",       &Runtime::LESS);
 
+    _defmacro = RegisterPrimitive("defmacro",&Runtime::DEFMACRO);
+
+
     // Interpreter commands
 
     RegisterPrimitive("help",  &Runtime::Help);
@@ -49,7 +52,7 @@ CELL_INDEX Runtime::RegisterSymbol(const char* ident)
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     CELL_INDEX cellIndex = _symbol[symbolIndex]._symbolCell;
 
-    _symbol[symbolIndex]._primIndex = SymbolInfo::RESERVED;
+    _symbol[symbolIndex]._type = SYMBOL_RESERVED;
     return cellIndex;
 }
 
@@ -80,7 +83,9 @@ CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     SymbolInfo& symbol = _symbol[symbolIndex];
 
+    symbol._type = SYMBOL_PRIMITIVE;
     symbol._primIndex = (TINDEX)_primitive.size();
+
     _primitive.emplace_back();
     PrimitiveInfo& primInfo = _primitive.back();
 
@@ -184,156 +189,5 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
     return ss.str();
 }
 
-
-
-CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
-{
-    if (!cellIndex || (cellIndex == _nil))
-        return _nil;
-
-#ifndef NDEBUG
-    static bool sDumpDebugGraph = false;
-    if (sDumpDebugGraph)
-    {
-        sDumpDebugGraph = false;
-        // For debugging, this generates a graph of cell connections for GraphViz to render
-
-        char filename[80];
-        sprintf(filename, "cell%d.dot", cellIndex);
-        DumpCellGraph(cellIndex, filename);
-    }
-#endif
-
-    const Cell& cell = _cell[cellIndex];
-
-    // Literals evaluate to themselves
-
-    bool isLiteral =
-        (cell._type == TYPE_INT) ||
-        (cell._type == TYPE_FLOAT) ||
-        (cell._type == TYPE_STRING);
-
-    if (isLiteral)
-        return cellIndex;
-
-    if (cell._type == TYPE_SYMBOL)
-    {
-        // Symbols in the current scope override globals
-
-        SYMBOL_INDEX symbolIndex = cell._data;
-        
-        if (!_environment.empty())
-        {
-            Scope& scope = _environment.back();
-
-            auto iter = scope.find(symbolIndex);
-            if (iter != scope.end())
-            {
-                CELL_INDEX localValue = iter->second;
-                return EvaluateCell(localValue);
-            }
-        }
-
-        // Primitive symbols can be used directly
-
-        const SymbolInfo& symbol = _symbol[symbolIndex];
-        assert(symbol._symbolCell == cellIndex);
-
-        if (symbol._primIndex > 0)
-        {
-            assert(symbol._valueCell == _nil);
-            return cellIndex;
-        }
-
-        // All others need to be evaluated
-
-        //return EvaluateCell(symbol._valueCell);
-
-        return symbol._valueCell;
-    }
-
-    if (cell._type == TYPE_LIST)
-    {
-        // Evaluate the function/operator (the first element)
-
-        CELL_INDEX function = EvaluateCell(cell._data);
-
-        // Handle special form: quote
-
-        if (function == _quote)
-        {
-            RAISE_ERROR_IF(cell._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
-
-            CELL_INDEX quoted = cell._next;
-            RAISE_ERROR_IF(_cell[quoted]._next, ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-            return _cell[quoted]._data;
-        }
-
-        // Call the function
-
-        if (_cell[function]._type == TYPE_SYMBOL)
-        {
-            SYMBOL_INDEX symbolIndexFunc = _cell[function]._data;
-            const SymbolInfo& symbol = _symbol[symbolIndexFunc];
-
-            // The remaining list elements are arguments, so evaluate them
-
-            ArgumentList callArgs;
-            CELL_INDEX onArg = cell._next;
-            int argIndex = 1;
-
-            while (onArg)
-            {
-                RAISE_ERROR_IF(_cell[onArg]._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
-
-                // HACK! until macros work, implicitly quote the first argument of SETQ
-
-                bool evaluateThisArg = true;
-                if (argIndex == 1)
-                    if (symbol._ident == "setq")
-                        evaluateThisArg = false;
-
-                CELL_INDEX argValue = _cell[onArg]._data;
-                if (evaluateThisArg)
-                    argValue = EvaluateCell(argValue);
-
-                callArgs.push_back(argValue);
-
-                Cell& argCell = _cell[onArg];
-                onArg = argCell._next;
-                argIndex++;
-            }
-
-            RAISE_ERROR_IF(symbol._primIndex == SymbolInfo::RESERVED, ERROR_RUNTIME_UNDEFINED_FUNCTION, symbol._ident.c_str());
-
-            if (symbol._primIndex)
-            {
-                // This is a primitive operation
-
-                PrimitiveInfo& prim = _primitive[symbol._primIndex];
-                CELL_INDEX primResult = (*this.*prim._func)(callArgs);
-                return primResult;
-            }
-            else
-            {
-                _environment.emplace_back();
-                Scope& scope = _environment.back();
-
-                // TODO: evaluate the function here
-                (scope);
-                
-
-                _environment.pop_back();
-
-                RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-            }
-        }
-
-        RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    }
-
-    return _nil;
-}
 
 

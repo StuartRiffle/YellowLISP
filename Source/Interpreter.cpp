@@ -23,14 +23,14 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
     for (auto& node : exps)
     {
         CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
-        CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
+        _parser.DumpSyntaxTree(node);
 
+        CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
         outputs.push_back(valueCell);
     }
 
     return outputs;
 }
-
 
 CELL_INDEX Interpreter::RunSourceCode(const string& source)
 {
@@ -60,11 +60,11 @@ string Interpreter::Evaluate(const string& source)
     catch (YellowError error)
     {
     #if !YELLOW_CATCH_EXCEPTIONS
-        throw error;
+        throw;
     #endif
 
         if (!_settings._catchExceptions)
-            throw error;
+            throw;
 
         SetTextColor(ANSI_RED);
         std::cout << error.what() << std::endl;
@@ -73,11 +73,11 @@ string Interpreter::Evaluate(const string& source)
     catch (std::exception error)
     {
     #if !YELLOW_CATCH_EXCEPTIONS
-        throw error;
+        throw;
     #endif
 
         if (!_settings._catchExceptions)
-            throw error;
+            throw;
 
         SetTextColor(ANSI_RED);
         std::cout << "CRITICAL ERROR: unhandled exception" << std::endl;
