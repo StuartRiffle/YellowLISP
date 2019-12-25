@@ -1,4 +1,4 @@
-// YellowLISP (c) 2019 Stuart Riffle
+// YellowLISP (c) 2019 Stuart Riffle (MIT license)
 
 #include "Parser.h"
 #include "Errors.h"
@@ -46,7 +46,7 @@ NodeRef Parser::ParseElement()
     {
         // Sugar: evaluate expressions between curly braces
         // using normal arithmetic, using the normal meaning
-        // of parentheses as grouping, like normal people.
+        // of parentheses as grouping, like normal people do.
         //
         // These expressions are equivalent in YellowLISP:
         //

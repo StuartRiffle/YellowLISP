@@ -1,3 +1,5 @@
+// YellowLISP (c) 2019 Stuart Riffle (MIT license)
+
 #pragma once
 #include "Yellow.h"
 #include "Parser.h"

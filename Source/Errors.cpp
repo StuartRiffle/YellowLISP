@@ -1,3 +1,5 @@
+// YellowLISP (c) 2019 Stuart Riffle (MIT license)
+
 #include "Yellow.h"
 #include "Errors.h"
 

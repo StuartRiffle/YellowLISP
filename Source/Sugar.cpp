@@ -1,14 +1,14 @@
-// YellowLISP (c) 2019 Stuart Riffle
+// YellowLISP (c) 2019 Stuart Riffle (MIT license)
 
-#include "Parser.h"
+#include "Yellow.h"
 #include "Errors.h"
-
 
 NodeRef Parser::ParseArithmeticExpression()
 {
     NodeRef expr = ParseArithmeticAddSub();
     return expr;
 }
+
 NodeRef Parser::ParseArithmeticAddSub()
 {
     NodeRef expr = ParseArithmeticMulDiv();
