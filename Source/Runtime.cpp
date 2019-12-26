@@ -31,6 +31,39 @@ Runtime::Runtime()
     RegisterPrimitive("*",       &Runtime::MUL);
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
+    RegisterPrimitive("add",     &Runtime::ADD);
+    RegisterPrimitive("sub",     &Runtime::SUB);
+    RegisterPrimitive("mul",     &Runtime::MUL);
+    RegisterPrimitive("div",     &Runtime::DIV);
+    RegisterPrimitive("mod",     &Runtime::MOD);
+
+    RegisterPrimitive("round", &Runtime::ROUND);
+    RegisterPrimitive("trunc", &Runtime::TRUNCATE);
+    RegisterPrimitive("floor", &Runtime::FLOOR);
+    RegisterPrimitive("celing", &Runtime::CEILING);
+    RegisterPrimitive("exp", &Runtime::EXP);
+    RegisterPrimitive("expt", &Runtime::EXPT);
+    RegisterPrimitive("pow", &Runtime::EXPT);
+    RegisterPrimitive("log", &Runtime::LOG);
+    RegisterPrimitive("sqrt", &Runtime::SQRT);
+    RegisterPrimitive("abs", &Runtime::ABS );
+
+    RegisterPrimitive("sin", &Runtime::SIN);
+    RegisterPrimitive("sinh", &Runtime::SINH);
+    RegisterPrimitive("asin", &Runtime::ASIN);
+    RegisterPrimitive("asinh", &Runtime::ASINH);
+    RegisterPrimitive("cos", &Runtime::COS);
+    RegisterPrimitive("cosh", &Runtime::COSH);
+    RegisterPrimitive("acos", &Runtime::ACOS);
+    RegisterPrimitive("acosh", &Runtime::ACOSH);
+    RegisterPrimitive("tan", &Runtime::TAN);
+    RegisterPrimitive("tanh", &Runtime::TANH);
+    RegisterPrimitive("atan", &Runtime::ATAN);
+    RegisterPrimitive("atanh", &Runtime::ATANH);
+
+
+
+
     RegisterPrimitive("<",       &Runtime::LESS);
 
     _defmacro = RegisterPrimitive("defmacro",&Runtime::DEFMACRO);

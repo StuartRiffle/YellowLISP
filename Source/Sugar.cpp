@@ -4,6 +4,8 @@
 #include "Parser.h"
 #include "Errors.h"
 
+// FIXME: implement in LISP instead
+
 NodeRef Parser::ParseArithmeticExpression()
 {
     NodeRef expr = ParseArithmeticAddSub();

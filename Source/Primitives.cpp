@@ -204,3 +204,17 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
     return symbolCell;
 }
 
+CELL_INDEX Runtime::DEFUN(const ArgumentList& args)
+{
+    CELL_INDEX   symbolCell  = DEFMACRO(args);
+    SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
+    SymbolInfo&  macroSymbol = _symbol[symbolIndex];
+
+    macroSymbol._type = SYMBOL_FUNCTION;
+    return symbolCell;
+}
+
+CELL_INDEX Runtime::LAMBDA(const ArgumentList& args)
+{
+
+}

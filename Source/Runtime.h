@@ -136,6 +136,7 @@ class Runtime
     CELL_INDEX  _true;
     CELL_INDEX  _quote;
     CELL_INDEX  _defmacro;
+    CELL_INDEX  _lambda;
 
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterSymbol(const char* ident);
@@ -179,12 +180,14 @@ class Runtime
     CELL_INDEX CONS(const ArgumentList& args);
     CELL_INDEX EQ(const ArgumentList& args);
     CELL_INDEX EVAL(const ArgumentList& args);
+    CELL_INDEX LAMBDA(const ArgumentList& args);
     CELL_INDEX LESS(const ArgumentList& args);
     CELL_INDEX LET(const ArgumentList& args);
     CELL_INDEX LIST(const ArgumentList& args);
     CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
     CELL_INDEX DEFMACRO(const ArgumentList& args);
+    CELL_INDEX DEFUN(const ArgumentList& args);  // YellowScheme
 
     // Math.cpp
 
@@ -193,7 +196,6 @@ class Runtime
     CELL_INDEX MUL(const ArgumentList& args);
     CELL_INDEX DIV(const ArgumentList& args);
     CELL_INDEX MOD(const ArgumentList& args);
-    CELL_INDEX REM(const ArgumentList& args);
     CELL_INDEX ROUND(const ArgumentList& args);
     CELL_INDEX TRUNCATE(const ArgumentList& args);
     CELL_INDEX FLOOR(const ArgumentList& args);
@@ -205,12 +207,20 @@ class Runtime
     CELL_INDEX LOG(const ArgumentList& args);
     CELL_INDEX SQRT(const ArgumentList& args);
     CELL_INDEX ABS(const ArgumentList& args);
+
     CELL_INDEX SIN(const ArgumentList& args);
-    CELL_INDEX COS(const ArgumentList& args);
-    CELL_INDEX TAN(const ArgumentList& args);
+    CELL_INDEX SINH(const ArgumentList& args);
     CELL_INDEX ASIN(const ArgumentList& args);
+    CELL_INDEX ASINH(const ArgumentList& args);
+    CELL_INDEX COS(const ArgumentList& args);
+    CELL_INDEX COSH(const ArgumentList& args);
     CELL_INDEX ACOS(const ArgumentList& args);
+    CELL_INDEX ACOSH(const ArgumentList& args);
+    CELL_INDEX TAN(const ArgumentList& args);
+    CELL_INDEX TANH(const ArgumentList& args);
     CELL_INDEX ATAN(const ArgumentList& args);
+    CELL_INDEX ATANH(const ArgumentList& args);
+
     CELL_INDEX RANDOM(const ArgumentList& args);
 
     CELL_INDEX LISTP(const ArgumentList& args);

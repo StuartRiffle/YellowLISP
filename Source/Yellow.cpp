@@ -38,7 +38,7 @@ void PrintOptions()
 int main(int argc, char** argv)
 {
 #ifndef NDEBUG
-    //SanityCheck();
+    SanityCheck();
 #endif
 
     CommandLine commandLine(argc, argv);
@@ -103,7 +103,6 @@ int main(int argc, char** argv)
     printf("\n %s \n", versionStr);
     ResetTextColor();
 
-    lisp.Evaluate("(defmacro sqr (x) (* x x))");
     lisp.RunREPL();
 
     return RETURN_SUCCESS;

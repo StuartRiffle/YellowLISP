@@ -6,7 +6,7 @@
 
 void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput)
 {
-    printf("-> %s\n", source);
+//    printf("-> %s\n", source);
     string output = lisp.Evaluate(source);
     if (output != expectedOutput)
     {
@@ -138,7 +138,8 @@ void SanityCheck()
     CheckOutput(lisp, "{ -3 + 4 * 5 }", "17");
     CheckOutput(lisp, "{ -(3 + 4 * 5) }", "-23");
 
-    CheckOutput(lisp, "(defmacro eight() '(+ 3 5))", "asdf");
+    CheckOutput(lisp, "(defmacro sqr (x) (* x x))", "sqr");
+    CheckOutput(lisp, "(sqr 5)", "25");
 
     // The error section needs a *lot* more test cases
 

@@ -48,7 +48,7 @@ NodeRef Parser::ParseElement()
         // using normal arithmetic, using the normal meaning
         // of parentheses as grouping, like normal people do.
         //
-        // These expressions are equivalent in YellowLISP:
+        // These expressions are equivalent:
         //
         //      (+ (* (+ a b) c) 123) 
         //      { (a + b) * c + 123 }

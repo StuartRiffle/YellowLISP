@@ -73,7 +73,7 @@ void HelloYellow()
 - [x] Lexical scoping
 - [x] Garbage collection
 - [ ] Backquotes
-- [ ] Macros
+- [x] Macros
 - [ ] Tail call recursion
 - [ ] Native function bindings
 - [ ] Debugging from the REPL
