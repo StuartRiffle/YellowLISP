@@ -3,9 +3,26 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
+
+vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
+{
+    vector<CELL_INDEX> result;
+
+    while (VALID_CELL(cellIndex))
+    {
+        result.push_back(cellIndex);
+        if (_cell[cellIndex]._type != TYPE_LIST)
+            break;
+
+        cellIndex = _cell[cellIndex]._next;
+    }
+
+    return result;
+}
+
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 {
-    if (!cellIndex || (cellIndex == _nil))
+    if (!VALID_CELL(cellIndex))
         return _nil;
 
 #ifndef NDEBUG
@@ -107,9 +124,8 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                 ArgumentList primArgs;
 
-                CELL_INDEX argCell = cell._next;
-                while ((argCell != _nil) && (_cell[argCell]._type == TYPE_LIST))
-                for (CELL_INDEX argCell = firstArgCell; argCell; argCell = _cell[argCell]._next)
+                vector<CELL_INDEX> elements = ExtractList(cell._next);
+                for (auto argCell : elements)
                 {
                     CELL_INDEX value = _cell[argCell]._data;
 
@@ -125,19 +141,42 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 return primResult;
             }
 
-
-
             // Bind the arguments
 
             Scope callScope;
 
             if (symbol._bindingListCell)
             {
+                vector<CELL_INDEX> argSymbolCells     = ExtractList(symbol._bindingListCell);
+                vector<CELL_INDEX> bindingSymbolCells = ExtractList(symbol._valueCell);
+
+                RAISE_ERROR_IF(argSymbolCells.size() != bindingSymbolCells.size(), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
+                for (size_t i = 0; i < argSymbolCells.size(); i++)
+                {
+                    CELL_INDEX   argCellIndex   = _cell[argSymbolCells[i]]._data;
+                    SYMBOL_INDEX argSymbolIndex = _cell[argCellIndex]._data;
+                    SymbolInfo&  argSymbol      = _symbol[argSymbolIndex];
+                    CELL_INDEX   boundCell      = bindingSymbolCells[i];
+
+                    if (symbol._type != SYMBOL_MACRO)
+                        boundCell = EvaluateCell(boundCell);
+
+                    callScope[argSymbol._symbolCell] = boundCell;
+                }
+
+
+
+
+
+
+                /*
                 CELL_INDEX argSymbolCell = symbol._bindingListCell;
                 CELL_INDEX bindingCell = symbol._valueCell;
 
-                while (argSymbolCell)
+                while (argSymbolCell != _nil)
                 {
+                    assert(argSymbolCell);
                     RAISE_ERROR_IF(!bindingCell, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                     CELL_INDEX   argCellIndex   = _cell[argSymbolCell]._data;
@@ -155,8 +194,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     argSymbolCell = _cell[argSymbolCell]._next;
                     bindingCell = _cell[bindingCell]._next;
                 }
-
-                //RAISE_ERROR_IF(bindingCell, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                */
             }
 
             // Evaluate the function body

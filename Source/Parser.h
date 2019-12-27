@@ -26,6 +26,7 @@ struct NodeVariant
     string _string;
     int    _int;
     float  _float;
+    NodeRef _dotted;
 };
 
 class Parser

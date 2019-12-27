@@ -1,4 +1,4 @@
-// YellowLISP (c) 2019 Stuart Riffle (MIT license)
+YellowLISP (c) 2019 Stuart Riffle (MIT license)
 
 #include "Yellow.h"
 #include "Runtime.h"
@@ -34,7 +34,7 @@ CELL_INDEX Runtime::CDR(const ArgumentList& args)
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    if (cell._next)
+    if (VALID_CELL(cell._next))
         return cell._next;
 
     return _nil;
@@ -49,8 +49,14 @@ CELL_INDEX Runtime::COND(const ArgumentList& args)
 
 CELL_INDEX Runtime::CONS(const ArgumentList& args)
 {
-    VERIFY_NUM_PARAMETERS(args.size(), 2, "CONS");
+    // FIXME!
+    //
+    // (cons 'a        'b)         ==>  (a . b)
+    // (cons (list 'a) 'b)         ==>  ((a) . b)
+    // (cons 'a        (list 'b))  ==>  (a b)
+    // (cons (list 'a) (list 'b))  ==>  ((a) b)
 
+    VERIFY_NUM_PARAMETERS(args.size(), 2, "CONS");
     CELL_INDEX head = args[0];
     CELL_INDEX tail = args[1];
 

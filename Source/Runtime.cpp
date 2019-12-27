@@ -10,9 +10,11 @@ Runtime::Runtime()
     _cellFreeList = _nil;
     ExpandCellTable();
 
-    _nil   = RegisterSymbol("nil");
-    _true  = RegisterSymbol("t");
+    _nil = RegisterSymbol("nil");
+    _true = RegisterSymbol("t");
     _quote = RegisterPrimitive("quote", NULL);
+    _unquote = RegisterPrimitive("unquote", NULL);
+    _quasiquote = RegisterPrimitive("quasiquote", NULL);
 
     // Language primitives
 
@@ -201,7 +203,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
             ss << '(';
 
             CELL_INDEX curr = index;
-            while (curr != _nil)
+            while (VALID_CELL(curr))
             {
                 ss << GetPrintedValue(_cell[curr]._data);
                 CELL_INDEX next = _cell[curr]._next;
@@ -212,7 +214,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
                     break;
                 }
 
-                if (next != _nil)
+                if (VALID_CELL(next))
                 {
                     ss << " ";
                     curr = next;

@@ -76,6 +76,9 @@ struct SymbolInfo
     SymbolInfo() : _type(SYMBOL_INVALID), _primIndex(0), _symbolCell(0), _valueCell(0), _bindingListCell(0) {}
 };
 
+#define VALID_CELL(_IDX) (((_IDX) != 0) && ((_IDX) != _nil))
+
+
 typedef vector<CELL_INDEX> ArgumentList;
 
 class Runtime;
@@ -141,6 +144,7 @@ class Runtime
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterSymbol(const char* ident);
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
+    vector<CELL_INDEX> ExtractList(CELL_INDEX index);
 
     // CellTable.cpp
 

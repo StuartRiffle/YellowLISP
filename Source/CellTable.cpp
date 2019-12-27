@@ -7,7 +7,7 @@
 CELL_INDEX Runtime::AllocateCell(Type type)
 {
 #if YELLOW_ENABLE_GC
-    if (_cellFreeList == _nil)
+    if (VALID_CELL(_cellFreeList))
     {
         size_t numCellsFreed = CollectGarbage();
 
@@ -26,10 +26,10 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     }
 #endif
 
-    if (_cellFreeList == _nil)
+    if (!VALID_CELL(_cellFreeList))
         ExpandCellTable();
 
-    if (_cellFreeList == _nil)
+    if (!VALID_CELL(_cellFreeList == _nil))
     {
         RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY);
         return 0;
@@ -76,10 +76,12 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
     cell._tags |= TAG_GC_MARK;
 
     if (cell._type == TYPE_LIST)
+    {
         MarkCellsInUse(cell._data);
 
-    if (cell._next != _nil)
-        MarkCellsInUse(cell._next);
+        if (VALID_CELL(cell._next))
+            MarkCellsInUse(cell._next);
+    }
 }
 
 size_t Runtime::CollectGarbage()
@@ -99,7 +101,7 @@ size_t Runtime::CollectGarbage()
         SYMBOL_INDEX symbolIndex = iter.second;
         SymbolInfo& symbol = _symbol[symbolIndex];
 
-        if (symbol._symbolCell)
+        if (VALID_CELL(symbol._symbolCell))
         {
             MarkCellsInUse(symbol._symbolCell);
             MarkCellsInUse(symbol._valueCell);

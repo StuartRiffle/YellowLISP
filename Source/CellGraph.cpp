@@ -45,7 +45,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         
     ss << "<next>";
 
-    if (cell._next != _nil)
+    if (VALID_CELL(cell._next))
         ss << "cell " << cell._next;
 
     ss << "| <data>" << ssValue.str() << " } }\"];" << std::endl;
@@ -86,7 +86,7 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
     ss << "{ { ident | primIndex | symbolCell | valueCell | bindingListCell } | ";
     ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | ";
 
-    if (symbol._valueCell && (symbol._valueCell != _nil))
+    if (VALID_CELL(symbol._valueCell))
         ss << "<valueCell>cell " << symbol._valueCell;
 
     ss << "| <bindingListCell>" << symbol._bindingListCell;
@@ -95,13 +95,13 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
 
     symbolsDone.insert(symbolIndex);
 
-    if (symbol._valueCell && (symbol._valueCell != _nil))
+    if (VALID_CELL(symbol._valueCell))
     {
         ss << "symbol" << symbolIndex << ":valueCell -> cell" << symbol._valueCell << ":header;" << std::endl;
         FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone, true);
     }
 
-    if (symbol._bindingListCell && (symbol._bindingListCell != _nil))
+    if (VALID_CELL(symbol._bindingListCell))
     {
         ss << "symbol" << symbolIndex << ":bindingListCell -> cell" << symbol._bindingListCell << ":header;" << std::endl;
         FormatCellLabel(symbol._bindingListCell, ss, cellsDone, symbolsDone, true);

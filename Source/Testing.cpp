@@ -60,6 +60,11 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
 
+    CheckOutput(lisp, "(cons 'a 'b)", "(a . b)");
+    CheckOutput(lisp, "(cons (list 'a) 'b)", "((a) . b)");
+    CheckOutput(lisp, "(cons 'a (list 'b))", "(a b)");
+    CheckOutput(lisp, "(cons (list 'a) (list 'b))", "((a) b)");
+
     CheckOutput(lisp, "", "");
     CheckOutput(lisp, ";(", "");
     CheckOutput(lisp, "\n", "");
@@ -128,6 +133,8 @@ void SanityCheck()
     CheckOutput(lisp, "(sqr 5)", "25");
 
     // TODO: dot notation
+
+
     // TODO: backquote
 
     // The error section needs a *lot* more test cases

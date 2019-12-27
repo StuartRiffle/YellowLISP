@@ -36,21 +36,21 @@ NodeRef Parser::ParseElement()
     }
     else if (Consume('\''))
     {
-        // Convert 'FOO to (quote FOO)
+        // 'FOO -> (quote FOO)
 
         NodeRef quote = IdentifierNode("quote");
         result = ListNode({ quote, ParseElement() });
     }
     else if (Consume('`'))
     {
-        // Convert `FOO to (quasiquote FOO)
+        // `FOO -> (quasiquote FOO)
 
-        NodeRef unquote = IdentifierNode("quasiquote");
-        result = ListNode({ unquote, ParseElement() });
+        NodeRef quasiquote = IdentifierNode("quasiquote");
+        result = ListNode({ quasiquote, ParseElement() });
     }
     else if (Consume(','))
     {
-        // Convert ,FOO to (unquote FOO)
+        // ,FOO -> (unquote FOO)
 
         NodeRef unquote = IdentifierNode("unquote");
         result = ListNode({ unquote, ParseElement() });
@@ -60,18 +60,16 @@ NodeRef Parser::ParseElement()
         result = ParseAtom();
     }
 
-    while (Consume('.'))
+    if (result && Consume('.'))
     {
         // Convert A . B to (cons A B)
-        // FIXME: apparently lists can be terminated with anything, not just nil
 
-
-        result = ListNode({ result, ParseElement() });
+        NodeRef cons = IdentifierNode("cons");
+        result = ListNode({ cons, result, ParseElement() });
     }
 
     return result;
 }
-
 
 NodeRef Parser::ParseList()
 {
