@@ -2,8 +2,7 @@
 ;;;; Copyright (C) 2019 Stuart Riffle
 
 ; Disable the debugger in SBCL
-; (defun debug-ignore (c h) (declare (ignore h)) (print c) (abort))
-; (setf *debugger-hook* #'debug-ignore)
+; (progn (defun debug-ignore (c h) (declare (ignore h)) (print c) (abort)) (setf *debugger-hook* #'debug-ignore))
 
 
 (defun d (x) ((lambda (x) (* x 2)) x))

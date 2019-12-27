@@ -15,6 +15,9 @@ Runtime::Runtime()
     _quote = RegisterPrimitive("quote", NULL);
     _unquote = RegisterPrimitive("unquote", NULL);
     _quasiquote = RegisterPrimitive("quasiquote", NULL);
+    _defmacro = RegisterPrimitive("defmacro",&Runtime::DEFMACRO);
+    _defun = RegisterPrimitive("defun",&Runtime::DEFUN);
+    _lambda = RegisterPrimitive("lambda",&Runtime::DEFUN);
 
     // Language primitives
 
@@ -26,6 +29,7 @@ Runtime::Runtime()
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("eval",    &Runtime::EVAL);
     RegisterPrimitive("list",    &Runtime::LIST);
+    RegisterPrimitive("progn",   &Runtime::PROGN);
     RegisterPrimitive("setq",    &Runtime::SETQ);
 
     RegisterPrimitive("+",       &Runtime::ADD);
@@ -68,7 +72,6 @@ Runtime::Runtime()
 
     RegisterPrimitive("<",       &Runtime::LESS);
 
-    _defmacro = RegisterPrimitive("defmacro",&Runtime::DEFMACRO);
 
 
     // Interpreter commands
@@ -208,17 +211,16 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
                 ss << GetPrintedValue(_cell[curr]._data);
                 CELL_INDEX next = _cell[curr]._next;
 
-                if (_cell[next]._type != TYPE_LIST)
+                if (VALID_CELL(next) && (_cell[next]._type != TYPE_LIST))
                 {
                     ss << " . " << GetPrintedValue(next);
                     break;
                 }
 
                 if (VALID_CELL(next))
-                {
                     ss << " ";
-                    curr = next;
-                }
+
+                curr = next;
             }
 
             ss << ')';

@@ -77,8 +77,9 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         bool isPrim     = (symbol._type == SYMBOL_PRIMITIVE) && symbol._primIndex;
         bool isReserved = (symbol._type == SYMBOL_RESERVED);
         bool isMacro    = (symbol._type == SYMBOL_MACRO);
+        bool isFunction = (symbol._type == SYMBOL_FUNCTION);
 
-        if (isPrim || isReserved || isMacro)
+        if (isPrim || isReserved || isMacro || isFunction)
             return cellIndex;
 
         CELL_INDEX value = symbol._valueCell;
@@ -101,7 +102,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             RAISE_ERROR_IF(cell._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
             CELL_INDEX quoted = cell._next;
-            RAISE_ERROR_IF(_cell[quoted]._next, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+            RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
             return _cell[quoted]._data;
         }
@@ -113,9 +114,11 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             SYMBOL_INDEX symbolIndexFunc = _cell[function]._data;
             const SymbolInfo& symbol = _symbol[symbolIndexFunc];
 
-            bool callable = (symbol._type == SYMBOL_FUNCTION) || (symbol._type == SYMBOL_PRIMITIVE) || (symbol._type == SYMBOL_MACRO);
+            bool callable = 
+                (symbol._type == SYMBOL_FUNCTION) || 
+                (symbol._type == SYMBOL_PRIMITIVE) || 
+                (symbol._type == SYMBOL_MACRO);
             RAISE_ERROR_IF(!callable, ERROR_RUNTIME_UNDEFINED_FUNCTION, symbol._ident.c_str());
-
 
             if (symbol._type == SYMBOL_PRIMITIVE)
             {
@@ -131,7 +134,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                     // HACK: do not evaluate params for defmacro
 
-                    if (function != _defmacro)
+                    if ((function != _defmacro) && (function != _defun))
                         value = EvaluateCell(value);
 
                     primArgs.push_back(value);
@@ -147,6 +150,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
             if (symbol._bindingListCell)
             {
+                /*
                 vector<CELL_INDEX> argSymbolCells     = ExtractList(symbol._bindingListCell);
                 vector<CELL_INDEX> bindingSymbolCells = ExtractList(symbol._valueCell);
 
@@ -164,20 +168,19 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                     callScope[argSymbol._symbolCell] = boundCell;
                 }
+                */
 
 
 
 
 
-
-                /*
                 CELL_INDEX argSymbolCell = symbol._bindingListCell;
                 CELL_INDEX bindingCell = symbol._valueCell;
 
-                while (argSymbolCell != _nil)
+                while (VALID_CELL(argSymbolCell))
                 {
                     assert(argSymbolCell);
-                    RAISE_ERROR_IF(!bindingCell, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                    RAISE_ERROR_IF(!VALID_CELL(bindingCell), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                     CELL_INDEX   argCellIndex   = _cell[argSymbolCell]._data;
                     SYMBOL_INDEX argSymbolIndex = _cell[argCellIndex]._data;
@@ -194,7 +197,6 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     argSymbolCell = _cell[argSymbolCell]._next;
                     bindingCell = _cell[bindingCell]._next;
                 }
-                */
             }
 
             // Evaluate the function body

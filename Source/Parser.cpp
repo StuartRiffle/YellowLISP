@@ -146,8 +146,6 @@ NodeRef Parser::ParseIdentifier()
 {
     RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
 
-    bool unbackquoted = Consume(',');
-
     const char* end = _code;
     while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
         end++;

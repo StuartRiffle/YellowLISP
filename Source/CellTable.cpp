@@ -29,7 +29,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     if (!VALID_CELL(_cellFreeList))
         ExpandCellTable();
 
-    if (!VALID_CELL(_cellFreeList == _nil))
+    if (!VALID_CELL(_cellFreeList))
     {
         RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY);
         return 0;

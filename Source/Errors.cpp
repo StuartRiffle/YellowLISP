@@ -25,6 +25,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
         case ERROR_RUNTIME_TYPE_MISMATCH:           ss << "Type mismatch"; break;
         case ERROR_RUNTIME_RESERVED_SYMBOL:         ss << "Reserved symbol"; break;
         case ERROR_RUNTIME_UNDEFINED_FUNCTION:      ss << "Undefined function"; break;
+        case ERROR_RUNTIME_INVALID_ARGUMENT:        ss << "Invalid argument"; break;
 
         case ERROR_INTERNAL_OUT_OF_MEMORY:          ss << "[INTERNAL] Out of memory"; break;
         case ERROR_INTERNAL_PARSER_FAILURE:         ss << "[INTERNAL] Parsing failure"; break;

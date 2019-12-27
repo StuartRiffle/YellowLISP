@@ -115,7 +115,7 @@ void SanityCheck()
 
     CheckOutput(lisp, "(setq x (list 4 5 6))", "(4 5 6)");
     CheckOutput(lisp, "(setq x '(4 5 6))", "(4 5 6)");
-    CheckOutput(lisp, "(atom x)", "nil");
+    CheckOutput(lisp, "(atom x)", "t");
     CheckOutput(lisp, "(setq y x)", "(4 5 6)");
     CheckOutput(lisp, "(setq y 'x)", "x");
     CheckOutput(lisp, "(atom y)", "t");

@@ -1,4 +1,4 @@
-YellowLISP (c) 2019 Stuart Riffle (MIT license)
+// YellowLISP (c) 2019 Stuart Riffle (MIT license)
 
 #include "Yellow.h"
 #include "Runtime.h"
@@ -42,20 +42,21 @@ CELL_INDEX Runtime::CDR(const ArgumentList& args)
 
 CELL_INDEX Runtime::COND(const ArgumentList& args)
 {
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
+    for (auto arg : args)
+    {
+        vector<CELL_INDEX> elements = ExtractList(arg);
+        RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_INVALID_ARGUMENT, "Arguments to COND must be lists of two elements");
+
+        CELL_INDEX testResult = EvaluateCell(elements[0]);
+        if (testResult != _nil)
+            return EvaluateCell(elements[1]);
+    }
+
+    return _nil;
 }
 
 CELL_INDEX Runtime::CONS(const ArgumentList& args)
 {
-    // FIXME!
-    //
-    // (cons 'a        'b)         ==>  (a . b)
-    // (cons (list 'a) 'b)         ==>  ((a) . b)
-    // (cons 'a        (list 'b))  ==>  (a b)
-    // (cons (list 'a) (list 'b))  ==>  ((a) b)
-
     VERIFY_NUM_PARAMETERS(args.size(), 2, "CONS");
     CELL_INDEX head = args[0];
     CELL_INDEX tail = args[1];
@@ -159,11 +160,19 @@ CELL_INDEX Runtime::SETQ(const ArgumentList& args)
     return valueCell;
 }
 
-CELL_INDEX Runtime::PRINT(const ArgumentList& args)
+CELL_INDEX Runtime::PROGN(const ArgumentList& args)
 {
-    (args);
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
-    return 0;
+    CELL_INDEX result = _nil;
+
+    for (size_t i = 0; i < args.size(); i++)
+    {
+        // TODO
+        //bool isTail = (i == args.size() - 1);
+
+        result = EvaluateCell(args[i]);
+    }
+
+    return result;
 }
 
 CELL_INDEX Runtime::EVAL(const ArgumentList& args)
@@ -214,13 +223,14 @@ CELL_INDEX Runtime::DEFUN(const ArgumentList& args)
 {
     CELL_INDEX   symbolCell  = DEFMACRO(args);
     SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
-    SymbolInfo&  macroSymbol = _symbol[symbolIndex];
+    SymbolInfo&  funcSymbol  = _symbol[symbolIndex];
 
-    macroSymbol._type = SYMBOL_FUNCTION;
+    funcSymbol._type = SYMBOL_FUNCTION;
     return symbolCell;
 }
 
 CELL_INDEX Runtime::LAMBDA(const ArgumentList& args)
 {
-
+    (args);
+    return _nil;
 }

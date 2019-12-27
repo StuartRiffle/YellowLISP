@@ -138,7 +138,10 @@ class Runtime
     CELL_INDEX  _nil;
     CELL_INDEX  _true;
     CELL_INDEX  _quote;
+    CELL_INDEX  _unquote;
+    CELL_INDEX  _quasiquote;
     CELL_INDEX  _defmacro;
+    CELL_INDEX  _defun;
     CELL_INDEX  _lambda;
 
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
@@ -190,6 +193,7 @@ class Runtime
     CELL_INDEX LESS(const ArgumentList& args);
     CELL_INDEX LET(const ArgumentList& args);
     CELL_INDEX LIST(const ArgumentList& args);
+    CELL_INDEX PROGN(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
 
     // Math.cpp
