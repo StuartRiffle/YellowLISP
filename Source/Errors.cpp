@@ -14,6 +14,7 @@ YellowError::YellowError(ErrorCode code, const char* details) :
     {
         case ERROR_PARSER_SYNTAX:                   ss << "Syntax error"; break;
         case ERROR_PARSER_STRING_UNTERMINATED:      ss << "String unterminated"; break;
+        case ERROR_PARSER_LIST_EXPECTED:            ss << "List expected"; break;
         case ERROR_PARSER_LIST_UNTERMINATED:        ss << "List unterminated"; break;
         case ERROR_PARSER_INVALID_IDENTIFIER:       ss << "Invalid identifier"; break;
         case ERROR_PARSER_BRACE_MISMATCH:           ss << "Brace mismatch"; break;

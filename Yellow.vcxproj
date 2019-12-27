@@ -161,7 +161,6 @@
     <ClCompile Include="Source\Parser.cpp" />
     <ClCompile Include="Source\Primitives.cpp" />
     <ClCompile Include="Source\Runtime.cpp" />
-    <ClCompile Include="Source\Sugar.cpp" />
     <ClCompile Include="Source\Testing.cpp" />
     <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>

@@ -178,16 +178,15 @@ class Runtime
     CELL_INDEX CDR(const ArgumentList& args);
     CELL_INDEX COND(const ArgumentList& args);
     CELL_INDEX CONS(const ArgumentList& args);
+    CELL_INDEX DEFUN(const ArgumentList& args);
+    CELL_INDEX DEFMACRO(const ArgumentList& args);
     CELL_INDEX EQ(const ArgumentList& args);
     CELL_INDEX EVAL(const ArgumentList& args);
     CELL_INDEX LAMBDA(const ArgumentList& args);
     CELL_INDEX LESS(const ArgumentList& args);
     CELL_INDEX LET(const ArgumentList& args);
     CELL_INDEX LIST(const ArgumentList& args);
-    CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX SETQ(const ArgumentList& args);
-    CELL_INDEX DEFMACRO(const ArgumentList& args);
-    CELL_INDEX DEFUN(const ArgumentList& args);  // YellowScheme
 
     // Math.cpp
 
@@ -221,6 +220,7 @@ class Runtime
     CELL_INDEX ATAN(const ArgumentList& args);
     CELL_INDEX ATANH(const ArgumentList& args);
 
+    CELL_INDEX PRINT(const ArgumentList& args);
     CELL_INDEX RANDOM(const ArgumentList& args);
 
     CELL_INDEX LISTP(const ArgumentList& args);

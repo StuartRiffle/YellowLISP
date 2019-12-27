@@ -43,7 +43,6 @@ class Parser
         for (;;)
         {
             SkipWhitespace();
-
             if (*_code != ';')
                 break;
 
@@ -63,6 +62,7 @@ class Parser
         return true;
     }
 
+    NodeRef ParseExpression();
     NodeRef ParseElement();
     NodeRef ParseList();
     NodeRef ParseAtom();
@@ -70,17 +70,11 @@ class Parser
     NodeRef ParseNumber();
     NodeRef ParseIdentifier();
 
-    // These are for parsing "normal" arithmetic expressions and
-    // converting them to a LISP representation
-
-    NodeRef ParseArithmeticExpression();
-    NodeRef ParseArithmeticAddSub();
-    NodeRef ParseArithmeticMulDiv();
-    NodeRef ParseArithmeticUnary();
-    NodeRef ParseArithmeticTerm();
+    NodeRef MakeIdentifier(const string& ident);
+    NodeRef MakeList(const vector<NodeRef>& args);
 
 public:
-    list<NodeRef> ParseExpressions(const string& source);
+    list<NodeRef> ParseExpressionList(const string& source);
     void DumpSyntaxTree(NodeRef node, int indent = 0);
 
     static void TestParsing(const string& code);

@@ -120,26 +120,15 @@ void SanityCheck()
     CheckOutput(lisp, "(< 1 1)", "nil");
     CheckOutput(lisp, "(< -2 -1)", "t");
     CheckOutput(lisp, "(< -1 -2)", "nil");
-
     CheckOutput(lisp, "(< 1.1 2.1)", "t");
     CheckOutput(lisp, "(< 1 2.1)", "t");
     CheckOutput(lisp, "(< -1.1 2)", "t");
 
-    // Need more arithmetic test cases
-
-    CheckOutput(lisp, "{ 1 }", "1");
-    CheckOutput(lisp, "{ 3+4 }", "7");
-    CheckOutput(lisp, "{ 3 + 4 }", "7");
-    CheckOutput(lisp, "{ 3 + 4 * 5 }", "23");
-    CheckOutput(lisp, "{ 3 + (4) * 5 }", "23");
-    CheckOutput(lisp, "{ 3 + (((4))) * 5 }", "23");
-    CheckOutput(lisp, "{ (3 + 4) * 5 }", "35");
-    CheckOutput(lisp, "{ -(3 + 4) * 5 }", "-35");
-    CheckOutput(lisp, "{ -3 + 4 * 5 }", "17");
-    CheckOutput(lisp, "{ -(3 + 4 * 5) }", "-23");
-
     CheckOutput(lisp, "(defmacro sqr (x) (* x x))", "sqr");
     CheckOutput(lisp, "(sqr 5)", "25");
+
+    // TODO: dot notation
+    // TODO: backquote
 
     // The error section needs a *lot* more test cases
 

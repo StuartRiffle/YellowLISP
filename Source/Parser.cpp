@@ -5,19 +5,20 @@
 
 const char* SYMBOL_CHARS = "!$%&*+-./:<=>?@^_~";
 
-list<NodeRef> Parser::ParseExpressions(const string& source)
+list<NodeRef> Parser::ParseExpressionList(const string& source)
 {
     list<NodeRef> result;
     _code = source.c_str();
 
     while (*_code)
     {
+        SkipWhitespace();
+
         NodeRef element = ParseElement();
         if (!element)
             break;
 
         result.push_back(element);
-        SkipWhitespace();
 
         //DumpSyntaxTree(element);
     }
@@ -29,67 +30,47 @@ NodeRef Parser::ParseElement()
 {
     NodeRef result;
 
-    if (Consume('\''))
-    {
-        // Sugar: convert 'FOO to (quote FOO)
-
-        NodeRef quote(new NodeVariant(AST_NODE_IDENTIFIER));
-        quote->_identifier = "quote";
-
-        NodeRef quoteNode(new NodeVariant(AST_NODE_LIST));
-        quoteNode->_list.push_back(quote);
-        quoteNode->_list.push_back(ParseElement());
-
-        result = quoteNode;
-    }
-    else if (Consume('{'))
-    {
-        // Sugar: evaluate expressions between curly braces
-        // using normal arithmetic, using the normal meaning
-        // of parentheses as grouping, like normal people do.
-        //
-        // These expressions are equivalent:
-        //
-        //      (+ (* (+ a b) c) 123) 
-        //      { (a + b) * c + 123 }
-
-        result = ParseArithmeticExpression();
-
-        if (!Consume('}'))
-            RAISE_ERROR(ERROR_PARSER_SYNTAX, "expected '}'");
-    }
-    else if (Peek('(') || Peek('['))
+    if (Peek('(') || Peek('['))
     {
         result = ParseList();
+    }
+    else if (Consume('\''))
+    {
+        // Convert 'FOO to (quote FOO)
+
+        NodeRef quote = MakeIdentifier("quote");
+        result = MakeList({ quote, ParseElement() });
+    }
+    else if (Consume('`'))
+    {
+        // Convert `FOO to (unquote FOO)
+
+        NodeRef unquote = MakeIdentifier("unquote");
+        result = MakeList({ unquote, ParseElement() });
     }
     else if (*_code)
     {
         result = ParseAtom();
     }
 
-    if (Consume('.'))
+    while (Consume('.'))
     {
-        // Sugar: convert A . B to (cons A B)
+        // Convert A . B to (cons A B)
 
-        NodeRef cons(new NodeVariant(AST_NODE_IDENTIFIER));
-        cons->_identifier = "cons";
-
-        NodeRef consNode(new NodeVariant(AST_NODE_LIST));
-        consNode->_list.push_back(cons);
-        consNode->_list.push_back(result);
-        consNode->_list.push_back(ParseElement());
-
-        result = consNode;
+        NodeRef cons = MakeIdentifier("cons");
+        result = MakeList({ cons, result, ParseList() });
     }
 
     return result;
 }
 
+
 NodeRef Parser::ParseList()
 {
     char matchingBrace = Consume('(') ? ')' : Consume('[') ? ']' : 0;
     char wrongBrace = (matchingBrace == ')') ? ']' : ')';
-    assert(matchingBrace);
+
+    RAISE_ERROR_IF(!matchingBrace, ERROR_PARSER_LIST_EXPECTED);
 
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
 
@@ -159,6 +140,8 @@ NodeRef Parser::ParseIdentifier()
 {
     RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
 
+    bool unbackquoted = Consume(',');
+
     const char* end = _code;
     while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
         end++;
@@ -169,9 +152,25 @@ NodeRef Parser::ParseIdentifier()
     string ident(_code, end - _code);
     _code = end;
 
-    NodeRef identNode(new NodeVariant(AST_NODE_IDENTIFIER));
-    identNode->_identifier = ident;
+    NodeRef identNode = MakeIdentifier(ident);
     return identNode;
+}
+
+NodeRef Parser::IdentifierNode(const string& ident)
+{
+    NodeRef node(new NodeVariant(AST_NODE_IDENTIFIER));
+    node->_identifier = ident;
+
+    return node;
+}
+
+NodeRef Parser::ListNode(const vector<NodeRef>& elems)
+{
+    NodeRef listNode(new NodeVariant(AST_NODE_LIST));
+    for (auto& elem : elems)
+        listNode->_list.push_back(elem);
+
+    return listNode;
 }
 
 void Parser::DumpSyntaxTree(NodeRef node, int indent)
