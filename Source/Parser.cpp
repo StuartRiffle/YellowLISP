@@ -38,15 +38,22 @@ NodeRef Parser::ParseElement()
     {
         // Convert 'FOO to (quote FOO)
 
-        NodeRef quote = MakeIdentifier("quote");
-        result = MakeList({ quote, ParseElement() });
+        NodeRef quote = IdentifierNode("quote");
+        result = ListNode({ quote, ParseElement() });
     }
     else if (Consume('`'))
     {
-        // Convert `FOO to (unquote FOO)
+        // Convert `FOO to (quasiquote FOO)
 
-        NodeRef unquote = MakeIdentifier("unquote");
-        result = MakeList({ unquote, ParseElement() });
+        NodeRef unquote = IdentifierNode("quasiquote");
+        result = ListNode({ unquote, ParseElement() });
+    }
+    else if (Consume(','))
+    {
+        // Convert ,FOO to (unquote FOO)
+
+        NodeRef unquote = IdentifierNode("unquote");
+        result = ListNode({ unquote, ParseElement() });
     }
     else if (*_code)
     {
@@ -56,9 +63,10 @@ NodeRef Parser::ParseElement()
     while (Consume('.'))
     {
         // Convert A . B to (cons A B)
+        // FIXME: apparently lists can be terminated with anything, not just nil
 
-        NodeRef cons = MakeIdentifier("cons");
-        result = MakeList({ cons, result, ParseList() });
+
+        result = ListNode({ result, ParseElement() });
     }
 
     return result;
@@ -152,7 +160,7 @@ NodeRef Parser::ParseIdentifier()
     string ident(_code, end - _code);
     _code = end;
 
-    NodeRef identNode = MakeIdentifier(ident);
+    NodeRef identNode = IdentifierNode(ident);
     return identNode;
 }
 
@@ -167,8 +175,7 @@ NodeRef Parser::IdentifierNode(const string& ident)
 NodeRef Parser::ListNode(const vector<NodeRef>& elems)
 {
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
-    for (auto& elem : elems)
-        listNode->_list.push_back(elem);
+    listNode->_list = elems;
 
     return listNode;
 }

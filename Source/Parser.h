@@ -70,8 +70,8 @@ class Parser
     NodeRef ParseNumber();
     NodeRef ParseIdentifier();
 
-    NodeRef MakeIdentifier(const string& ident);
-    NodeRef MakeList(const vector<NodeRef>& args);
+    NodeRef IdentifierNode(const string& ident);
+    NodeRef ListNode(const vector<NodeRef>& elems);
 
 public:
     list<NodeRef> ParseExpressionList(const string& source);

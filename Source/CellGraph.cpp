@@ -12,6 +12,8 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         return;
 
     Cell& cell = _cell[cellIndex];
+    assert(cell._next);
+
     std::stringstream ssValue;
 
     string fillColor = "white";
@@ -43,7 +45,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         
     ss << "<next>";
 
-    if (cell._next && (cell._next != _nil))
+    if (cell._next != _nil)
         ss << "cell " << cell._next;
 
     ss << "| <data>" << ssValue.str() << " } }\"];" << std::endl;
@@ -64,7 +66,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         FormatCellLabel(cell._data, ss, cellsDone, symbolsDone, expandSymbols);
     }
 
-    if (cell._next)
+    if (cell._next != _nil)
     {
         ss << "cell" << cellIndex << ":next -> cell" << cell._next << ":header;" << std::endl;
         FormatCellLabel(cell._next, ss, cellsDone, symbolsDone, expandSymbols);

@@ -35,7 +35,7 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 
 
 (defmacro if (test then else) `(cond (,test ,then) (T ,else)))
-(defmacro defvar (n v) `(setq ,n v))
+(defmacro defvar (n v) `(setq n ,v)))
 
 
 (defun and    (a b) (cond (a (cond (b T)))))

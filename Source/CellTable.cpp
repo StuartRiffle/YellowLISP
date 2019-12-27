@@ -7,7 +7,7 @@
 CELL_INDEX Runtime::AllocateCell(Type type)
 {
 #if YELLOW_ENABLE_GC
-    if (_cellFreeList == 0)
+    if (_cellFreeList == _nil)
     {
         size_t numCellsFreed = CollectGarbage();
 
@@ -26,10 +26,10 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     }
 #endif
 
-    if (_cellFreeList == 0)
+    if (_cellFreeList == _nil)
         ExpandCellTable();
 
-    if (_cellFreeList == 0)
+    if (_cellFreeList == _nil)
     {
         RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY);
         return 0;
@@ -39,7 +39,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     _cellFreeList = _cell[_cellFreeList]._next;
 
     _cell[index]._type = type;
-    _cell[index]._next = 0;
+    _cell[index]._next = _nil;
     _cell[index]._tags = TAG_IN_USE;
 
     return index;
@@ -78,7 +78,7 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
     if (cell._type == TYPE_LIST)
         MarkCellsInUse(cell._data);
 
-    if (cell._next)
+    if (cell._next != _nil)
         MarkCellsInUse(cell._next);
 }
 

@@ -105,9 +105,10 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 assert(symbol._primIndex && (symbol._primIndex != _nil));
                 PrimitiveInfo& prim = _primitive[symbol._primIndex];
 
-                CELL_INDEX firstArgCell = cell._next;
-
                 ArgumentList primArgs;
+
+                CELL_INDEX argCell = cell._next;
+                while ((argCell != _nil) && (_cell[argCell]._type == TYPE_LIST))
                 for (CELL_INDEX argCell = firstArgCell; argCell; argCell = _cell[argCell]._next)
                 {
                     CELL_INDEX value = _cell[argCell]._data;

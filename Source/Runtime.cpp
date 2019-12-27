@@ -7,7 +7,7 @@ Runtime::Runtime()
 {
     _primitive.emplace_back(); // element 0 is invalid
 
-    _cellFreeList = 0;
+    _cellFreeList = _nil;
     ExpandCellTable();
 
     _nil   = RegisterSymbol("nil");
@@ -199,14 +199,26 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
         case TYPE_LIST:
         {
             ss << '(';
+
             CELL_INDEX curr = index;
-            while (curr)
+            while (curr != _nil)
             {
                 ss << GetPrintedValue(_cell[curr]._data);
-                if (_cell[curr]._next)
+                CELL_INDEX next = _cell[curr]._next;
+
+                if (_cell[next]._type != TYPE_LIST)
+                {
+                    ss << " . " << GetPrintedValue(next);
+                    break;
+                }
+
+                if (next != _nil)
+                {
                     ss << " ";
-                curr = _cell[curr]._next;
+                    curr = next;
+                }
             }
+
             ss << ')';
             break;
         }
