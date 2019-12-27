@@ -10,6 +10,7 @@ enum Type : uint32_t
 {                       // The data stored in the cell is...
     TYPE_VOID,          //   zero, because the cell is uninitialized
     TYPE_LIST,          //   an index into the cell table
+    TYPE_LAMBDA,      //   an index into the cell table for the binding list
     TYPE_SYMBOL,        //   an index into the symbol table
     TYPE_STRING,        //   a tiny string literal, or an index into the string table
     TYPE_INT,           //   a signed integer literal
@@ -71,9 +72,9 @@ struct SymbolInfo
     TINDEX _primIndex;
     CELL_INDEX _symbolCell;
     CELL_INDEX _valueCell;
-    CELL_INDEX _bindingListCell;
+    CELL_INDEX _macroBindings;
 
-    SymbolInfo() : _type(SYMBOL_INVALID), _primIndex(0), _symbolCell(0), _valueCell(0), _bindingListCell(0) {}
+    SymbolInfo() : _type(SYMBOL_INVALID), _primIndex(0), _symbolCell(0), _valueCell(0), _macroBindings(0) {}
 };
 
 #define VALID_CELL(_IDX) (((_IDX) != 0) && ((_IDX) != _nil))
@@ -148,6 +149,9 @@ class Runtime
     CELL_INDEX   RegisterSymbol(const char* ident);
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
     vector<CELL_INDEX> ExtractList(CELL_INDEX index);
+
+    CELL_INDEX CallPrimitive(SYMBOL_INDEX symbolIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
+    CELL_INDEX ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell);
 
     // CellTable.cpp
 

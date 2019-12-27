@@ -90,6 +90,7 @@ void SanityCheck()
     CheckOutput(lisp, "(quote ('1 2))", "((quote 1) 2)");
     CheckOutput(lisp, "'('1 2)", "((quote 1) 2)");
 
+    CheckOutput(lisp, "(atom nil)", "t");
     CheckOutput(lisp, "(atom ())", "t");
     CheckOutput(lisp, "(atom '())", "t");
     CheckOutput(lisp, "(atom 3)", "t");
@@ -100,6 +101,7 @@ void SanityCheck()
     CheckOutput(lisp, "[atom (atom 3)]", "t");
     CheckOutput(lisp, "(atom '(atom 3))", "nil");
     CheckOutput(lisp, "(atom (list 1 2))", "nil");
+    CheckOutput(lisp, "(atom (cons 1 2))", "nil");
 
     CheckOutput(lisp, "(car (list 1 2))", "1");
     CheckOutput(lisp, "(cdr (list 1 2))", "(2)");
@@ -132,7 +134,19 @@ void SanityCheck()
     CheckOutput(lisp, "(defmacro sqr (x) (* x x))", "sqr");
     CheckOutput(lisp, "(sqr 5)", "25");
 
-    // TODO: dot notation
+    CheckOutput(lisp, "(append '(a b c) '())", "(a b c)");
+    CheckOutput(lisp, "(append '() '(a b c))", "(a b c)");
+    CheckOutput(lisp, "(append '(a b) '(c d))", "(a b c d)");
+    CheckOutput(lisp, "(append '(a b) 'c)", "(a b . c)");
+    CheckOutput(lisp, "(append '(a b c) '(d e f) '() '(g))", "(a b c d e f g)");
+    CheckOutput(lisp, "(append '(a b c) 'd)", "(a b c . d)");
+    CheckOutput(lisp, "(setq lst '(a b c))", "(a b c)");
+    CheckOutput(lisp, "(append lst '(d))", "(a b c d)");
+    CheckOutput(lisp, "lst", "(a b c)");
+    CheckOutput(lisp, "(append)", "nil");
+    CheckOutput(lisp, "(append 'a)", "a");
+
+        // TODO: dot notation
 
 
     // TODO: backquote

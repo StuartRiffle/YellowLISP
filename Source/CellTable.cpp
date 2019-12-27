@@ -82,6 +82,15 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
         if (VALID_CELL(cell._next))
             MarkCellsInUse(cell._next);
     }
+
+    if (cell._type == TYPE_LAMBDA)
+    {
+        CELL_INDEX args = cell._data;
+        MarkCellsInUse(args);
+
+        CELL_INDEX body = cell._next;
+        MarkCellsInUse(body);
+    }
 }
 
 size_t Runtime::CollectGarbage()
@@ -93,6 +102,7 @@ size_t Runtime::CollectGarbage()
     MarkCellsInUse(_nil);
     MarkCellsInUse(_true);
     MarkCellsInUse(_quote);
+    // TODO: the rest of them here
 
     // Mark everything in the global scope
 
@@ -105,6 +115,7 @@ size_t Runtime::CollectGarbage()
         {
             MarkCellsInUse(symbol._symbolCell);
             MarkCellsInUse(symbol._valueCell);
+            //MarkCellsInUse(symbol._bindingListCell);
         }
     }
 

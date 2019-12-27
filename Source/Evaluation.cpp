@@ -20,10 +20,33 @@ vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
     return result;
 }
 
+CELL_INDEX Runtime::ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell)
+{
+}
+
+void Runtime::DumpDebugGraph(CELL_INDEX cellIndex)
+{
+
+}
+
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 {
     if (!VALID_CELL(cellIndex))
         return _nil;
+
+    // Symbols in the current scope override globals
+
+    if (!_environment.empty())
+    {
+        Scope& scope = _environment.back();
+
+        auto iter = scope.find(cellIndex);
+        if (iter != scope.end())
+        {
+            CELL_INDEX localValue = iter->second;
+            cellIndex = localValue;
+        }
+    }
 
 #ifndef NDEBUG
     static int sDumpDebugGraph = 1;
@@ -40,188 +63,143 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 #endif
 
     const Cell& cell = _cell[cellIndex];
+    CELL_INDEX lambdaCell = _nil;
 
-    // Literals evaluate to themselves
-
-    bool isLiteral =
-        (cell._type == TYPE_INT) ||
-        (cell._type == TYPE_FLOAT) ||
-        (cell._type == TYPE_STRING);
-
-    if (isLiteral)
-        return cellIndex;
-
-    if (cell._type == TYPE_SYMBOL)
+    if (cellIndex == _quote)
     {
-        // Symbols in the current scope override globals
+        // Special form: quote
 
-        SYMBOL_INDEX symbolIndex = cell._data;
+        CELL_INDEX quoted = cell._next;
+        RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
-        if (!_environment.empty())
+        return _cell[quoted]._data;
+    }
+
+    switch (cell._type)
+    {
+        case TYPE_SYMBOL:
         {
-            Scope& scope = _environment.back();
+            SYMBOL_INDEX symbolIndex = cell._data;
+            const SymbolInfo& symbol = _symbol[symbolIndex];
 
-            auto iter = scope.find(cellIndex);
-            if (iter != scope.end())
+            assert(symbol._symbolCell == cellIndex);
+            if (!VALID_CELL(symbol._valueCell))
+                return _nil;
+
+            switch (symbol._type)
             {
-                CELL_INDEX localValue = iter->second;
-                return EvaluateCell(localValue);
+                case SYMBOL_RESERVED:
+                    return cellIndex;
+
+                case SYMBOL_VARIABLE:
+                    return symbol._valueCell;
+
+                case SYMBOL_FUNCTION:
+                    lambdaCell = symbol._valueCell;
+                    break;
+
+                case SYMBOL_MACRO:
+                    lambdaCell = ExpandMacro(symbol._macroBindings, symbol._valueCell);
+                    break;
+
+                case SYMBOL_PRIMITIVE:
+                {
+                    bool evaluateArgs = ((cellIndex != _defmacro) && (cellIndex != _defun));
+                    CELL_INDEX argCellIndex = cell._next;
+
+                    return CallPrimitive(symbolIndex, argCellIndex, evaluateArgs);
+                }
             }
+
+            break;
         }
 
-        // Primitive symbols are used directly
+        case TYPE_LIST:
+        {
+            lambdaCell = EvaluateCell(cell._data);
+            RAISE_ERROR_IF(_cell[lambdaCell]._type != TYPE_LAMBDA, ERROR_RUNTIME_INVALID_ARGUMENT, "first element not a function");
+            break;
+        }
 
-        const SymbolInfo& symbol = _symbol[symbolIndex];
-        assert(symbol._symbolCell == cellIndex);
-
-        bool isPrim     = (symbol._type == SYMBOL_PRIMITIVE) && symbol._primIndex;
-        bool isReserved = (symbol._type == SYMBOL_RESERVED);
-        bool isMacro    = (symbol._type == SYMBOL_MACRO);
-        bool isFunction = (symbol._type == SYMBOL_FUNCTION);
-
-        if (isPrim || isReserved || isMacro || isFunction)
+        case TYPE_INT:
+        case TYPE_FLOAT:
+        case TYPE_STRING:
+        case TYPE_LAMBDA:
             return cellIndex;
+    }
 
-        CELL_INDEX value = symbol._valueCell;
-        if (symbol._type == SYMBOL_MACRO)
+    assert(VALID_CELL(lambdaCell));
+
+    CELL_INDEX bindingCellIndex  = _cell[lambdaCell]._data;
+    CELL_INDEX bodyCellIndex = _cell[lambdaCell]._next;
+
+    // Bind the arguments
+
+    CELL_INDEX bindingList = _cell[lambdaCell]._data;
+    assert(_cell[bindingList]._type == TYPE_LIST);
+
+    CELL_INDEX argList = cell._next;
+    assert(_cell[argList]._type == TYPE_LIST);
+
+    Scope callScope;
+
+    while (VALID_CELL(argList))
+    {
+        RAISE_ERROR_IF(!VALID_CELL(bindingList), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
+        CELL_INDEX boundSymbolCell = _cell[bindingList]._data;
+        SYMBOL_INDEX boundSymbolIndex = _cell[boundSymbolCell]._data;
+
+        CELL_INDEX valueCell = _cell[argList]._data;
+        CELL_INDEX value = EvaluateCell(valueCell);
+
+        callScope[boundSymbolIndex] = value;
+
+        argList = _cell[argList]._next;
+        bindingList = _cell[bindingList]._next;
+    }
+
+    // Evaluate the function body
+
+    CELL_INDEX callResult = _nil;
+    _environment.push_back(std::move(callScope));
+
+    try
+    {
+        callResult = EvaluateCell(bodyCellIndex);
+    }
+    catch (...)
+    {
+        _environment.pop_back();
+        throw;
+    }
+
+    _environment.pop_back();
+    return callResult;
+}
+
+CELL_INDEX Runtime::CallPrimitive(SYMBOL_INDEX symbolIndex, CELL_INDEX argCellIndex, bool evaluateArgs)
+{
+    const SymbolInfo& symbol = _symbol[symbolIndex];
+
+    assert(symbol._primIndex && (symbol._primIndex != _nil));
+    PrimitiveInfo& prim = _primitive[symbol._primIndex];
+
+    ArgumentList primArgs;
+
+    vector<CELL_INDEX> elements = ExtractList(argCellIndex);
+    for (auto argCell : elements)
+    {
+        CELL_INDEX value = _cell[argCell]._data;
+
+        if (evaluateArgs)
             value = EvaluateCell(value);
 
-        return value;
+        primArgs.push_back(value);
     }
 
-    if (cell._type == TYPE_LIST)
-    {
-        // Evaluate the function/operator (the first element)
-
-        CELL_INDEX function = EvaluateCell(cell._data);
-
-        // Handle special form: quote
-
-        if (function == _quote)
-        {
-            RAISE_ERROR_IF(cell._type != TYPE_LIST, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
-
-            CELL_INDEX quoted = cell._next;
-            RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-            return _cell[quoted]._data;
-        }
-
-        // Call the function
-
-        if (_cell[function]._type == TYPE_SYMBOL)
-        {
-            SYMBOL_INDEX symbolIndexFunc = _cell[function]._data;
-            const SymbolInfo& symbol = _symbol[symbolIndexFunc];
-
-            bool callable = 
-                (symbol._type == SYMBOL_FUNCTION) || 
-                (symbol._type == SYMBOL_PRIMITIVE) || 
-                (symbol._type == SYMBOL_MACRO);
-            RAISE_ERROR_IF(!callable, ERROR_RUNTIME_UNDEFINED_FUNCTION, symbol._ident.c_str());
-
-            if (symbol._type == SYMBOL_PRIMITIVE)
-            {
-                assert(symbol._primIndex && (symbol._primIndex != _nil));
-                PrimitiveInfo& prim = _primitive[symbol._primIndex];
-
-                ArgumentList primArgs;
-
-                vector<CELL_INDEX> elements = ExtractList(cell._next);
-                for (auto argCell : elements)
-                {
-                    CELL_INDEX value = _cell[argCell]._data;
-
-                    // HACK: do not evaluate params for defmacro
-
-                    if ((function != _defmacro) && (function != _defun))
-                        value = EvaluateCell(value);
-
-                    primArgs.push_back(value);
-                }
-
-                CELL_INDEX primResult = (*this.*prim._func)(primArgs);
-                return primResult;
-            }
-
-            // Bind the arguments
-
-            Scope callScope;
-
-            if (symbol._bindingListCell)
-            {
-                /*
-                vector<CELL_INDEX> argSymbolCells     = ExtractList(symbol._bindingListCell);
-                vector<CELL_INDEX> bindingSymbolCells = ExtractList(symbol._valueCell);
-
-                RAISE_ERROR_IF(argSymbolCells.size() != bindingSymbolCells.size(), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-                for (size_t i = 0; i < argSymbolCells.size(); i++)
-                {
-                    CELL_INDEX   argCellIndex   = _cell[argSymbolCells[i]]._data;
-                    SYMBOL_INDEX argSymbolIndex = _cell[argCellIndex]._data;
-                    SymbolInfo&  argSymbol      = _symbol[argSymbolIndex];
-                    CELL_INDEX   boundCell      = bindingSymbolCells[i];
-
-                    if (symbol._type != SYMBOL_MACRO)
-                        boundCell = EvaluateCell(boundCell);
-
-                    callScope[argSymbol._symbolCell] = boundCell;
-                }
-                */
-
-
-
-
-
-                CELL_INDEX argSymbolCell = symbol._bindingListCell;
-                CELL_INDEX bindingCell = symbol._valueCell;
-
-                while (VALID_CELL(argSymbolCell))
-                {
-                    assert(argSymbolCell);
-                    RAISE_ERROR_IF(!VALID_CELL(bindingCell), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-                    CELL_INDEX   argCellIndex   = _cell[argSymbolCell]._data;
-                    SYMBOL_INDEX argSymbolIndex = _cell[argCellIndex]._data;
-                    SymbolInfo&  argSymbol      = _symbol[argSymbolIndex];
-
-                    // Evaluate the argument (if this isn't a macro)
-
-                    CELL_INDEX boundCell = _cell[cell._next]._data;
-                    if (symbol._type != SYMBOL_MACRO)
-                        boundCell = EvaluateCell(boundCell);
-
-                    callScope[argSymbol._symbolCell] = boundCell;
-
-                    argSymbolCell = _cell[argSymbolCell]._next;
-                    bindingCell = _cell[bindingCell]._next;
-                }
-            }
-
-            // Evaluate the function body
-
-            CELL_INDEX callResult = _nil;
-            _environment.push_back(std::move(callScope));
-
-            try
-            {
-                callResult = EvaluateCell(symbol._valueCell);
-            }
-            catch (...)
-            {
-                _environment.pop_back();
-                throw;
-            }
-
-            _environment.pop_back();
-            return callResult;
-        }
-
-        RAISE_ERROR(ERROR_RUNTIME_UNDEFINED_FUNCTION);
-    }
-
-    return _nil;
+    CELL_INDEX primResult = (*this.*prim._func)(primArgs);
+    return primResult;
 }
 
 
