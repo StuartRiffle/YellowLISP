@@ -232,6 +232,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
         case TYPE_FLOAT:  ss << LoadFloatLiteral(index); break;
         case TYPE_STRING: ss << '\"' << LoadStringLiteral(index) << '\"'; break;
         case TYPE_SYMBOL: ss << _symbol[cell._data]._ident; break;
+        case TYPE_LAMBDA: ss << "<lambda " << index << ">"; break;
 
         default:          RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT); break;
     }

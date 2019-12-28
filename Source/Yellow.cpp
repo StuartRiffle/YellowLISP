@@ -29,6 +29,7 @@ void PrintOptions()
     printf("Available command line options are:\n");
     printf("  --repl      Drop to an interactive prompt after running any LISP files\n");
     printf("  --debug     Run in debug mode (verbose diagnostic output)\n");
+    printf("  --no-color  Disable colored console output\n");
     printf("  --version   Print just the version and exit\n");
     printf("  --help      Display this message and exit\n");
     printf("\n");
@@ -37,10 +38,12 @@ void PrintOptions()
     printf("  https://github.com/StuartRiffle/YellowLISP\n");
 }
 
+bool gColorConsole = true;
+
 int main(int argc, char** argv)
 {
 #ifndef NDEBUG
-    SanityCheck();
+    //SanityCheck();
 #endif
 
     CommandLine commandLine(argc, argv);
@@ -68,6 +71,9 @@ int main(int argc, char** argv)
 
     if (commandLine.HasFlag("--debug"))
         settings._debugMode = true;
+
+    if (commandLine.HasFlag("--no-color"))
+        gColorConsole = false;
 
     // Now let's try and LISP something
 
@@ -105,7 +111,6 @@ int main(int argc, char** argv)
     printf("\n %s \n", versionStr);
     ResetTextColor();
 
-    lisp.Evaluate("'nil");
     lisp.RunREPL();
 
     return RETURN_SUCCESS;

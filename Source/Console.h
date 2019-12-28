@@ -46,8 +46,13 @@ inline WORD AnsiColorToWindows(int fg, int bg)
     return attr;
 }
 
+extern bool gColorConsole;
+
 inline void SetTextColor(int fg, int bg = 0)
 {
+    if (!gColorConsole)
+        return;
+
 #ifdef _MSC_VER
     WORD attr = AnsiColorToWindows(fg, bg);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), attr);
@@ -59,6 +64,9 @@ inline void SetTextColor(int fg, int bg = 0)
 
 inline void ResetTextColor()
 {
+    if (!gColorConsole)
+        return;
+
 #ifdef _MSC_VER
     WORD attr = AnsiColorToWindows(ANSI_WHITE, ANSI_BLACK);
     attr &= ~FOREGROUND_INTENSITY;

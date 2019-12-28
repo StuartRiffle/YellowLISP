@@ -50,10 +50,6 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         case TYPE_SYMBOL:
         {
             SYMBOL_INDEX symbolIndex = cell._data;
-            const SymbolInfo& symbol = _symbol[symbolIndex];
-            assert(symbol._symbolCell == cellIndex);
-
-            RAISE_ERROR_IF(symbol._type == SYMBOL_INVALID, ERROR_RUNTIME_VARIABLE_UNBOUND, symbol._ident.c_str());
 
             // Symbols in the current scope override globals
 
@@ -68,6 +64,11 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     return EvaluateCell(localValue);
                 }
             }
+
+            const SymbolInfo& symbol = _symbol[symbolIndex];
+            assert(symbol._symbolCell == cellIndex);
+
+            RAISE_ERROR_IF(symbol._type == SYMBOL_INVALID, ERROR_RUNTIME_VARIABLE_UNBOUND, symbol._ident.c_str());
 
             switch (symbol._type)
             {
@@ -125,15 +126,19 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 if (headSymbol._type == SYMBOL_PRIMITIVE)
                 {
                     primitiveIndex = headSymbol._primIndex;
-                    evaluateArguments = ((head != _defmacro) && (head != _defun) && (head != _setq));
+                    evaluateArguments = ((head != _defmacro) && (head != _defun) && (head != _setq) && (head != _lambda));
                 }
                 else if (headSymbol._type == SYMBOL_FUNCTION)
                 {
                     lambdaCell = headSymbol._valueCell;
                 }
             }
+            else if (_cell[head]._type == TYPE_LIST)
+            {
+                lambdaCell = EvaluateCell(head);
+            }
 
-            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_UNDEFINED_FUNCTION, "first list element is not a function");
+            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_UNDEFINED_FUNCTION, "first list element must be a function");
             break;
         }
 
