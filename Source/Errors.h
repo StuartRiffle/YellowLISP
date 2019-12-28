@@ -45,6 +45,7 @@ struct YellowError : std::exception
         return _finalMessage.c_str();
     }
 
+    static const char* GetDesc(ErrorCode code);
 };
 
 inline void RAISE_ERROR(ErrorCode code, const char* details = "")

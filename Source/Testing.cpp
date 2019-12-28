@@ -6,7 +6,7 @@
 
 void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput)
 {
-//    printf("-> %s\n", source);
+    printf("-> %s\n", source);
     string output = lisp.Evaluate(source);
     if (output != expectedOutput)
     {
@@ -16,7 +16,7 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
 
         printf("\"%s\" evaluates to \"%s\" instead of \"%s\"\n", source, output.c_str(), expectedOutput);
 
-        //CheckOutput(lisp, source, expectedOutput);
+        CheckOutput(lisp, source, expectedOutput);
     }
 }
 
@@ -59,16 +59,6 @@ void SanityCheck()
     settings._catchExceptions = false;
 
     Interpreter lisp(&settings);
-
-    CheckOutput(lisp, "(defun sqr (x) (* x x))", "sqr");
-    static volatile int always = 1;
-    if (always)
-        return;
-
-    CheckOutput(lisp, "(cons 'a 'b)", "(a . b)");
-    CheckOutput(lisp, "(cons (list 'a) 'b)", "((a) . b)");
-    CheckOutput(lisp, "(cons 'a (list 'b))", "(a b)");
-    CheckOutput(lisp, "(cons (list 'a) (list 'b))", "((a) b)");
 
     CheckOutput(lisp, "", "");
     CheckOutput(lisp, ";(", "");
@@ -122,10 +112,14 @@ void SanityCheck()
 
     CheckOutput(lisp, "(setq x (list 4 5 6))", "(4 5 6)");
     CheckOutput(lisp, "(setq x '(4 5 6))", "(4 5 6)");
-    CheckOutput(lisp, "(atom x)", "t");
+    CheckOutput(lisp, "(atom x)", "nil");
+    CheckOutput(lisp, "(atom 'x)", "t");
     CheckOutput(lisp, "(setq y x)", "(4 5 6)");
     CheckOutput(lisp, "(setq y 'x)", "x");
     CheckOutput(lisp, "(atom y)", "t");
+    CheckOutput(lisp, "y", "x");
+    CheckOutput(lisp, "(eval y)", "(4 5 6)");
+
 
     CheckOutput(lisp, "(< 1 2)", "t");
     CheckOutput(lisp, "(< 2 1)", "nil");
@@ -136,20 +130,25 @@ void SanityCheck()
     CheckOutput(lisp, "(< 1 2.1)", "t");
     CheckOutput(lisp, "(< -1.1 2)", "t");
 
-    CheckOutput(lisp, "(defmacro sqr (x) (* x x))", "sqr");
+    CheckOutput(lisp, "(defun sqr (x) (* x x))", "sqr");
     CheckOutput(lisp, "(sqr 5)", "25");
 
-    CheckOutput(lisp, "(append '(a b c) '())", "(a b c)");
-    CheckOutput(lisp, "(append '() '(a b c))", "(a b c)");
-    CheckOutput(lisp, "(append '(a b) '(c d))", "(a b c d)");
-    CheckOutput(lisp, "(append '(a b) 'c)", "(a b . c)");
-    CheckOutput(lisp, "(append '(a b c) '(d e f) '() '(g))", "(a b c d e f g)");
-    CheckOutput(lisp, "(append '(a b c) 'd)", "(a b c . d)");
-    CheckOutput(lisp, "(setq lst '(a b c))", "(a b c)");
-    CheckOutput(lisp, "(append lst '(d))", "(a b c d)");
-    CheckOutput(lisp, "lst", "(a b c)");
-    CheckOutput(lisp, "(append)", "nil");
-    CheckOutput(lisp, "(append 'a)", "a");
+    CheckOutput(lisp, "(cons 'a 'b)", "(a . b)");
+    CheckOutput(lisp, "(cons (list 'a) 'b)", "((a) . b)");
+    CheckOutput(lisp, "(cons 'a (list 'b))", "(a b)");
+    CheckOutput(lisp, "(cons (list 'a) (list 'b))", "((a) b)");
+
+    //CheckOutput(lisp, "(append '(a b c) '())", "(a b c)");
+    //CheckOutput(lisp, "(append '() '(a b c))", "(a b c)");
+    //CheckOutput(lisp, "(append '(a b) '(c d))", "(a b c d)");
+    //CheckOutput(lisp, "(append '(a b) 'c)", "(a b . c)");
+    //CheckOutput(lisp, "(append '(a b c) '(d e f) '() '(g))", "(a b c d e f g)");
+    //CheckOutput(lisp, "(append '(a b c) 'd)", "(a b c . d)");
+    //CheckOutput(lisp, "(setq lst '(a b c))", "(a b c)");
+    //CheckOutput(lisp, "(append lst '(d))", "(a b c d)");
+    //CheckOutput(lisp, "lst", "(a b c)");
+    //CheckOutput(lisp, "(append)", "nil");
+    //CheckOutput(lisp, "(append 'a)", "a");
 
         // TODO: dot notation
 

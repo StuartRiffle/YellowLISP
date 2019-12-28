@@ -45,17 +45,6 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
     TINDEX primitiveIndex = 0;
     bool evaluateArguments = true;
 
-
-    if (cellIndex == _quote)
-    {
-        // Special form: quote
-
-        CELL_INDEX quoted = cell._next;
-        RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-        return _cell[quoted]._data;
-    }
-
     switch (cell._type)
     {
         case TYPE_SYMBOL:
@@ -97,9 +86,10 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                 case SYMBOL_PRIMITIVE:
                 {
-                    primitiveIndex = symbol._primIndex;
-                    evaluateArguments = ((cellIndex != _defmacro) && (cellIndex != _defun));
-                    break;
+                    return cellIndex;
+                    //primitiveIndex = symbol._primIndex;
+                    //evaluateArguments = ((cellIndex != _defmacro) && (cellIndex != _defun) && (cellIndex != _setq));
+                    //break;
                 }
 
                 default:
@@ -114,6 +104,17 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             CELL_INDEX head = cell._data;
             assert(VALID_CELL(head));
 
+            if (head == _quote)
+            {
+                // Special form: quote
+
+                CELL_INDEX quoted = cell._next;
+                RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                RAISE_ERROR_IF(VALID_CELL(_cell[quoted]._next), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
+                return _cell[quoted]._data;
+            }
+
             if (_cell[head]._type == TYPE_SYMBOL)
             {
                 SYMBOL_INDEX headSymbolIndex = _cell[head]._data;
@@ -122,7 +123,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 if (headSymbol._type == SYMBOL_PRIMITIVE)
                 {
                     primitiveIndex = headSymbol._primIndex;
-                    evaluateArguments = ((head != _defmacro) && (head != _defun));
+                    evaluateArguments = ((head != _defmacro) && (head != _defun) && (head != _setq));
                 }
                 else if (headSymbol._type == SYMBOL_FUNCTION)
                 {
@@ -130,7 +131,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 }
             }
 
-            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_INVALID_ARGUMENT, "first list element is not a function");
+            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_UNDEFINED_FUNCTION, "first list element is not a function");
             break;
         }
 

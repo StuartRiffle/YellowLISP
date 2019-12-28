@@ -115,7 +115,7 @@ size_t Runtime::CollectGarbage()
         {
             MarkCellsInUse(symbol._symbolCell);
             MarkCellsInUse(symbol._valueCell);
-            //MarkCellsInUse(symbol._bindingListCell);
+            MarkCellsInUse(symbol._macroBindings);
         }
     }
 

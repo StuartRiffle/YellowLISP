@@ -40,10 +40,10 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 
 (defun and    (a b) (cond (a (cond (b T)))))
 (defun or     (a b) (cond (a T) (b T)))
-(defun not    (x)   (cond (x nil)(T T)))
+(defun not    (x)   (cond (x nil) (T T)))
 
 (defun >      (a b) (< b a)))
-(defun <=     (a b) (not (< b a)))
+(defun <=     (a b) (not (< b a)))    ; (cond ((< b a) nil)
 (defun >=     (a b) (not (< a b)))
 (defun /=     (a b) (not (= a b)))
 

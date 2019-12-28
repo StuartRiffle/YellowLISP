@@ -144,6 +144,7 @@ class Runtime
     CELL_INDEX  _defmacro;
     CELL_INDEX  _defun;
     CELL_INDEX  _lambda;
+    CELL_INDEX  _setq;
 
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterSymbol(const char* ident);

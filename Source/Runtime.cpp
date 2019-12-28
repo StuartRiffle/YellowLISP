@@ -17,7 +17,8 @@ Runtime::Runtime()
     _quasiquote = RegisterPrimitive("quasiquote", NULL);
     _defmacro = RegisterPrimitive("defmacro",&Runtime::DEFMACRO);
     _defun = RegisterPrimitive("defun",&Runtime::DEFUN);
-    _lambda = RegisterPrimitive("lambda",&Runtime::DEFUN);
+    _lambda = RegisterPrimitive("lambda",&Runtime::LAMBDA);
+    _setq = RegisterPrimitive("setq",&Runtime::SETQ);
 
     // Language primitives
 
@@ -30,7 +31,6 @@ Runtime::Runtime()
     RegisterPrimitive("eval",    &Runtime::EVAL);
     RegisterPrimitive("list",    &Runtime::LIST);
     RegisterPrimitive("progn",   &Runtime::PROGN);
-    RegisterPrimitive("setq",    &Runtime::SETQ);
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);
