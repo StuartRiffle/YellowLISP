@@ -32,20 +32,6 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
     if (!VALID_CELL(cellIndex))
         return _nil;
 
-    // Symbols in the current scope override globals
-
-    if (!_environment.empty())
-    {
-        Scope& scope = _environment.back();
-
-        auto iter = scope.find(cellIndex);
-        if (iter != scope.end())
-        {
-            CELL_INDEX localValue = iter->second;
-            cellIndex = localValue;
-        }
-    }
-
 #ifndef NDEBUG
     static int sDumpDebugGraph = 1;
     static int sExpandSymbols = 1;
@@ -54,10 +40,11 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         DumpCellGraph(cellIndex, sExpandSymbols);
 #endif
 
-    const Cell& cell = _cell[cellIndex];
+    Cell& cell = _cell[cellIndex];
     CELL_INDEX lambdaCell = _nil;
     TINDEX primitiveIndex = 0;
     bool evaluateArguments = true;
+
 
     if (cellIndex == _quote)
     {
@@ -76,6 +63,20 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             SYMBOL_INDEX symbolIndex = cell._data;
             const SymbolInfo& symbol = _symbol[symbolIndex];
             assert(symbol._symbolCell == cellIndex);
+
+            // Symbols in the current scope override globals
+
+            if (!_environment.empty())
+            {
+                Scope& scope = _environment.back();
+
+                auto iter = scope.find(symbolIndex);
+                if (iter != scope.end())
+                {
+                    CELL_INDEX localValue = iter->second;
+                    return EvaluateCell(localValue);
+                }
+            }
 
             switch (symbol._type)
             {
@@ -129,7 +130,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 }
             }
 
-            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_INVALID_ARGUMENT, "first element not a function");
+            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_INVALID_ARGUMENT, "first list element is not a function");
             break;
         }
 
@@ -138,7 +139,12 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         case TYPE_STRING:
         case TYPE_LAMBDA:
             return cellIndex;
+
+        default:
+            assert(!"Invalid cell type");
     }
+
+    // At this point we [should] have something callable
 
     if (primitiveIndex)
     {
