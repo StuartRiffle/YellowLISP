@@ -53,6 +53,8 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             const SymbolInfo& symbol = _symbol[symbolIndex];
             assert(symbol._symbolCell == cellIndex);
 
+            RAISE_ERROR_IF(symbol._type == SYMBOL_INVALID, ERROR_RUNTIME_VARIABLE_UNBOUND, symbol._ident.c_str());
+
             // Symbols in the current scope override globals
 
             if (!_environment.empty())

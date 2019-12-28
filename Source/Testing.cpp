@@ -4,23 +4,7 @@
 #include "Console.h"
 #include "Interpreter.h"
 
-void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput)
-{
-    printf("-> %s\n", source);
-    string output = lisp.Evaluate(source);
-    if (output != expectedOutput)
-    {
-        SetTextColor(ANSI_RED);
-        printf("SANITY CHECK FAILED: ");
-        ResetTextColor();
-
-        printf("\"%s\" evaluates to \"%s\" instead of \"%s\"\n", source, output.c_str(), expectedOutput);
-
-        CheckOutput(lisp, source, expectedOutput);
-    }
-}
-
-void CheckError(Interpreter& lisp, const char* source, ErrorCode expectedError)
+void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
 {
     ErrorCode caughtError = ERROR_NONE;
     string output;
@@ -34,23 +18,47 @@ void CheckError(Interpreter& lisp, const char* source, ErrorCode expectedError)
         caughtError = error._code;
     }
 
-    if (caughtError != expectedError)
+    string shouldHave;
+    string actually;
+
+    std::stringstream ss;
+    ss << '\"' << source << '\"';
+
+    if (expectedOutput)
     {
-        std::stringstream ss;
-        ss << '\"' << source << '\"' << " should raise error " << expectedError;
+        if (output == expectedOutput)
+            return;
 
-        if (caughtError)
-            ss << ", but raised " << caughtError;
-        else
-            ss << ", but evaluated to \"" << output << '\"';
-
-        SetTextColor(ANSI_RED);
-        printf("SANITY CHECK FAILED: "); 
-        ResetTextColor();
-
-        printf("% s\n", ss.str().c_str());
+        ss << " should output \"" << expectedOutput << "\", ";
     }
+    else if (expectedError)
+    {
+        if (caughtError == expectedError)
+            return;
+
+        ss << " should raise error " << expectedError << " (" << YellowError::GetDesc(expectedError) << "), ";
+    }
+    else
+        assert(0);
+
+    if(caughtError)
+        ss << "but raised error " << caughtError << " (" << YellowError::GetDesc(caughtError) << ")";
+    else 
+        ss << "but output \"" << output << "\"";
+
+    SetTextColor(ANSI_RED);
+    printf("SANITY CHECK FAILED: "); 
+    ResetTextColor();
+
+    printf("% s\n", ss.str().c_str());
 }
+
+void CheckOutput(Interpreter& lisp, const char* source, ErrorCode expectedError)
+{
+    CheckOutput(lisp, source, NULL, expectedError);
+}
+
+#define VERIFY(_IN, _OUT) CheckOutput(lisp, _IN, _OUT)
 
 void SanityCheck()
 {
@@ -60,113 +68,111 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
 
-    CheckOutput(lisp, "", "");
-    CheckOutput(lisp, ";(", "");
-    CheckOutput(lisp, "\n", "");
-    CheckOutput(lisp, "1", "1");
-    CheckOutput(lisp, "-1", "-1");
-    CheckOutput(lisp, " 2 ", "2");
-    CheckOutput(lisp, "3.4", "3.4");
-    CheckOutput(lisp, "-5.6", "-5.6");
-    CheckOutput(lisp, "78e-3", "0.078");
-    CheckOutput(lisp, "9 ; (", "9");
+    VERIFY("", "");
+    VERIFY(";(", "");
+    VERIFY("\n", "");
+    VERIFY("1", "1");
+    VERIFY("-1", "-1");
+    VERIFY(" 2 ", "2");
+    VERIFY("3.4", "3.4");
+    VERIFY("-5.6", "-5.6");
+    VERIFY("78e-3", "0.078");
+    VERIFY("9 ; (", "9");
 
-    CheckOutput(lisp, "t", "t");
-    CheckOutput(lisp, "nil", "nil");
-    CheckOutput(lisp, "'nil", "nil");
-    CheckOutput(lisp, "()", "nil");
-    CheckOutput(lisp, "'()", "nil");
+    VERIFY("t", "t");
+    VERIFY("nil", "nil");
+    VERIFY("'nil", "nil");
+    VERIFY("()", "nil");
+    VERIFY("'()", "nil");
 
-    CheckOutput(lisp, "'foo", "foo");
-    CheckOutput(lisp, "'FOO", "FOO");
-    CheckOutput(lisp, "\"foo\"", "\"foo\"");
-    CheckOutput(lisp, "\"FOO\"", "\"FOO\"");
+    VERIFY("'foo", "foo");
+    VERIFY("'FOO", "FOO");
+    VERIFY("\"foo\"", "\"foo\"");
+    VERIFY("\"FOO\"", "\"FOO\"");
 
-    CheckOutput(lisp, "(quote ('1 2))", "((quote 1) 2)");
-    CheckOutput(lisp, "'('1 2)", "((quote 1) 2)");
+    VERIFY("(quote ('1 2))", "((quote 1) 2)");
+    VERIFY("'('1 2)", "((quote 1) 2)");
 
-    CheckOutput(lisp, "(atom nil)", "t");
-    CheckOutput(lisp, "(atom ())", "t");
-    CheckOutput(lisp, "(atom '())", "t");
-    CheckOutput(lisp, "(atom 3)", "t");
-    CheckOutput(lisp, "(atom 'foo)", "t");
-    CheckOutput(lisp, "(atom (atom 3))", "t");
-    CheckOutput(lisp, "(atom [atom 3])", "t");
-    CheckOutput(lisp, "[atom [atom 3]]", "t");
-    CheckOutput(lisp, "[atom (atom 3)]", "t");
-    CheckOutput(lisp, "(atom '(atom 3))", "nil");
-    CheckOutput(lisp, "(atom (list 1 2))", "nil");
-    CheckOutput(lisp, "(atom (cons 1 2))", "nil");
+    VERIFY("(atom nil)", "t");
+    VERIFY("(atom ())", "t");
+    VERIFY("(atom '())", "t");
+    VERIFY("(atom 3)", "t");
+    VERIFY("(atom 'foo)", "t");
+    VERIFY("(atom (atom 3))", "t");
+    VERIFY("(atom [atom 3])", "t");
+    VERIFY("[atom [atom 3]]", "t");
+    VERIFY("[atom (atom 3)]", "t");
+    VERIFY("(atom '(atom 3))", "nil");
+    VERIFY("(atom (list 1 2))", "nil");
+    VERIFY("(atom (cons 1 2))", "nil");
 
-    CheckOutput(lisp, "(car (list 1 2))", "1");
-    CheckOutput(lisp, "(cdr (list 1 2))", "(2)");
-    CheckOutput(lisp, "(car ())", "nil");
-    CheckOutput(lisp, "(cdr ())", "nil");
-    CheckOutput(lisp, "(car (cdr (list 1 2 3)))", "2");
-    CheckOutput(lisp, "(cdr (cdr (list 1 2 3)))", "(3)");
+    VERIFY("(car (list 1 2))", "1");
+    VERIFY("(cdr (list 1 2))", "(2)");
+    VERIFY("(car ())", "nil");
+    VERIFY("(cdr ())", "nil");
+    VERIFY("(car (cdr (list 1 2 3)))", "2");
+    VERIFY("(cdr (cdr (list 1 2 3)))", "(3)");
 
-    CheckOutput(lisp, "(list)", "nil");
-    CheckOutput(lisp, "(list 1)", "(1)");
-    CheckOutput(lisp, "(list 1 'foo 3)", "(1 foo 3)");
-    CheckOutput(lisp, "(list (list ()))", "((nil))");
+    VERIFY("(list)", "nil");
+    VERIFY("(list 1)", "(1)");
+    VERIFY("(list 1 'foo 3)", "(1 foo 3)");
+    VERIFY("(list (list ()))", "((nil))");
 
-    CheckOutput(lisp, "(setq x (list 4 5 6))", "(4 5 6)");
-    CheckOutput(lisp, "(setq x '(4 5 6))", "(4 5 6)");
-    CheckOutput(lisp, "(atom x)", "nil");
-    CheckOutput(lisp, "(atom 'x)", "t");
-    CheckOutput(lisp, "(setq y x)", "(4 5 6)");
-    CheckOutput(lisp, "(setq y 'x)", "x");
-    CheckOutput(lisp, "(atom y)", "t");
-    CheckOutput(lisp, "y", "x");
-    CheckOutput(lisp, "(eval y)", "(4 5 6)");
-
-
-    CheckOutput(lisp, "(< 1 2)", "t");
-    CheckOutput(lisp, "(< 2 1)", "nil");
-    CheckOutput(lisp, "(< 1 1)", "nil");
-    CheckOutput(lisp, "(< -2 -1)", "t");
-    CheckOutput(lisp, "(< -1 -2)", "nil");
-    CheckOutput(lisp, "(< 1.1 2.1)", "t");
-    CheckOutput(lisp, "(< 1 2.1)", "t");
-    CheckOutput(lisp, "(< -1.1 2)", "t");
-
-    CheckOutput(lisp, "(defun sqr (x) (* x x))", "sqr");
-    CheckOutput(lisp, "(sqr 5)", "25");
-
-    CheckOutput(lisp, "(cons 'a 'b)", "(a . b)");
-    CheckOutput(lisp, "(cons (list 'a) 'b)", "((a) . b)");
-    CheckOutput(lisp, "(cons 'a (list 'b))", "(a b)");
-    CheckOutput(lisp, "(cons (list 'a) (list 'b))", "((a) b)");
-
-    //CheckOutput(lisp, "(append '(a b c) '())", "(a b c)");
-    //CheckOutput(lisp, "(append '() '(a b c))", "(a b c)");
-    //CheckOutput(lisp, "(append '(a b) '(c d))", "(a b c d)");
-    //CheckOutput(lisp, "(append '(a b) 'c)", "(a b . c)");
-    //CheckOutput(lisp, "(append '(a b c) '(d e f) '() '(g))", "(a b c d e f g)");
-    //CheckOutput(lisp, "(append '(a b c) 'd)", "(a b c . d)");
-    //CheckOutput(lisp, "(setq lst '(a b c))", "(a b c)");
-    //CheckOutput(lisp, "(append lst '(d))", "(a b c d)");
-    //CheckOutput(lisp, "lst", "(a b c)");
-    //CheckOutput(lisp, "(append)", "nil");
-    //CheckOutput(lisp, "(append 'a)", "a");
-
-        // TODO: dot notation
+    VERIFY("(setq x (list 4 5 6))", "(4 5 6)");
+    VERIFY("(setq x '(4 5 6))", "(4 5 6)");
+    VERIFY("(atom x)", "nil");
+    VERIFY("(atom 'x)", "t");
+    VERIFY("(setq y x)", "(4 5 6)");
+    VERIFY("(setq y 'x)", "x");
+    VERIFY("(atom y)", "t");
+    VERIFY("y", "x");
+    VERIFY("(eval y)", "(4 5 6)");
 
 
+    VERIFY("(< 1 2)", "t");
+    VERIFY("(< 2 1)", "nil");
+    VERIFY("(< 1 1)", "nil");
+    VERIFY("(< -2 -1)", "t");
+    VERIFY("(< -1 -2)", "nil");
+    VERIFY("(< 1.1 2.1)", "t");
+    VERIFY("(< 1 2.1)", "t");
+    VERIFY("(< -1.1 2)", "t");
+
+    VERIFY("(defun sqr (x) (* x x))", "sqr");
+    VERIFY("(sqr 5)", "25");
+
+    VERIFY("(cons 'a 'b)", "(a . b)");
+    VERIFY("(cons (list 'a) 'b)", "((a) . b)");
+    VERIFY("(cons 'a (list 'b))", "(a b)");
+    VERIFY("(cons (list 'a) (list 'b))", "((a) b)");
+
+    //VERIFY("(append '(a b c) '())", "(a b c)");
+    //VERIFY("(append '() '(a b c))", "(a b c)");
+    //VERIFY("(append '(a b) '(c d))", "(a b c d)");
+    //VERIFY("(append '(a b) 'c)", "(a b . c)");
+    //VERIFY("(append '(a b c) '(d e f) '() '(g))", "(a b c d e f g)");
+    //VERIFY("(append '(a b c) 'd)", "(a b c . d)");
+    //VERIFY("(setq lst '(a b c))", "(a b c)");
+    //VERIFY("(append lst '(d))", "(a b c d)");
+    //VERIFY("lst", "(a b c)");
+    //VERIFY("(append)", "nil");
+    //VERIFY("(append 'a)", "a");
+
+    // TODO: dot notation
     // TODO: backquote
 
     // The error section needs a *lot* more test cases
 
-    CheckError(lisp, "\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
-    CheckError(lisp, "(",           ERROR_PARSER_LIST_UNTERMINATED);
-    CheckError(lisp, "(setq } 3)",  ERROR_PARSER_INVALID_IDENTIFIER);
-    CheckError(lisp, "(setq quote 3)", ERROR_RUNTIME_RESERVED_SYMBOL);
-    CheckError(lisp, "(foo 1 2)",   ERROR_RUNTIME_UNDEFINED_FUNCTION);
-    CheckError(lisp, "(atom 3]",    ERROR_PARSER_BRACE_MISMATCH);
-    CheckError(lisp, "(atom [3)]",  ERROR_PARSER_BRACE_MISMATCH);
-    CheckError(lisp, "(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);
-    CheckError(lisp, "(atom foo)",  ERROR_RUNTIME_VARIABLE_UNBOUND);
-    CheckError(lisp, "(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
+    VERIFY("\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
+    VERIFY("(",           ERROR_PARSER_LIST_UNTERMINATED);
+    VERIFY("(setq } 3)",  ERROR_PARSER_INVALID_IDENTIFIER);
+    VERIFY("(setq quote 3)", ERROR_RUNTIME_RESERVED_SYMBOL);
+    VERIFY("(foo 1 2)",   ERROR_RUNTIME_UNDEFINED_FUNCTION);
+    VERIFY("(atom 3]",    ERROR_PARSER_BRACE_MISMATCH);
+    VERIFY("(atom [3)]",  ERROR_PARSER_BRACE_MISMATCH);
+    VERIFY("(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);
+    VERIFY("(atom unbound)", ERROR_RUNTIME_VARIABLE_UNBOUND);
+    VERIFY("(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
 }
 
 

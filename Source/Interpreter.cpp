@@ -67,8 +67,10 @@ string Interpreter::Evaluate(const string& source)
             throw;
 
         SetTextColor(ANSI_RED);
-        std::cout << error.what() << std::endl;
+        std::cout << "ERROR " << error._code << ": ";
         ResetTextColor();
+
+        std::cout << error.what() << std::endl;
     }
     catch (std::exception error)
     {

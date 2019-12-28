@@ -108,7 +108,7 @@ SYMBOL_INDEX Runtime::GetSymbolIndex(const char* ident)
         _cell[cellIndex]._data = symbolIndex;
 
         SymbolInfo& symbol = _symbol[symbolIndex];
-        symbol._type = SYMBOL_VARIABLE;
+        symbol._type = SYMBOL_INVALID;
         symbol._ident = ident;
         symbol._symbolCell = cellIndex;
         symbol._valueCell = _nil;
