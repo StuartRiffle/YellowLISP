@@ -82,7 +82,7 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
     std::stringstream ssValue;
 
     ss << "symbol" << symbolIndex << " [shape=Mrecord,style=filled,fillcolor=lightblue1,label=\"<header>SYMBOL " << symbolIndex << " | ";
-    ss << "{ { ident | primIndex | symbolCell | valueCell | bindingListCell } | ";
+    ss << "{ { ident | primIndex | symbolCell | valueCell | macroBindings } | ";
     ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | ";
 
     if (VALID_CELL(symbol._valueCell))

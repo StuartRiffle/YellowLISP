@@ -151,7 +151,7 @@ class Runtime
     vector<CELL_INDEX> ExtractList(CELL_INDEX index);
 
     Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
-    CELL_INDEX CallPrimitive(SYMBOL_INDEX symbolIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
+    CELL_INDEX CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
     CELL_INDEX ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell);
 
     // CellTable.cpp

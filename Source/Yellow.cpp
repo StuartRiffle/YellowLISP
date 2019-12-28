@@ -103,6 +103,7 @@ int main(int argc, char** argv)
     printf("\n %s \n", versionStr);
     ResetTextColor();
 
+    lisp.Evaluate("(defun sqr (x) (* x x))");
     lisp.RunREPL();
 
     return RETURN_SUCCESS;
