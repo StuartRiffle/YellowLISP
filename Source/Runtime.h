@@ -150,6 +150,7 @@ class Runtime
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
     vector<CELL_INDEX> ExtractList(CELL_INDEX index);
 
+    Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
     CELL_INDEX CallPrimitive(SYMBOL_INDEX symbolIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
     CELL_INDEX ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell);
 
@@ -166,7 +167,8 @@ class Runtime
 
     void FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone, bool expandSymbols = false);
     void FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone);
-    void DumpCellGraph(CELL_INDEX cellIndex, const string& filename, bool expandSymbols = false);
+    string GenerateCellGraph(CELL_INDEX cellIndex, bool expandSymbols);
+    void DumpCellGraph(CELL_INDEX cellIndex, bool expandSymbols);
 
     // Literals.cpp
 

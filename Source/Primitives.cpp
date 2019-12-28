@@ -221,13 +221,26 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
 
 CELL_INDEX Runtime::DEFUN(const ArgumentList& args)
 {
-    CELL_INDEX   symbolCell  = DEFMACRO(args);
+    RAISE_ERROR_IF(args.size() < 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFUN");
+
+    CELL_INDEX symbolCell = args[0];
+    RAISE_ERROR_IF(_cell[symbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_TYPE_MISMATCH, "function name");
+
+    CELL_INDEX bindingListCell  = args[1];
+    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "function arguments");
+
+    CELL_INDEX functionBodyCell = args[2];
+    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "function body");
+
+    ArgumentList lambdaArgs = { bindingListCell, functionBodyCell };
+    CELL_INDEX lambdaCell = LAMBDA(lambdaArgs);
+
     SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
-    SymbolInfo&  funcSymbol  = _symbol[symbolIndex];
+    SymbolInfo&  functionSymbol = _symbol[symbolIndex];
 
-    // FIXME: the function symbol should resolve to a lambda cell
+    functionSymbol._type = SYMBOL_FUNCTION;
+    functionSymbol._valueCell = lambdaCell;
 
-    funcSymbol._type = SYMBOL_FUNCTION;
     return symbolCell;
 }
 
@@ -245,6 +258,6 @@ CELL_INDEX Runtime::LAMBDA(const ArgumentList& args)
     _cell[lambdaCell]._data = bindingListCell;
     _cell[lambdaCell]._next = functionBodyCell;
 
-    return functionCellIndex;
+    return lambdaCell;
 }
 

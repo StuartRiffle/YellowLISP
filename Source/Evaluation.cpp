@@ -22,11 +22,9 @@ vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
 
 CELL_INDEX Runtime::ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell)
 {
-}
-
-void Runtime::DumpDebugGraph(CELL_INDEX cellIndex)
-{
-
+    (bindingListCell);
+    (argListCell);
+    return _nil;
 }
 
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
@@ -51,19 +49,14 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 #ifndef NDEBUG
     static int sDumpDebugGraph = 1;
     static int sExpandSymbols = 1;
+    // For debugging, this generates a graph of cell connections for GraphViz to render
     if (sDumpDebugGraph)
-    {
-        //sDumpDebugGraph = 0;
-        // For debugging, this generates a graph of cell connections for GraphViz to render
-
-        char filename[80];
-        sprintf(filename, "cell%d.dot", cellIndex);
-        DumpCellGraph(cellIndex, filename, sExpandSymbols);
-    }
+        DumpCellGraph(cellIndex, sExpandSymbols);
 #endif
 
     const Cell& cell = _cell[cellIndex];
     CELL_INDEX lambdaCell = _nil;
+    bool evaluateArguments = true;
 
     if (cellIndex == _quote)
     {
@@ -100,6 +93,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                 case SYMBOL_MACRO:
                     lambdaCell = ExpandMacro(symbol._macroBindings, symbol._valueCell);
+                    evaluateArguments = false;
                     break;
 
                 case SYMBOL_PRIMITIVE:
@@ -135,29 +129,13 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
     // Bind the arguments
 
-    CELL_INDEX bindingList = _cell[lambdaCell]._data;
+    CELL_INDEX bindingList = _cell[bindingCellIndex]._data;
     assert(_cell[bindingList]._type == TYPE_LIST);
 
     CELL_INDEX argList = cell._next;
     assert(_cell[argList]._type == TYPE_LIST);
 
-    Scope callScope;
-
-    while (VALID_CELL(argList))
-    {
-        RAISE_ERROR_IF(!VALID_CELL(bindingList), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-        CELL_INDEX boundSymbolCell = _cell[bindingList]._data;
-        SYMBOL_INDEX boundSymbolIndex = _cell[boundSymbolCell]._data;
-
-        CELL_INDEX valueCell = _cell[argList]._data;
-        CELL_INDEX value = EvaluateCell(valueCell);
-
-        callScope[boundSymbolIndex] = value;
-
-        argList = _cell[argList]._next;
-        bindingList = _cell[bindingList]._next;
-    }
+    Scope callScope = BindArguments(bindingList, argList, evaluateArguments);
 
     // Evaluate the function body
 
@@ -176,6 +154,30 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
     _environment.pop_back();
     return callResult;
+}
+
+Runtime::Scope Runtime::BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs)
+{
+    Scope scope;
+
+    while (VALID_CELL(argList))
+    {
+        RAISE_ERROR_IF(!VALID_CELL(bindingList), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
+        CELL_INDEX boundSymbolCell = _cell[bindingList]._data;
+        SYMBOL_INDEX boundSymbolIndex = _cell[boundSymbolCell]._data;
+
+        CELL_INDEX value = _cell[argList]._data;
+        if (evaluateArgs)
+            value = EvaluateCell(value);
+
+        scope[boundSymbolIndex] = value;
+
+        argList = _cell[argList]._next;
+        bindingList = _cell[bindingList]._next;
+    }
+
+    return scope;
 }
 
 CELL_INDEX Runtime::CallPrimitive(SYMBOL_INDEX symbolIndex, CELL_INDEX argCellIndex, bool evaluateArgs)

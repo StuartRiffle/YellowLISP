@@ -88,7 +88,7 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
     if (VALID_CELL(symbol._valueCell))
         ss << "<valueCell>cell " << symbol._valueCell;
 
-    ss << "| <bindingListCell>" << symbol._bindingListCell;
+    ss << "| <macroBindings>" << symbol._macroBindings;
 
     ss << " } }\"];" << std::endl;
 
@@ -100,14 +100,14 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
         FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone, true);
     }
 
-    if (VALID_CELL(symbol._bindingListCell))
+    if (VALID_CELL(symbol._macroBindings))
     {
-        ss << "symbol" << symbolIndex << ":bindingListCell -> cell" << symbol._bindingListCell << ":header;" << std::endl;
-        FormatCellLabel(symbol._bindingListCell, ss, cellsDone, symbolsDone, true);
+        ss << "symbol" << symbolIndex << ":bindingListCell -> cell" << symbol._macroBindings << ":header;" << std::endl;
+        FormatCellLabel(symbol._macroBindings, ss, cellsDone, symbolsDone, true);
     }
 }
 
-void Runtime::DumpCellGraph(CELL_INDEX cellIndex, const string& filename, bool expandSymbols)
+string Runtime::GenerateCellGraph(CELL_INDEX cellIndex, bool expandSymbols)
 {
     std::stringstream ss;
     set<CELL_INDEX> cellsDone;
@@ -119,12 +119,22 @@ void Runtime::DumpCellGraph(CELL_INDEX cellIndex, const string& filename, bool e
     FormatCellLabel(cellIndex, ss, cellsDone, symbolsDone, expandSymbols);
 
     ss << "} " << std::endl;
+    return ss.str();
+}
+
+void Runtime::DumpCellGraph(CELL_INDEX cellIndex, bool expandSymbols)
+{
+    string graph = GenerateCellGraph(cellIndex, expandSymbols);
+
+    char filename[80];
+    sprintf(filename, "cell%d.dot", cellIndex);
 
     std::ofstream outFile(filename);
     if (outFile)
     {
-        outFile << ss.str();
+        outFile << graph;
         outFile.close();
     }
 }
+
 
