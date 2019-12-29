@@ -26,7 +26,7 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 //        _parser.DumpSyntaxTree(node);
 
         CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
-        outputs.push_back(valueCell);
+        outputs.push_back(valueCell);    
     }
 
     return outputs;

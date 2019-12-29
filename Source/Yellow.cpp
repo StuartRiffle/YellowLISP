@@ -6,7 +6,8 @@
 #include "Console.h"
 #include "CommandLine.h"
 
-void PrintOptions()
+
+void PrintBanner()
 {
     SetTextColor(ANSI_YELLOW);
     printf("__  __     ____              __    _________ ____ \n");
@@ -15,7 +16,10 @@ void PrintOptions()
     printf(" / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
     printf("/_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n\n");
     ResetTextColor();
+}
 
+void PrintOptions()
+{
     printf("Usage: YellowLISP [options] [lisp files]\n\n");
 
     printf("This is an interpreter for a [very] small subset of LISP. It is a work in\n");
@@ -43,7 +47,7 @@ bool gColorConsole = true;
 int main(int argc, char** argv)
 {
 #ifndef NDEBUG
-    //SanityCheck();
+    SanityCheck();
 #endif
 
     CommandLine commandLine(argc, argv);
@@ -59,6 +63,8 @@ int main(int argc, char** argv)
         printf("%s\n", versionStr);
         return RETURN_SUCCESS;
     }
+
+    PrintBanner();
 
     if (commandLine.HasFlag("--help"))
     {

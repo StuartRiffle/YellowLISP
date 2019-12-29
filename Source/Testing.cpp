@@ -67,10 +67,12 @@ void SanityCheck()
     settings._catchExceptions = false;
 
     Interpreter lisp(&settings);
+    
+    lisp.Evaluate("(setq x 123)");
 
-    VERIFY("`(x   x)", "(x x)");
-    VERIFY("`(x  ,x)", "(x 3)");
-    VERIFY("`(x ',x)", "(x '3)");
+    VERIFY("`(x x)", "(x x)");
+    VERIFY("`(x ,x)", "(x 123)");
+    VERIFY("`(x ',x)", "(x '123)");
     VERIFY("`(x ,'x)", "(x x)");
 
     VERIFY("`(x ,'`(x ,'x))", "(x `(x ,'x))"); 
@@ -79,12 +81,12 @@ void SanityCheck()
     VERIFY("`(x ',`(x x))", "(x '(x x))"); 
     VERIFY("`(x ,'`(x x))", "(x `(x x))"); 
     VERIFY("`(x `(x ,x))", "(x `(x ,x))"); 
-    VERIFY("`(x ,`(x ,x))", "(x (x 3))"); 
-    VERIFY("`(x ',`(x ,x))", "(x '(x 3))"); 
+    VERIFY("`(x ,`(x ,x))", "(x (x 123))"); 
+    VERIFY("`(x ',`(x ,x))", "(x '(x 123))"); 
     VERIFY("`(x ,'`(x ,x))", "(x `(x ,x))"); 
     VERIFY("`(x `(x ',x))", "(x `(x ',x))"); 
-    VERIFY("`(x ,`(x ',x))", "(x (x '3))"); 
-    VERIFY("`(x ',`(x ',x))", "(x '(x '3))"); 
+    VERIFY("`(x ,`(x ',x))", "(x (x '123))"); 
+    VERIFY("`(x ',`(x ',x))", "(x '(x '123))"); 
     VERIFY("`(x ,'`(x ',x))", "(x `(x ',x))"); 
     VERIFY("`(x `(x ,'x))", "(x `(x ,'x))"); 
     VERIFY("`(x ,`(x ,'x))", "(x (x x))"); 

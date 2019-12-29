@@ -8,11 +8,11 @@ vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
 {
     vector<CELL_INDEX> result;
 
-    while (VALID_CELL(cellIndex))
+    while (VALID_CELL(cellIndex) && (_cell[cellIndex]._type == TYPE_LIST))
     {
-        result.push_back(cellIndex);
-        if (_cell[cellIndex]._type != TYPE_LIST)
-            break;
+        result.push_back(_cell[cellIndex]._data);
+        //if (_cell[cellIndex]._type != TYPE_LIST)
+        //    break;
 
         cellIndex = _cell[cellIndex]._next;
     }
@@ -39,147 +39,13 @@ CELL_INDEX Runtime::GenerateList(const vector<CELL_INDEX>& elements)
 }
 
 
-CELL_INDEX Runtime::ExpandMacro(CELL_INDEX macroBodyCell, int quasiquoteLevel)
+CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 {
-    vector<CELL_INDEX> elements = ExtractList(macroBodyCell);
+    DumpCellGraph(cellIndex, true);
+
+    vector<CELL_INDEX> elements = ExtractList(cellIndex);
     if (elements.empty())
-        return _nil;
-
-    //(setq foo 3)
-    //`(foo   foo) => (foo foo)
-    //`(foo  ,foo) => (foo 3)
-    //`(foo ',foo) => (foo '3)
-    //`(foo ,'foo) => (foo foo)
-
-    /*
-
-
-
-`(x   x) => (x x)
-    (x x)
-
-`(x  ,x) => (x 3)
-    (x 3)
-
-`(x ,'x) => (x x)
-    (x x)
-
-`(x ',x) => (x '3)
-    (x '(value x))
-    (x '3)
-
-`(x ,'`(x ,'x))    (x `(x ,'x))          
-    (x `(x ,'x))   
-    ,' cancels
-
-`(x `(x   x))      (x `(x x))            
-    (x `(x x))
-    no unquote, acts just like quote
-
-`(x ,`(x   x))     (x (x x))             
-    (x (x x))
-    ,' cancels
-
-`(x ',`(x   x))    (x '(x x))            
-    (x '(x x))
-    ,' cancels
-
-`(x ,'`(x   x))    (x `(x x))            
-    (x `(x x))
-    ,' cancels
-
-`(x `(x  ,x))      (x `(x ,x))           
-    (x `(x ,x))
-    , does not expand b/c not at level 0
-
-`(x ,`(x  ,x))     (x (x 3))            
-    (x (x 3))
-    ,x expands to "value of x" at level 0
-    "value of x" == (eval 'x) => 3 
-
-`(x ',`(x  ,x))    (x '(x 3))              
-    (x '(x 3))
-    ,` cancels
-    ,x expanded at level 0
-
-`(x ,'`(x  ,x))    (x `(x ,x))           
-    (x `(x ,x))
-    ,' elided, so ,x is at the wrong level
-                         
-`(x `(x ',x))      (x `(x ',x))          
-    (x `(x ',x))
-    
-`(x ,`(x ',x))     (x (x '3))              
-    (x (x 'x))
-        ,` cancels before going deeper
-    (x (x '3))
-        ,x expands at level 0
-
-`(x ',`(x ',x))    (x '(x '3))             
-    (x '(x '3))
-
-
-`(x ,'`(x ',x))    (x `(x ',x))          
-                         
-`(x `(x ,'x))      (x `(x ,'x))          
-`(x ,`(x ,'x))     (x (x x))             
-`(x ',`(x ,'x))    (x '(x x))            
-`(x ,'`(x ,'x))    (x `(x ,'x))          
-
-
-
-
-
-
-*/
-    // ('foo (eval 'foo))
-    // ('foo 'foo)
-
-
-    // ('foo ','foo)
-    // ('foo ''(eval 'foo))
-    // ('foo 'foo)
-
-    // 1) quasiquote distributes to children
-    // 2) unquote -> (quote (eval ...
-    // 3) collapse quotes as the last step
-
-
-
-
-    // ('foo (quote (eval (quote foo))))
-    //              
-
-
-    //      (quasiquote (foo (unquote (quote foo))))
-    //          (quote (foo
-    //      ((quote foo) (quote (unquote (quote foo))))
-    //      ((quote foo)
-    //
-    // (unquote x) -> (quote (eval x))?
-    // (eval (quote foo)) -> foo
-
-    // `(foo bar) -> ('foo 'bar)   (distributes quotes)
-    // ,foo -> `(eval foo)
-     
-    //      
-    // `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) ==>  (a `(b ,(+ 1 2) ,(foo 4 d) e) f)
-
-
-    // `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
-    //  (a `(b ,(+ 1 2) ,(foo 4        d) e) f)
-    //
-    // `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
-
-
-
-
-
-    // depth first
-    // down to (quote foo)
-    // up one to the unquote
-
-
+        return cellIndex;
 
     if (elements[0] == _quote)
     {
@@ -189,45 +55,48 @@ CELL_INDEX Runtime::ExpandMacro(CELL_INDEX macroBodyCell, int quasiquoteLevel)
         {
             // (quote (unquote foo)) => (unquote foo) at the same level
 
-            return ExpandMacro(elements[1], quasiquoteLevel);
+            return ExpandQuasiquoted(elements[1], level);
         }
 
         // (quote foo) => (expand foo) at the same level
 
-        CELL_INDEX expanded = ExpandMacro(elements[1], quasiquoteLevel - 1);
+        CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level - 1);
         return expanded;
     }
 
     if (elements[0] == _unquote)
     {
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "unquote");
-        RAISE_ERROR_IF(quasiquoteLevel < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quasiquoted");
+        RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quasiquoted");
 
         if (elements[1] == _quasiquote)
         {
             // (unquote (quasiquote foo)) => (expand foo) at the same level, because ,' cancels
 
-            return ExpandMacro(elements[1], quasiquoteLevel);
+            return ExpandQuasiquoted(elements[1], level);
         }
 
-        // (unquote foo) => (expand foo) at lower level
+        if (level == 1)
+        {
+            // (unquote foo) => (expand foo) at lower level
 
-        CELL_INDEX expanded = ExpandMacro(elements[1], quasiquoteLevel - 1);
-        return expanded;
+            CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level - 1);
+            return expanded;
+        }
     }
 
     if (elements[0] == _quasiquote)
     {
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "quasiquote");
-        RAISE_ERROR_IF(quasiquoteLevel > 0, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "only one level of quasiquote is supported");
+        //RAISE_ERROR_IF(level > 0, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "only one level of quasiquote is supported");
 
         // (quasiquote foo) => (expand foo) at higher level
 
-        return ExpandMacro(elements[1], quasiquoteLevel + 1);
+        return ExpandQuasiquoted(elements[1], level + 1);
     }
 
     for (size_t i = 0; i < elements.size(); i++)
-        elements[i] = ExpandMacro(elements[i], quasiquoteLevel);
+        elements[i] = ExpandQuasiquoted(elements[i], level);
 
     return GenerateList(elements);
 }
@@ -291,8 +160,8 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     break;
 
                 case SYMBOL_MACRO:
-                    lambdaCell = ExpandMacro(cellIndex, symbol._macroBindings, symbol._valueCell);
-                    evaluateArguments = false;
+                    // FIXME: macros should be expanded at compile time
+                    lambdaCell = symbol._valueCell;
                     break;
 
                 default:
@@ -317,6 +186,19 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
                 return _cell[quoted]._data;
             }
+
+            if (head == _quasiquote)
+            {
+                // Special form: quasiquote
+
+                //CELL_INDEX quasiquoted = cell._next;
+                //RAISE_ERROR_IF(!VALID_CELL(quasiquoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
+                //DumpCellGraph(_cell[quasiquoted]._data, sExpandSymbols);
+                return ExpandQuasiquoted(cellIndex);
+            }
+
+            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quoted");
 
             if (_cell[head]._type == TYPE_SYMBOL)
             {
@@ -423,17 +305,17 @@ Runtime::Scope Runtime::BindArguments(CELL_INDEX bindingList, CELL_INDEX argList
 CELL_INDEX Runtime::CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs)
 {
     PrimitiveInfo& prim = _primitive[primIndex];
-    ArgumentList primArgs;
+    ArgumentList primArgs = ExtractList(argCellIndex);
 
-    vector<CELL_INDEX> elements = ExtractList(argCellIndex);
-    for (auto argCell : elements)
+    if (evaluateArgs)
     {
-        CELL_INDEX value = _cell[argCell]._data;
-
-        if (evaluateArgs)
+        for (size_t i = 0; i < primArgs.size(); i++)
+        {
+            CELL_INDEX value = _cell[primArgs[i]]._data;
             value = EvaluateCell(value);
 
-        primArgs.push_back(value);
+            primArgs[i] = value;
+        }
     }
 
     CELL_INDEX primResult = (*this.*prim._func)(primArgs);

@@ -159,7 +159,7 @@ class Runtime
 
     Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
     CELL_INDEX CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
-    CELL_INDEX ExpandMacro(CELL_INDEX macroBodyCell, int quasiquoteLevel = 0);
+    CELL_INDEX ExpandQuasiquoted(CELL_INDEX macroBodyCell, int level = 0);
 
     // CellTable.cpp
 
