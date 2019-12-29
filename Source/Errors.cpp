@@ -13,6 +13,7 @@ const char* YellowError::GetDesc(ErrorCode code)
         case ERROR_PARSER_LIST_UNTERMINATED:        return "list unterminated";
         case ERROR_PARSER_INVALID_IDENTIFIER:       return "invalid identifier";
         case ERROR_PARSER_BRACE_MISMATCH:           return "brace mismatch";
+
         case ERROR_RUNTIME_NOT_IMPLEMENTED:         return "not implemented";
         case ERROR_RUNTIME_WRONG_NUM_PARAMS:        return "wrong number of parameters";
         case ERROR_RUNTIME_VARIABLE_UNBOUND:        return "variable is unbound";
@@ -20,6 +21,8 @@ const char* YellowError::GetDesc(ErrorCode code)
         case ERROR_RUNTIME_RESERVED_SYMBOL:         return "reserved symbol";
         case ERROR_RUNTIME_UNDEFINED_FUNCTION:      return "undefined function";
         case ERROR_RUNTIME_INVALID_ARGUMENT:        return "invalid argument";
+        case ERROR_RUNTIME_INVALID_MACRO_EXPANSION: return "invalid macro expansion";
+
         case ERROR_INTERNAL_OUT_OF_MEMORY:          return "[INTERNAL] out of memory";
         case ERROR_INTERNAL_PARSER_FAILURE:         return "[INTERNAL] parsing failure";
         case ERROR_INTERNAL_HASH_COLLISION:         return "[INTERNAL] hash collision";

@@ -155,12 +155,9 @@ NodeRef Parser::ParseIdentifier()
     }
     else
     {
-
+        while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
+            end++;
     }
-
-    end = _code;
-    while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
-        end++;
 
     if (end == _code)
         RAISE_ERROR(ERROR_PARSER_INVALID_IDENTIFIER);
@@ -222,5 +219,13 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
             RAISE_ERROR(ERROR_INTERNAL_AST_CORRUPT);
             break;
     }
+
+
+
+
+
+    // macro stores arg list
+    // 
+
 }
 

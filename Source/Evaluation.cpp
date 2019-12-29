@@ -20,11 +20,216 @@ vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
     return result;
 }
 
-CELL_INDEX Runtime::ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell)
+CELL_INDEX Runtime::GenerateList(const vector<CELL_INDEX>& elements)
 {
-    (bindingListCell);
-    (argListCell);
-    return _nil;
+    CELL_INDEX head = _nil;
+
+    for (auto iter = elements.crbegin(); iter != elements.crend(); ++iter)
+    {
+        CELL_INDEX elem = *iter;
+        CELL_INDEX elemLink = AllocateCell(TYPE_LIST);
+
+        _cell[elemLink]._data = elem;
+        _cell[elemLink]._next = head;
+
+        head = elemLink;
+    }
+
+    return head;
+}
+
+
+CELL_INDEX Runtime::ExpandMacro(CELL_INDEX macroBodyCell, int quasiquoteLevel)
+{
+    vector<CELL_INDEX> elements = ExtractList(macroBodyCell);
+    if (elements.empty())
+        return _nil;
+
+    //(setq foo 3)
+    //`(foo   foo) => (foo foo)
+    //`(foo  ,foo) => (foo 3)
+    //`(foo ',foo) => (foo '3)
+    //`(foo ,'foo) => (foo foo)
+
+    /*
+
+
+
+`(x   x) => (x x)
+    (x x)
+
+`(x  ,x) => (x 3)
+    (x 3)
+
+`(x ,'x) => (x x)
+    (x x)
+
+`(x ',x) => (x '3)
+    (x '(value x))
+    (x '3)
+
+`(x ,'`(x ,'x))    (x `(x ,'x))          
+    (x `(x ,'x))   
+    ,' cancels
+
+`(x `(x   x))      (x `(x x))            
+    (x `(x x))
+    no unquote, acts just like quote
+
+`(x ,`(x   x))     (x (x x))             
+    (x (x x))
+    ,' cancels
+
+`(x ',`(x   x))    (x '(x x))            
+    (x '(x x))
+    ,' cancels
+
+`(x ,'`(x   x))    (x `(x x))            
+    (x `(x x))
+    ,' cancels
+
+`(x `(x  ,x))      (x `(x ,x))           
+    (x `(x ,x))
+    , does not expand b/c not at level 0
+
+`(x ,`(x  ,x))     (x (x 3))            
+    (x (x 3))
+    ,x expands to "value of x" at level 0
+    "value of x" == (eval 'x) => 3 
+
+`(x ',`(x  ,x))    (x '(x 3))              
+    (x '(x 3))
+    ,` cancels
+    ,x expanded at level 0
+
+`(x ,'`(x  ,x))    (x `(x ,x))           
+    (x `(x ,x))
+    ,' elided, so ,x is at the wrong level
+                         
+`(x `(x ',x))      (x `(x ',x))          
+    (x `(x ',x))
+    
+`(x ,`(x ',x))     (x (x '3))              
+    (x (x 'x))
+        ,` cancels before going deeper
+    (x (x '3))
+        ,x expands at level 0
+
+`(x ',`(x ',x))    (x '(x '3))             
+    (x '(x '3))
+
+
+`(x ,'`(x ',x))    (x `(x ',x))          
+                         
+`(x `(x ,'x))      (x `(x ,'x))          
+`(x ,`(x ,'x))     (x (x x))             
+`(x ',`(x ,'x))    (x '(x x))            
+`(x ,'`(x ,'x))    (x `(x ,'x))          
+
+
+
+
+
+
+*/
+    // ('foo (eval 'foo))
+    // ('foo 'foo)
+
+
+    // ('foo ','foo)
+    // ('foo ''(eval 'foo))
+    // ('foo 'foo)
+
+    // 1) quasiquote distributes to children
+    // 2) unquote -> (quote (eval ...
+    // 3) collapse quotes as the last step
+
+
+
+
+    // ('foo (quote (eval (quote foo))))
+    //              
+
+
+    //      (quasiquote (foo (unquote (quote foo))))
+    //          (quote (foo
+    //      ((quote foo) (quote (unquote (quote foo))))
+    //      ((quote foo)
+    //
+    // (unquote x) -> (quote (eval x))?
+    // (eval (quote foo)) -> foo
+
+    // `(foo bar) -> ('foo 'bar)   (distributes quotes)
+    // ,foo -> `(eval foo)
+     
+    //      
+    // `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) ==>  (a `(b ,(+ 1 2) ,(foo 4 d) e) f)
+
+
+    // `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
+    //  (a `(b ,(+ 1 2) ,(foo 4        d) e) f)
+    //
+    // `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
+
+
+
+
+
+    // depth first
+    // down to (quote foo)
+    // up one to the unquote
+
+
+
+    if (elements[0] == _quote)
+    {
+        RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "quote");
+
+        if (elements[1] == _unquote)
+        {
+            // (quote (unquote foo)) => (unquote foo) at the same level
+
+            return ExpandMacro(elements[1], quasiquoteLevel);
+        }
+
+        // (quote foo) => (expand foo) at the same level
+
+        CELL_INDEX expanded = ExpandMacro(elements[1], quasiquoteLevel - 1);
+        return expanded;
+    }
+
+    if (elements[0] == _unquote)
+    {
+        RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "unquote");
+        RAISE_ERROR_IF(quasiquoteLevel < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quasiquoted");
+
+        if (elements[1] == _quasiquote)
+        {
+            // (unquote (quasiquote foo)) => (expand foo) at the same level, because ,' cancels
+
+            return ExpandMacro(elements[1], quasiquoteLevel);
+        }
+
+        // (unquote foo) => (expand foo) at lower level
+
+        CELL_INDEX expanded = ExpandMacro(elements[1], quasiquoteLevel - 1);
+        return expanded;
+    }
+
+    if (elements[0] == _quasiquote)
+    {
+        RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "quasiquote");
+        RAISE_ERROR_IF(quasiquoteLevel > 0, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "only one level of quasiquote is supported");
+
+        // (quasiquote foo) => (expand foo) at higher level
+
+        return ExpandMacro(elements[1], quasiquoteLevel + 1);
+    }
+
+    for (size_t i = 0; i < elements.size(); i++)
+        elements[i] = ExpandMacro(elements[i], quasiquoteLevel);
+
+    return GenerateList(elements);
 }
 
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
@@ -86,7 +291,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     break;
 
                 case SYMBOL_MACRO:
-                    lambdaCell = ExpandMacro(symbol._macroBindings, symbol._valueCell);
+                    lambdaCell = ExpandMacro(cellIndex, symbol._macroBindings, symbol._valueCell);
                     evaluateArguments = false;
                     break;
 

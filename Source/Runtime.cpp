@@ -12,6 +12,7 @@ Runtime::Runtime()
 
     _nil = RegisterReserved("nil");
     _true = RegisterReserved("t");
+    _eval = RegisterPrimitive("eval", &Runtime::EVAL);
     _quote = RegisterPrimitive("quote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
     _unquote = RegisterPrimitive("unquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
     _quasiquote = RegisterPrimitive("quasiquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
@@ -29,7 +30,6 @@ Runtime::Runtime()
     RegisterPrimitive("cdr",     &Runtime::CDR);
     RegisterPrimitive("cons",    &Runtime::CONS);
     RegisterPrimitive("eq",      &Runtime::EQ);
-    RegisterPrimitive("eval",    &Runtime::EVAL);
     RegisterPrimitive("list",    &Runtime::LIST);
     RegisterPrimitive("progn",   &Runtime::PROGN);
 

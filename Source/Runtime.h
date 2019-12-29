@@ -43,7 +43,6 @@ static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index")
 typedef TDATA  TINDEX;
 typedef TINDEX CELL_INDEX;
 typedef TINDEX SYMBOL_INDEX;
-typedef TINDEX FUNC_INDEX;
 typedef TINDEX STRING_INDEX;
 
 struct Cell
@@ -147,6 +146,7 @@ class Runtime
 
     CELL_INDEX  _nil;
     CELL_INDEX  _true;
+    CELL_INDEX  _eval;
     CELL_INDEX  _quote;
     CELL_INDEX  _unquote;
     CELL_INDEX  _quasiquote;
@@ -159,11 +159,12 @@ class Runtime
 
     Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
     CELL_INDEX CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
-    CELL_INDEX ExpandMacro(CELL_INDEX bindingListCell, CELL_INDEX argListCell);
+    CELL_INDEX ExpandMacro(CELL_INDEX macroBodyCell, int quasiquoteLevel = 0);
 
     // CellTable.cpp
 
     CELL_INDEX AllocateCell(Type Type);
+    CELL_INDEX GenerateList(const vector<CELL_INDEX>& elements);
     void ExpandCellTable();
     void FreeCell(CELL_INDEX index);
 

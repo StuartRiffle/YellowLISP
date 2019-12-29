@@ -68,6 +68,35 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
 
+    VERIFY("`(x   x)", "(x x)");
+    VERIFY("`(x  ,x)", "(x 3)");
+    VERIFY("`(x ',x)", "(x '3)");
+    VERIFY("`(x ,'x)", "(x x)");
+
+    VERIFY("`(x ,'`(x ,'x))", "(x `(x ,'x))"); 
+    VERIFY("`(x `(x x))", "(x `(x x))"); 
+    VERIFY("`(x ,`(x x))", "(x (x x))"); 
+    VERIFY("`(x ',`(x x))", "(x '(x x))"); 
+    VERIFY("`(x ,'`(x x))", "(x `(x x))"); 
+    VERIFY("`(x `(x ,x))", "(x `(x ,x))"); 
+    VERIFY("`(x ,`(x ,x))", "(x (x 3))"); 
+    VERIFY("`(x ',`(x ,x))", "(x '(x 3))"); 
+    VERIFY("`(x ,'`(x ,x))", "(x `(x ,x))"); 
+    VERIFY("`(x `(x ',x))", "(x `(x ',x))"); 
+    VERIFY("`(x ,`(x ',x))", "(x (x '3))"); 
+    VERIFY("`(x ',`(x ',x))", "(x '(x '3))"); 
+    VERIFY("`(x ,'`(x ',x))", "(x `(x ',x))"); 
+    VERIFY("`(x `(x ,'x))", "(x `(x ,'x))"); 
+    VERIFY("`(x ,`(x ,'x))", "(x (x x))"); 
+    VERIFY("`(x ',`(x ,'x))", "(x '(x x))"); 
+    VERIFY("`(x ,'`(x ,'x))", "(x `(x ,'x))"); 
+
+    VERIFY("`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)", "(a `(b ,(+ 1 2) ,(foo 4 d) e) f)");
+
+
+
+
+
     VERIFY("", "");
     VERIFY(";(", "");
     VERIFY("\n", "");
@@ -128,24 +157,6 @@ void SanityCheck()
     VERIFY("y", "x");
     VERIFY("(eval y)", "(4 5 6)");
 
-    VERIFY("(< 1 2)", "t");
-    VERIFY("(< 2 1)", "nil");
-    VERIFY("(< 1 1)", "nil");
-    VERIFY("(< -2 -1)", "t");
-    VERIFY("(< -1 -2)", "nil");
-    VERIFY("(< 1.1 2.1)", "t");
-    VERIFY("(< 1 2.1)", "t");
-    VERIFY("(< -1.1 2)", "t");
-
-    VERIFY("(defun sqr (x) (* x x))", "sqr");
-    VERIFY("(sqr 5)", "25");
-
-    VERIFY("(cons 'a 'b)", "(a . b)");
-    VERIFY("(cons (list 'a) 'b)", "((a) . b)");
-    VERIFY("(cons 'a (list 'b))", "(a b)");
-    VERIFY("(cons (list 'a) (list 'b))", "((a) b)");
-
-
     VERIFY("(= 1 1)", "t");
     VERIFY("(= 1 2)", "nil");
     VERIFY("(= 1 1.0)", "t");
@@ -167,6 +178,26 @@ void SanityCheck()
     VERIFY("(= 'foo 'foo)", "t");
     VERIFY("(= 'foo 'bar)", "nil");
 
+    VERIFY("(< 1 2)", "t");
+    VERIFY("(< 2 1)", "nil");
+    VERIFY("(< 1 1)", "nil");
+    VERIFY("(< -2 -1)", "t");
+    VERIFY("(< -1 -2)", "nil");
+    VERIFY("(< 1.1 2.1)", "t");
+    VERIFY("(< 1 2.1)", "t");
+    VERIFY("(< -1.1 2)", "t");
+
+    VERIFY("(defun sqr (x) (* x x))", "sqr");
+    VERIFY("(sqr 5)", "25");
+
+    VERIFY("(cons 'a 'b)", "(a . b)");
+    VERIFY("(cons (list 'a) 'b)", "((a) . b)");
+    VERIFY("(cons 'a (list 'b))", "(a b)");
+    VERIFY("(cons (list 'a) (list 'b))", "((a) b)");
+
+    VERIFY("(list 1 . (2))", "(1 . 2)");
+    VERIFY("(list 'a 'b . ('c 'd 'e . ()))", "(a b c d e)");
+
     // Need test cases:
     //  unquote
     //  quasiquote
@@ -180,6 +211,46 @@ void SanityCheck()
     //  progn
     //  + - * / %
 
+    //
+    //
+    // `(,a b)
+    // (qq ((uq a) b)
+
+
+
+    //
+    /*
+
+    (defmacro if (test then else) `(cond (,test ,then) (T ,else)))
+
+    `(cond (,test ,then) (T ,else))
+    (qq (cond ((uq test) (uq then)) (T (uq else))))
+
+    ((q cond) ((test then) (T else))
+
+    (if ((< 1 3) 1 2))
+    `(cond (,test foo ,then) (T ,else))
+    (qq (cond ((uq test) foo (uq then)) (T (uq else))))
+    ((q cond) ((test (q foo) then) (T else))
+    (cond (((eval (< 1 3)) foo
+
+    qq has one parameter
+    recurse
+    first level every list element that is not quoted, gets quoted
+    every element (uq foo)
+    elements of the form (q foo) become (q (q foo))
+
+    every element that is not uq gets q, and the uq are elided
+
+
+
+    qq sets q state on
+    recurse in
+
+
+    */
+
+
     //VERIFY("(append '(a b c) '())", "(a b c)");
     //VERIFY("(append '() '(a b c))", "(a b c)");
     //VERIFY("(append '(a b) '(c d))", "(a b c d)");
@@ -191,6 +262,8 @@ void SanityCheck()
     //VERIFY("lst", "(a b c)");
     //VERIFY("(append)", "nil");
     //VERIFY("(append 'a)", "a");
+
+    //
 
     // TODO: dot notation
     // TODO: backquote

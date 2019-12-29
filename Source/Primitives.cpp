@@ -166,23 +166,30 @@ CELL_INDEX Runtime::LIST(const ArgumentList& args)
 
 CELL_INDEX Runtime::SETQ(const ArgumentList& args)
 {
-    VERIFY_NUM_PARAMETERS(args.size(), 2, "SETQ");
+    RAISE_ERROR_IF(args.empty(), ERROR_RUNTIME_WRONG_NUM_PARAMS, "SETQ needs at least 2 arguments");
+    RAISE_ERROR_IF(args.size() & 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "SETQ needs an even number of arguments");
 
-    CELL_INDEX symbolCell = args[0];
-    CELL_INDEX valueCell = EvaluateCell(args[1]);
+    CELL_INDEX valueCell = _nil;
 
-    if (_cell[symbolCell]._type != TYPE_SYMBOL)
-        RAISE_ERROR(ERROR_RUNTIME_TYPE_MISMATCH, "symbol expected");
+    for (size_t argIdx = 0; argIdx < args.size(); argIdx += 2)
+    {
+        CELL_INDEX symbolCell = args[argIdx];
+        valueCell = EvaluateCell(args[argIdx + 1]);
 
-    SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
-    SymbolInfo& symbol = _symbol[symbolIndex];
-    assert(symbol._symbolCell == symbolCell);
+        if (_cell[symbolCell]._type != TYPE_SYMBOL)
+            RAISE_ERROR(ERROR_RUNTIME_TYPE_MISMATCH, "symbol expected");
 
-    if (symbol._primIndex)
-        RAISE_ERROR(ERROR_RUNTIME_RESERVED_SYMBOL, symbol._ident.c_str());
+        SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
+        SymbolInfo& symbol = _symbol[symbolIndex];
+        assert(symbol._symbolCell == symbolCell);
 
-    symbol._type = SYMBOL_VARIABLE;
-    symbol._valueCell = valueCell;
+        if (symbol._primIndex)
+            RAISE_ERROR(ERROR_RUNTIME_RESERVED_SYMBOL, symbol._ident.c_str());
+
+        symbol._type = SYMBOL_VARIABLE;
+        symbol._valueCell = valueCell;
+    }
+
 
     return valueCell;
 }

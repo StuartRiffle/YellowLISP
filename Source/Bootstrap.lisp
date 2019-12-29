@@ -44,7 +44,7 @@
 (def arith-term (expr))
     
         
-
+(import scheme-compat)
 
 
 
@@ -57,6 +57,13 @@
 (defun plusp  (x) (<  0 x))
 (defun minusp (x) (<  x 0))
 (defun null   (x) (eq x nil))
+
+(defun append (x y)
+    (cond 
+        ((null x) y)
+        ('t (cons (car x) (append (cdr x) y)))))
+
+
 
 
 ;;; Really guys?

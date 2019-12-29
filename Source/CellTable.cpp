@@ -97,13 +97,6 @@ size_t Runtime::CollectGarbage()
 {
     size_t numCellsFreed = 0;
 
-    // Mark our core symbols
-
-    MarkCellsInUse(_nil);
-    MarkCellsInUse(_true);
-    MarkCellsInUse(_quote);
-    // TODO: the rest of them here
-
     // Mark everything in the global scope
 
     for (auto iter : _globalScope)
@@ -165,3 +158,4 @@ size_t Runtime::CollectGarbage()
 
     return numCellsFreed;
 }
+
