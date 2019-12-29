@@ -70,36 +70,63 @@ CELL_INDEX Runtime::CONS(const ArgumentList& args)
     return index;
 }
 
-CELL_INDEX Runtime::EQ(const ArgumentList& args)
+bool Runtime::TestEquality(CELL_INDEX a, CELL_INDEX b)
 {
-    VERIFY_NUM_PARAMETERS(args.size(), 2, "EQ");
-
-    CELL_INDEX a = args[0];
-    CELL_INDEX b = args[1];
-
     if (a == b)
-        return _true;
+        return true;
 
-    const Cell& ca = _cell[a];
-    const Cell& cb = _cell[b];
+    if (_cell[a]._type != _cell[b]._type)
+        return true;
 
-    if (ca._type == cb._type)
+    if (_cell[a]._tags & _cell[b]._tags & TAG_EMBEDDED)
+        if (_cell[a]._data == _cell[b]._data)
+            return true;
+
+    if (IS_NUMERIC_TYPE(a) && IS_NUMERIC_TYPE(b))
     {
-        if (ca._tags & cb._tags & TAG_EMBEDDED)
-            if (ca._data == cb._data)
-                return _true;
+        double aval = LoadNumericLiteral(a);
+        double bval = LoadNumericLiteral(b);
 
-        if (ca._type == TYPE_STRING)
+        if (aval == bval)
+            return true;
+    }
+    else if (_cell[a]._type == TYPE_STRING)
+    {
+        string vala = LoadStringLiteral(a);
+        string valb = LoadStringLiteral(b);
+
+        if (vala == valb)
+            return true;
+    }
+    else if (_cell[a]._type == TYPE_LIST)
+    {
+        while ((a != _nil) && (b != _nil))
         {
-            string vala = LoadStringLiteral(a);
-            string valb = LoadStringLiteral(b);
+            if (!TestEquality(_cell[a]._data, _cell[b]._data))
+                return false;
 
-            if (vala == valb)
-                return _true;
+            a = (CELL_INDEX) _cell[a]._next;
+            b = (CELL_INDEX) _cell[b]._next;
         }
+
+        if ((a != _nil) || (b != _nil))
+            return false;
+
+        return true;
     }
 
-    return _nil;
+    return false;
+}
+
+CELL_INDEX Runtime::EQ(const ArgumentList& args)
+{
+    RAISE_ERROR_IF(args.size() < 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "=");
+
+    for (size_t i = 1; i < args.size(); i++)
+        if (!TestEquality(args[0], args[i]))
+            return _nil;
+
+    return _true;
 }
 
 CELL_INDEX Runtime::LESS(const ArgumentList& args)
@@ -165,12 +192,7 @@ CELL_INDEX Runtime::PROGN(const ArgumentList& args)
     CELL_INDEX result = _nil;
 
     for (size_t i = 0; i < args.size(); i++)
-    {
-        // TODO
-        //bool isTail = (i == args.size() - 1);
-
         result = EvaluateCell(args[i]);
-    }
 
     return result;
 }
