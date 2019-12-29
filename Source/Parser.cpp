@@ -147,6 +147,18 @@ NodeRef Parser::ParseIdentifier()
     RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
 
     const char* end = _code;
+
+    if (Consume('|'))
+    {
+        end = strchr(_code, '|');
+        RAISE_ERROR_IF(!end, ERROR_PARSER_INVALID_IDENTIFIER, "pipe-style identifier unterminated");
+    }
+    else
+    {
+
+    }
+
+    end = _code;
     while (*end && (isalnum(*end) || strchr(SYMBOL_CHARS, *end)))
         end++;
 

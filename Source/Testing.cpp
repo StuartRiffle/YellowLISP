@@ -128,7 +128,6 @@ void SanityCheck()
     VERIFY("y", "x");
     VERIFY("(eval y)", "(4 5 6)");
 
-
     VERIFY("(< 1 2)", "t");
     VERIFY("(< 2 1)", "nil");
     VERIFY("(< 1 1)", "nil");
@@ -145,6 +144,41 @@ void SanityCheck()
     VERIFY("(cons (list 'a) 'b)", "((a) . b)");
     VERIFY("(cons 'a (list 'b))", "(a b)");
     VERIFY("(cons (list 'a) (list 'b))", "((a) b)");
+
+
+    VERIFY("(= 1 1)", "t");
+    VERIFY("(= 1 2)", "nil");
+    VERIFY("(= 1 1.0)", "t");
+    VERIFY("(= (+ 1 2) 3)", "t");
+    VERIFY("(= \"foo\" \"bar\")", "nil");
+    VERIFY("(= \"foo\" \"foo\")", "t");
+    VERIFY("(= \"foo\" \"FOO\")", "nil");
+    VERIFY("(progn (setq a 123) (= a 123)", "t");
+    VERIFY("(= a a)", "t");
+    VERIFY("(progn (setq b a) (= a b))", "t");
+    VERIFY("(progn (setq b 'a) (= a b))", "t");
+    VERIFY("(= b 123)", "t");
+    VERIFY("(= () ())", "t");
+    VERIFY("(= () nil)", "t");
+    VERIFY("(= '(a) '(b))", "t");
+    VERIFY("(= '(1 2 3) '(1 2 3))", "t");
+    VERIFY("(= '(1 (2 3) 4) '(1 (2 3) 4))", "t");
+    VERIFY("(= (atom 'foo) (atom 'bar))", "nil");
+    VERIFY("(= 'foo 'foo)", "t");
+    VERIFY("(= 'foo 'bar)", "nil");
+
+    // Need test cases:
+    //  unquote
+    //  quasiquote
+    //  defmacro
+    //  defun
+    //  lambda
+    //  setq
+    //  cond
+    //  eq
+    //  eval
+    //  progn
+    //  + - * / %
 
     //VERIFY("(append '(a b c) '())", "(a b c)");
     //VERIFY("(append '() '(a b c))", "(a b c)");

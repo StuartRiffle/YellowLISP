@@ -38,14 +38,15 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defmacro defvar (n v) `(setq n ,v)))
 
 
+(defun null   (x)   (eq x nil))
 (defun and    (a b) (cond (a (cond (b T)))))
 (defun or     (a b) (cond (a T) (b T)))
 (defun not    (x)   (cond (x nil) (T T)))
 
 (defun >      (a b) (< b a)))
-(defun <=     (a b) (not (< b a)))    ; (cond ((< b a) nil)
-(defun >=     (a b) (not (< a b)))
-(defun /=     (a b) (not (= a b)))
+(defun <=     (a b) (cond ((< b a) nil) (T T)))
+(defun >=     (a b) (cond ((< a b) nil) (T T)))
+(defun /=     (a b) (cond ((= a b) nil) (T T)))
 
 (defun zero? (x) (=  x 0))
 (ASSERT (zero? 0)))
@@ -61,8 +62,7 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (ASSERT (not (plus? T)))
 (ASSERT (not (plus? NIL)))
 
-(defun minusp (x) (<  x 0))
-(defun null   (x) (eq x nil))
+(defun minus? (x) (<  x 0))
 
 
 )LISP_BOOTSTRAP";

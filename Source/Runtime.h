@@ -10,7 +10,7 @@ enum Type : uint32_t
 {                       // The data stored in the cell is...
     TYPE_VOID,          //   zero, because the cell is uninitialized
     TYPE_LIST,          //   an index into the cell table
-    TYPE_LAMBDA,      //   an index into the cell table for the binding list
+    TYPE_LAMBDA,        //   an index into the cell table for the binding list
     TYPE_SYMBOL,        //   an index into the symbol table
     TYPE_STRING,        //   a tiny string literal, or an index into the string table
     TYPE_INT,           //   a signed integer literal
@@ -64,9 +64,17 @@ enum SymbolType
     SYMBOL_MACRO
 };
 
+enum SymbolFlags
+{
+    SYMBOLFLAG_NONE = 0,
+    SYMBOLFLAG_DONT_EVAL_ARGS = 1 << 0,  
+};
+
 struct SymbolInfo
 {
     SymbolType _type;
+    SymbolFlags _flags;
+
     string _ident;
     string _comment;
     TINDEX _primIndex;
@@ -74,10 +82,11 @@ struct SymbolInfo
     CELL_INDEX _valueCell;
     CELL_INDEX _macroBindings;
 
-    SymbolInfo() : _type(SYMBOL_INVALID), _primIndex(0), _symbolCell(0), _valueCell(0), _macroBindings(0) {}
+    SymbolInfo() : _type(SYMBOL_INVALID), _flags(SYMBOLFLAG_NONE), _primIndex(0), _symbolCell(0), _valueCell(0), _macroBindings(0) {}
 };
 
-#define VALID_CELL(_IDX) (((_IDX) != 0) && ((_IDX) != _nil))
+#define VALID_CELL(_IDX)        (((_IDX) != 0) && ((_IDX) != _nil))
+#define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
 
 
 typedef vector<CELL_INDEX> ArgumentList;
@@ -141,15 +150,12 @@ class Runtime
     CELL_INDEX  _quote;
     CELL_INDEX  _unquote;
     CELL_INDEX  _quasiquote;
-    CELL_INDEX  _defmacro;
-    CELL_INDEX  _defun;
-    CELL_INDEX  _lambda;
-    CELL_INDEX  _setq;
 
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
-    CELL_INDEX   RegisterSymbol(const char* ident);
-    CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func);
+    CELL_INDEX   RegisterReserved(const char* ident);
+    CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);
     vector<CELL_INDEX> ExtractList(CELL_INDEX index);
+    bool TestEquality(CELL_INDEX a, CELL_INDEX b);
 
     Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
     CELL_INDEX CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
@@ -195,6 +201,7 @@ class Runtime
     CELL_INDEX DEFUN(const ArgumentList& args);
     CELL_INDEX DEFMACRO(const ArgumentList& args);
     CELL_INDEX EQ(const ArgumentList& args);
+    CELL_INDEX EQV(const ArgumentList& args);
     CELL_INDEX EVAL(const ArgumentList& args);
     CELL_INDEX LAMBDA(const ArgumentList& args);
     CELL_INDEX LESS(const ArgumentList& args);
@@ -244,56 +251,6 @@ class Runtime
     CELL_INDEX STRINGP(const ArgumentList& args);
     CELL_INDEX ENDP(const ArgumentList& args);
 
-    /*
-    INCF
-    DECF
-
-    DECLARE
-    DECLAIM
-
-    DEFVAR
-    DEFUNC
-    DEFCONSTANT
-    DEFMACRO
-
-    NOT
-    AND
-    OR
-    WHEN
-    UNLESS
-    IF
-    CASE
-
-    SETF
-    SETQ
-
-    LET
-    FLET
-
-    PROG
-    PROGN
-
-    LOGAND
-    LOGIOR
-    LOGXOR
-    LOGNOR
-    LOGEQV
-
-    DOLIST
-    DOTIMES
-    LOOP
-
-
-    LIST
-    APPEND
-    LENGTH
-    REVERSE
-    MEMBER
-    POSITION
-    FIND
-    COUNT
-    REMOVE
-    */
 
     // Commands.cpp
 

@@ -10,22 +10,23 @@ Runtime::Runtime()
     _cellFreeList = _nil;
     ExpandCellTable();
 
-    _nil = RegisterSymbol("nil");
-    _true = RegisterSymbol("t");
-    _quote = RegisterPrimitive("quote", NULL);
-    _unquote = RegisterPrimitive("unquote", NULL);
-    _quasiquote = RegisterPrimitive("quasiquote", NULL);
-    _defmacro = RegisterPrimitive("defmacro",&Runtime::DEFMACRO);
-    _defun = RegisterPrimitive("defun",&Runtime::DEFUN);
-    _lambda = RegisterPrimitive("lambda",&Runtime::LAMBDA);
-    _setq = RegisterPrimitive("setq",&Runtime::SETQ);
+    _nil = RegisterReserved("nil");
+    _true = RegisterReserved("t");
+    _quote = RegisterPrimitive("quote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
+    _unquote = RegisterPrimitive("unquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
+    _quasiquote = RegisterPrimitive("quasiquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
 
     // Language primitives
+
+    RegisterPrimitive("cond",    &Runtime::COND,     SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("defmacro",&Runtime::DEFMACRO, SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("defun",   &Runtime::DEFUN,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("setq",    &Runtime::SETQ,     SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("atom",    &Runtime::ATOM);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
-    RegisterPrimitive("cond",    &Runtime::COND);
     RegisterPrimitive("cons",    &Runtime::CONS);
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("eval",    &Runtime::EVAL);
@@ -37,55 +38,43 @@ Runtime::Runtime()
     RegisterPrimitive("*",       &Runtime::MUL);
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
-    RegisterPrimitive("add",     &Runtime::ADD);
-    RegisterPrimitive("sub",     &Runtime::SUB);
-    RegisterPrimitive("mul",     &Runtime::MUL);
-    RegisterPrimitive("div",     &Runtime::DIV);
-    RegisterPrimitive("mod",     &Runtime::MOD);
-
-    RegisterPrimitive("round", &Runtime::ROUND);
-    RegisterPrimitive("trunc", &Runtime::TRUNCATE);
-    RegisterPrimitive("floor", &Runtime::FLOOR);
-    RegisterPrimitive("celing", &Runtime::CEILING);
-    RegisterPrimitive("exp", &Runtime::EXP);
-    RegisterPrimitive("expt", &Runtime::EXPT);
-    RegisterPrimitive("pow", &Runtime::EXPT);
-    RegisterPrimitive("log", &Runtime::LOG);
-    RegisterPrimitive("sqrt", &Runtime::SQRT);
-    RegisterPrimitive("abs", &Runtime::ABS );
-
-    RegisterPrimitive("sin", &Runtime::SIN);
-    RegisterPrimitive("sinh", &Runtime::SINH);
-    RegisterPrimitive("asin", &Runtime::ASIN);
-    RegisterPrimitive("asinh", &Runtime::ASINH);
-    RegisterPrimitive("cos", &Runtime::COS);
-    RegisterPrimitive("cosh", &Runtime::COSH);
-    RegisterPrimitive("acos", &Runtime::ACOS);
-    RegisterPrimitive("acosh", &Runtime::ACOSH);
-    RegisterPrimitive("tan", &Runtime::TAN);
-    RegisterPrimitive("tanh", &Runtime::TANH);
-    RegisterPrimitive("atan", &Runtime::ATAN);
-    RegisterPrimitive("atanh", &Runtime::ATANH);
-
-
-
-
     RegisterPrimitive("<",       &Runtime::LESS);
+    RegisterPrimitive("=",       &Runtime::EQ);
 
+    RegisterPrimitive("round",   &Runtime::ROUND);
+    RegisterPrimitive("trunc",   &Runtime::TRUNCATE);
+    RegisterPrimitive("floor",   &Runtime::FLOOR);
+    RegisterPrimitive("ceiling", &Runtime::CEILING);
+    RegisterPrimitive("exp",     &Runtime::EXP);
+    RegisterPrimitive("expt",    &Runtime::EXPT);
+    RegisterPrimitive("log",     &Runtime::LOG);
+    RegisterPrimitive("sqrt",    &Runtime::SQRT);
+    RegisterPrimitive("abs",     &Runtime::ABS );
+    RegisterPrimitive("sin",     &Runtime::SIN);
+    RegisterPrimitive("sinh",    &Runtime::SINH);
+    RegisterPrimitive("asin",    &Runtime::ASIN);
+    RegisterPrimitive("asinh",   &Runtime::ASINH);
+    RegisterPrimitive("cos",     &Runtime::COS);
+    RegisterPrimitive("cosh",    &Runtime::COSH);
+    RegisterPrimitive("acos",    &Runtime::ACOS);
+    RegisterPrimitive("acosh",   &Runtime::ACOSH);
+    RegisterPrimitive("tan",     &Runtime::TAN);
+    RegisterPrimitive("tanh",    &Runtime::TANH);
+    RegisterPrimitive("atan",    &Runtime::ATAN);
+    RegisterPrimitive("atanh",   &Runtime::ATANH);
 
+    // Interpreter/meta commands
 
-    // Interpreter commands
-
-    RegisterPrimitive("help",  &Runtime::Help);
-    RegisterPrimitive("exit",  &Runtime::Exit);
-    RegisterPrimitive("quit",  &Runtime::Exit);
+    RegisterPrimitive("help",    &Runtime::Help);
+    RegisterPrimitive("exit",    &Runtime::Exit);
+    RegisterPrimitive("quit",    &Runtime::Exit);
 }
 
 Runtime::~Runtime()
 {
 }
 
-CELL_INDEX Runtime::RegisterSymbol(const char* ident)
+CELL_INDEX Runtime::RegisterReserved(const char* ident)
 {
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     CELL_INDEX cellIndex = _symbol[symbolIndex]._symbolCell;
@@ -117,12 +106,13 @@ SYMBOL_INDEX Runtime::GetSymbolIndex(const char* ident)
     return symbolIndex;
 }
 
-CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func)
+CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags)
 {
     SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
     SymbolInfo& symbol = _symbol[symbolIndex];
 
     symbol._type = SYMBOL_PRIMITIVE;
+    symbol._flags = flags;
     symbol._primIndex = (TINDEX)_primitive.size();
 
     _primitive.emplace_back();

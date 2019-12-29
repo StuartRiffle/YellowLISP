@@ -75,6 +75,9 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 case SYMBOL_RESERVED:
                     return cellIndex;
 
+                case SYMBOL_PRIMITIVE:
+                    return cellIndex;
+
                 case SYMBOL_VARIABLE:
                     return symbol._valueCell;
 
@@ -86,14 +89,6 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                     lambdaCell = ExpandMacro(symbol._macroBindings, symbol._valueCell);
                     evaluateArguments = false;
                     break;
-
-                case SYMBOL_PRIMITIVE:
-                {
-                    return cellIndex;
-                    //primitiveIndex = symbol._primIndex;
-                    //evaluateArguments = ((cellIndex != _defmacro) && (cellIndex != _defun) && (cellIndex != _setq));
-                    //break;
-                }
 
                 default:
                     assert(!"Invalid symbol type");
@@ -126,7 +121,9 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 if (headSymbol._type == SYMBOL_PRIMITIVE)
                 {
                     primitiveIndex = headSymbol._primIndex;
-                    evaluateArguments = ((head != _defmacro) && (head != _defun) && (head != _setq) && (head != _lambda));
+
+                    if (headSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
+                        evaluateArguments = false;
                 }
                 else if (headSymbol._type == SYMBOL_FUNCTION)
                 {
