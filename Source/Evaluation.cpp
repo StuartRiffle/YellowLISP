@@ -45,7 +45,12 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 
     vector<CELL_INDEX> elements = ExtractList(cellIndex);
     if (elements.empty())
+    {
+        if (level == 0)
+            return EvaluateCell(cellIndex);
+
         return cellIndex;
+    }
 
     if (elements[0] == _quote)
     {
@@ -60,7 +65,7 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 
         // (quote foo) => (expand foo) at the same level
 
-        CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level - 1);
+        CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level);
         return expanded;
     }
 
