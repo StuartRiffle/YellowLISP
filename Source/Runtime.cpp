@@ -194,27 +194,45 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
     {
         case TYPE_LIST:
         {
-            ss << '(';
-
-            CELL_INDEX curr = index;
-            while (VALID_CELL(curr))
+            if (cell._data == _quote)
             {
-                ss << GetPrintedValue(_cell[curr]._data);
-                CELL_INDEX next = _cell[curr]._next;
+                ss << "'";
+                ss << GetPrintedValue(_cell[cell._next]._data);
+            }
+            else if (cell._data == _unquote)
+            {
+                ss << ",";
+                ss << GetPrintedValue(_cell[cell._next]._data);
+            }
+            else if (cell._data == _quasiquote)
+            {
+                ss << "`";
+                ss << GetPrintedValue(_cell[cell._next]._data);
+            }
+            else
+            {
+                ss << '(';
 
-                if (VALID_CELL(next) && (_cell[next]._type != TYPE_LIST))
+                CELL_INDEX curr = index;
+                while (VALID_CELL(curr))
                 {
-                    ss << " . " << GetPrintedValue(next);
-                    break;
+                    ss << GetPrintedValue(_cell[curr]._data);
+                    CELL_INDEX next = _cell[curr]._next;
+
+                    if (VALID_CELL(next) && (_cell[next]._type != TYPE_LIST))
+                    {
+                        ss << " . " << GetPrintedValue(next);
+                        break;
+                    }
+
+                    if (VALID_CELL(next))
+                        ss << " ";
+
+                    curr = next;
                 }
 
-                if (VALID_CELL(next))
-                    ss << " ";
-
-                curr = next;
+                ss << ')';
             }
-
-            ss << ')';
             break;
         }
 

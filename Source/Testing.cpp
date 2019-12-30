@@ -9,6 +9,8 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     ErrorCode caughtError = ERROR_NONE;
     string output;
 
+    printf("%s  =>  %s\n", source, expectedOutput);
+
     try
     {
         output = lisp.Evaluate(source);
@@ -51,6 +53,8 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     ResetTextColor();
 
     printf("% s\n", ss.str().c_str());
+
+    CheckOutput(lisp, source, expectedOutput, expectedError);
 }
 
 void CheckOutput(Interpreter& lisp, const char* source, ErrorCode expectedError)
@@ -69,6 +73,13 @@ void SanityCheck()
     Interpreter lisp(&settings);
     
     lisp.Evaluate("(setq x 123)");
+    lisp.Evaluate("(setq a 123)");
+    lisp.Evaluate("(setq b 123)");
+    lisp.Evaluate("(setq c 123)");
+    lisp.Evaluate("(setq d 123)");
+    lisp.Evaluate("(setq e 123)");
+    lisp.Evaluate("(setq f 123)");
+    lisp.Evaluate("(setq foo 123)");
 
     VERIFY("`(x x)", "(x x)");
     VERIFY("`(x ,x)", "(x 123)");

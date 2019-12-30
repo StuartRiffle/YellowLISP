@@ -56,17 +56,14 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
     {
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "quote");
 
-        if (elements[1] == _unquote)
-        {
-            // (quote (unquote foo)) => (unquote foo) at the same level
+        CELL_INDEX quoted = elements[1];
 
-            return ExpandQuasiquoted(elements[1], level);
-        }
-
-        // (quote foo) => (expand foo) at the same level
+        if (level == 0)
+            return EvaluateCell(quoted);
 
         CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level);
-        return expanded;
+        CELL_INDEX requoted = GenerateList({ _quote, expanded });
+        return requoted;
     }
 
     if (elements[0] == _unquote)
@@ -74,20 +71,14 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "unquote");
         RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quasiquoted");
 
-        if (elements[1] == _quasiquote)
-        {
-            // (unquote (quasiquote foo)) => (expand foo) at the same level, because ,' cancels
-
-            return ExpandQuasiquoted(elements[1], level);
-        }
+        CELL_INDEX unquoted = elements[1];
 
         if (level == 1)
-        {
-            // (unquote foo) => (expand foo) at lower level
+            return EvaluateCell(unquoted);
 
-            CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level - 1);
-            return expanded;
-        }
+        CELL_INDEX expanded = ExpandQuasiquoted(unquoted, level - 1);
+        CELL_INDEX reunquoted = GenerateList({ _unquote, expanded });
+        return reunquoted;
     }
 
     if (elements[0] == _quasiquote)
@@ -97,7 +88,17 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 
         // (quasiquote foo) => (expand foo) at higher level
 
-        return ExpandQuasiquoted(elements[1], level + 1);
+        CELL_INDEX quasiquoted = elements[1];
+
+        CELL_INDEX expanded = ExpandQuasiquoted(quasiquoted, level + 1);
+
+        if (level > 0)
+        {
+            CELL_INDEX requoted = GenerateList({ _quasiquote, expanded });
+            return requoted;
+        }
+
+        return expanded;
     }
 
     for (size_t i = 0; i < elements.size(); i++)
