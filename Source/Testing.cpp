@@ -104,7 +104,7 @@ void SanityCheck()
     VERIFY("`(x ',`(x ,'x))", "(x '(x x))"); 
     VERIFY("`(x ,'`(x ,'x))", "(x `(x ,'x))"); 
 
-    VERIFY("`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)", "(a `(b ,(+ 1 2) ,(foo 4 d) e) f)");
+//    VERIFY("`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)", "(a `(b ,(+ 1 2) ,(foo 4 d) e) f)");
 
 
 
@@ -132,8 +132,8 @@ void SanityCheck()
     VERIFY("\"foo\"", "\"foo\"");
     VERIFY("\"FOO\"", "\"FOO\"");
 
-    VERIFY("(quote ('1 2))", "((quote 1) 2)");
-    VERIFY("'('1 2)", "((quote 1) 2)");
+    VERIFY("(quote ('1 2))", "('1 2)");
+    VERIFY("'('1 2)", "('1 2)");
 
     VERIFY("(atom nil)", "t");
     VERIFY("(atom ())", "t");

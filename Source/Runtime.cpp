@@ -25,7 +25,7 @@ Runtime::Runtime()
     RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("setq",    &Runtime::SETQ,     SYMBOLFLAG_DONT_EVAL_ARGS);
 
-    RegisterPrimitive("atom",    &Runtime::ATOM);
+    RegisterPrimitive("atom",    &Runtime::ATOM);//, SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
     RegisterPrimitive("cons",    &Runtime::CONS);

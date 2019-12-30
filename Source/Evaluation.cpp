@@ -317,7 +317,7 @@ CELL_INDEX Runtime::CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, boo
     {
         for (size_t i = 0; i < primArgs.size(); i++)
         {
-            CELL_INDEX value = _cell[primArgs[i]]._data;
+            CELL_INDEX value = primArgs[i];//_cell[primArgs[i]]._data;
             value = EvaluateCell(value);
 
             primArgs[i] = value;
