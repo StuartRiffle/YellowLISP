@@ -109,7 +109,7 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 
 CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
 {
-    if (!VALID_CELL(cellIndex))
+    if (!VALID_CELL(index))
         return _nil;
 
 #ifndef NDEBUG
@@ -117,7 +117,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
     static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render
     if (sDumpDebugGraph)
-        DumpCellGraph(cellIndex, sExpandSymbols);
+        DumpCellGraph(index, sExpandSymbols);
 #endif
 
     CELL_INDEX lambdaCell = _nil;
@@ -146,17 +146,17 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
             }
 
             const SymbolInfo& symbol = _symbol[symbolIndex];
-            assert(symbol._symbolCell == cellIndex);
+            assert(symbol._symbolCell == index);
 
             RAISE_ERROR_IF(symbol._type == SYMBOL_INVALID, ERROR_RUNTIME_VARIABLE_UNBOUND, symbol._ident.c_str());
 
             switch (symbol._type)
             {
                 case SYMBOL_RESERVED:
-                    return cellIndex;
+                    return index;
 
                 case SYMBOL_PRIMITIVE:
-                    return cellIndex;
+                    return index;
 
                 case SYMBOL_VARIABLE:
                     return symbol._valueCell;
@@ -201,7 +201,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
                 //RAISE_ERROR_IF(!VALID_CELL(quasiquoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                 //DumpCellGraph(_cell[quasiquoted]._data, sExpandSymbols);
-                return ExpandQuasiquoted(cellIndex);
+                return ExpandQuasiquoted(index);
             }
 
             RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
@@ -241,7 +241,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
         case TYPE_FLOAT:
         case TYPE_STRING:
         case TYPE_LAMBDA:
-            return cellIndex;
+            return index;
 
         default:
             assert(!"Invalid cell type");

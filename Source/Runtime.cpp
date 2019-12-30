@@ -7,10 +7,9 @@ Runtime::Runtime()
 {
     _primitive.emplace_back(); // element 0 is invalid
 
+    _nil = 0;
+    InitCellTable();
     _garbageCollectionNeeded = false;
-    _cellFreeList = _nil;
-    _cellFreeCount = 0;
-    ExpandCellTable();
 
     _nil = RegisterReserved("nil");
     _true = RegisterReserved("t");
@@ -104,7 +103,7 @@ SYMBOL_INDEX Runtime::GetSymbolIndex(const char* ident)
         symbol._type = SYMBOL_INVALID;
         symbol._ident = ident;
         symbol._symbolCell = cellIndex;
-        symbol._valueCell = _nil;
+        symbol._valueCell = 0;
     }
 
     return symbolIndex;

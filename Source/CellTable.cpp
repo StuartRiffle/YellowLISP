@@ -6,20 +6,12 @@
 
 CELL_INDEX Runtime::AllocateCell(Type type)
 {
-    float pctUsed = _cellFreeCount * 1.0f / _cell.size();
-    assert((pctUsed >= 0) && (pctUsed <= 1));
-
-    if (pctUsed >= CELL_TABLE_EXPAND_THRESH)
-    {
-        ExpandCellTable();
+    float pctFree =_cellFreeCount * 1.0f / _cell.size();
+    if (pctFree < GARBAGE_COLLECTION_THRESH)
         _garbageCollectionNeeded = true;
-    }
 
     if (!VALID_CELL(_cellFreeList))
     {
-        // This should be rare, because HandleGarbage() should
-        // expand the table before we hit the wall.
-
         ExpandCellTable();
     }
 
@@ -34,9 +26,9 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     _cellFreeCount--;
 
     if (_cellFreeCount == 0)
-        assert(_cellFreeList == _nil);
+        assert(_cellFreeList == 0);
 
-    if (_cellFreeList == _nil)
+    if (_cellFreeList == 0)
         assert(_cellFreeCount == 0);
 
     _cell[index]._type = type;
@@ -57,13 +49,21 @@ void Runtime::FreeCell(CELL_INDEX index)
     _cellFreeCount++;
 }
 
-void Runtime::ExpandCellTable(size_t minimumSize)
+void Runtime::InitCellTable(size_t size)
+{
+    _cell.resize(size);
+    _cellFreeList = 0;
+    _cellFreeCount = 0;
+
+    for (size_t i = size - 1; i > 0; i--)
+        FreeCell((CELL_INDEX)i);
+}
+
+
+void Runtime::ExpandCellTable()
 {
     size_t oldSize = _cell.size();
     size_t newSize = oldSize + (oldSize / 2) + 1;
-
-    if (newSize < minimumSize)
-        newSize = minimumSize;
 
     _cell.resize(newSize);
 
@@ -137,6 +137,12 @@ size_t Runtime::CollectGarbage()
         numFree++;
     }
 
+    // FIXME
+    //
+    // GC is dropping elements from the free list
+    // numFree 75, cellFreeCount 90
+
+
     assert(_cellFreeCount == numFree);
 
     // Sweep away anything unreachable
@@ -188,5 +194,12 @@ void Runtime::HandleGarbage()
         CollectGarbage();
         _garbageCollectionNeeded = false;
 
+        float pctFree = _cellFreeCount * 1.0f / _cell.size();
+        if (pctFree < CELL_TABLE_EXPAND_THRESH)
+        {
+            // The GC didn't free up much space, so expand the table to avoid thrashing
+
+            ExpandCellTable();
+        }
     }
 }

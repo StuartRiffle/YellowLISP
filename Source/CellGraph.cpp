@@ -16,14 +16,14 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
     string fillColor = "white";
     string cellTypeName;
 
-    switch (_cell[index]._type)
+    switch (_cell[cellIndex]._type)
     {
-        case TYPE_LIST:   cellTypeName = "LIST";   ssValue << "cell " << _cell[index]._data; fillColor = "lemonchiffon"; break;
+        case TYPE_LIST:   cellTypeName = "LIST";   ssValue << "cell " << _cell[cellIndex]._data; fillColor = "lemonchiffon"; break;
         case TYPE_INT:    cellTypeName = "INT";    ssValue << LoadIntLiteral(cellIndex); break;
         case TYPE_FLOAT:  cellTypeName = "FLOAT";  ssValue << LoadFloatLiteral(cellIndex); break;
         case TYPE_STRING: cellTypeName = "STRING"; ssValue << LoadStringLiteral(cellIndex);  break;
-        case TYPE_SYMBOL: cellTypeName = "SYMBOL"; ssValue << "symbol " << _cell[index]._data; fillColor = "lightcyan";  break;
-        case TYPE_LAMBDA: cellTypeName = "LAMBDA"; ssValue << "cell " << _cell[index]._data; fillColor = "lightpink";  break;
+        case TYPE_SYMBOL: cellTypeName = "SYMBOL"; ssValue << "symbol " << _cell[cellIndex]._data; fillColor = "lightcyan";  break;
+        case TYPE_LAMBDA: cellTypeName = "LAMBDA"; ssValue << "cell " << _cell[cellIndex]._data; fillColor = "lightpink";  break;
     }
 
     ss << "cell" << cellIndex << " [shape=record,style=filled,fillcolor=" << fillColor << ",label=\"<header>CELL " << cellIndex << " (";
@@ -31,7 +31,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
 
     ss << ") | { { ";
 
-    bool includeIdent = !expandSymbols && (_cell[index]._type == TYPE_SYMBOL);
+    bool includeIdent = !expandSymbols && (_cell[cellIndex]._type == TYPE_SYMBOL);
 
     if (includeIdent)
         ss << "ident | ";
@@ -39,35 +39,35 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
     ss << "next | data } | { ";
         
     if (includeIdent)
-        ss << _symbol[_cell[index]._data]._ident << " | ";
+        ss << _symbol[_cell[cellIndex]._data]._ident << " | ";
         
     ss << "<next>";
 
-    if (VALID_CELL(_cell[index]._next))
-        ss << "cell " << _cell[index]._next;
+    if (VALID_CELL(_cell[cellIndex]._next))
+        ss << "cell " << _cell[cellIndex]._next;
 
     ss << "| <data>" << ssValue.str() << " } }\"];" << std::endl;
 
     cellsDone.insert(cellIndex);
 
-    if (expandSymbols && (_cell[index]._type == TYPE_SYMBOL))
+    if (expandSymbols && (_cell[cellIndex]._type == TYPE_SYMBOL))
     {
-        SYMBOL_INDEX symbolIndex = _cell[index]._data;
+        SYMBOL_INDEX symbolIndex = _cell[cellIndex]._data;
         ss << "cell" << cellIndex << ":data -> symbol" << symbolIndex << ":header;" << std::endl;
 
         FormatSymbolLabel(symbolIndex, ss, cellsDone, symbolsDone);
     }
 
-    if (_cell[index]._type == TYPE_LIST)
+    if (_cell[cellIndex]._type == TYPE_LIST)
     {
-        ss << "cell" << cellIndex << ":data -> cell" << _cell[index]._data << ":header;" << std::endl;
-        FormatCellLabel(_cell[index]._data, ss, cellsDone, symbolsDone, expandSymbols);
+        ss << "cell" << cellIndex << ":data -> cell" << _cell[cellIndex]._data << ":header;" << std::endl;
+        FormatCellLabel(_cell[cellIndex]._data, ss, cellsDone, symbolsDone, expandSymbols);
     }
 
-    if (VALID_CELL(_cell[index]._next))
+    if (VALID_CELL(_cell[cellIndex]._next))
     {
-        ss << "cell" << cellIndex << ":next -> cell" << _cell[index]._next << ":header;" << std::endl;
-        FormatCellLabel(_cell[index]._next, ss, cellsDone, symbolsDone, expandSymbols);
+        ss << "cell" << cellIndex << ":next -> cell" << _cell[cellIndex]._next << ":header;" << std::endl;
+        FormatCellLabel(_cell[cellIndex]._next, ss, cellsDone, symbolsDone, expandSymbols);
     }
 }
 

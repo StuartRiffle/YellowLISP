@@ -125,7 +125,8 @@ struct StringInfo
         return 0; \
     }
 
-#define CELL_TABLE_EXPAND_THRESH (0.9f)
+#define GARBAGE_COLLECTION_THRESH (0.10f)   // GC is triggered when the cell table has this much free space left
+#define CELL_TABLE_EXPAND_THRESH  (0.25f)   // If the GC doesn't free up at least this much space, expand the table 
 
 class Runtime
 {
@@ -167,7 +168,8 @@ class Runtime
 
     CELL_INDEX AllocateCell(Type Type);
     CELL_INDEX GenerateList(const vector<CELL_INDEX>& elements);
-    void ExpandCellTable(size_t minimum_size = 64);
+    void InitCellTable(size_t size = 8);
+    void ExpandCellTable();
     void FreeCell(CELL_INDEX index);
 
     void MarkCellsInUse(CELL_INDEX index);
