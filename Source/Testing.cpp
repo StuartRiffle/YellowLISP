@@ -177,7 +177,7 @@ void SanityCheck()
     VERIFY("(= \"foo\" \"bar\")", "nil");
     VERIFY("(= \"foo\" \"foo\")", "t");
     VERIFY("(= \"foo\" \"FOO\")", "nil");
-    VERIFY("(progn (setq a 123) (= a 123)", "t");
+    VERIFY("(progn (setq a 123) (= a 123))", "t");
     VERIFY("(= a a)", "t");
     VERIFY("(progn (setq b a) (= a b))", "t");
     VERIFY("(progn (setq b 'a) (= a b))", "t");

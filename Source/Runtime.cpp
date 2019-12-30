@@ -25,13 +25,13 @@ Runtime::Runtime()
     RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("setq",    &Runtime::SETQ,     SYMBOLFLAG_DONT_EVAL_ARGS);
 
-    RegisterPrimitive("atom",    &Runtime::ATOM);//, SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("atom",    &Runtime::ATOM);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
     RegisterPrimitive("cons",    &Runtime::CONS);
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("list",    &Runtime::LIST);
-    RegisterPrimitive("progn",   &Runtime::PROGN);
+    RegisterPrimitive("progn",   &Runtime::PROGN, SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);
@@ -39,7 +39,7 @@ Runtime::Runtime()
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
     RegisterPrimitive("<",       &Runtime::LESS);
-    RegisterPrimitive("=",       &Runtime::EQ);
+    RegisterPrimitive("=",       &Runtime::EQ, SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("round",   &Runtime::ROUND);
     RegisterPrimitive("trunc",   &Runtime::TRUNCATE);

@@ -114,6 +114,10 @@ bool Runtime::TestEquality(CELL_INDEX a, CELL_INDEX b)
 
         return true;
     }
+    else if (_cell[a]._type == TYPE_SYMBOL)
+    {
+        return TestEquality(_cell[a]._data, _cell[b]._data);
+    }
 
     return false;
 }
