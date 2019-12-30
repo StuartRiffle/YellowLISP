@@ -1,4 +1,4 @@
-// YellowLISP (c) 2019 Stuart Riffle (MIT license)
+// YellowLISP (c) 2020 Stuart Riffle (MIT license)
 
 #include "Parser.h"
 #include "Errors.h"

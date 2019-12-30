@@ -1,7 +1,7 @@
 const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 
 ;;;; YellowLISP
-;;;; Copyright (C) 2019 Stuart Riffle
+;;;; Copyright (C) 2020 Stuart Riffle
 
 (defmacro if (test then else) `(cond (,test ,then) (t ,else)))
 (defmacro defvar (n v) `(setq n ,v))
