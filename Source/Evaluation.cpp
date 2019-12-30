@@ -124,6 +124,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
     CELL_INDEX lambdaCell = _nil;
     TINDEX primitiveIndex = 0;
     bool evaluateArguments = true;
+    bool isMacro = false; // HACK
 
     switch (cell._type)
     {
@@ -204,7 +205,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 return ExpandQuasiquoted(cellIndex);
             }
 
-            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quoted");
+            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
             if (_cell[head]._type == TYPE_SYMBOL)
             {
@@ -222,13 +223,18 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
                 {
                     lambdaCell = headSymbol._valueCell;
                 }
+                else if (headSymbol._type == SYMBOL_MACRO)
+                {
+                    lambdaCell = headSymbol._valueCell;
+                    isMacro = true;
+                }
             }
             else if (_cell[head]._type == TYPE_LIST)
             {
                 lambdaCell = EvaluateCell(head);
             }
 
-            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_UNDEFINED_FUNCTION, "first list element must be a function");
+            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
             break;
         }
 
@@ -273,6 +279,9 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
     try
     {
         callResult = EvaluateCell(bodyCellIndex);
+
+        if (isMacro)
+            callResult = EvaluateCell(callResult);
     }
     catch (...)
     {

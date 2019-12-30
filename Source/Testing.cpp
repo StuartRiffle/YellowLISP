@@ -72,15 +72,6 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
     
-    lisp.Evaluate("(setq x 123)");
-    lisp.Evaluate("(setq a 123)");
-    lisp.Evaluate("(setq b 123)");
-    lisp.Evaluate("(setq c 123)");
-    lisp.Evaluate("(setq d 123)");
-    lisp.Evaluate("(setq e 123)");
-    lisp.Evaluate("(setq f 123)");
-    lisp.Evaluate("(setq foo 123)");
-
     VERIFY("`(x x)", "(x x)");
     VERIFY("`(x ,x)", "(x 123)");
     VERIFY("`(x ',x)", "(x '123)");

@@ -102,7 +102,7 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
 
     if (VALID_CELL(symbol._macroBindings))
     {
-        ss << "symbol" << symbolIndex << ":bindingListCell -> cell" << symbol._macroBindings << ":header;" << std::endl;
+        ss << "symbol" << symbolIndex << ":macroBindings -> cell" << symbol._macroBindings << ":header;" << std::endl;
         FormatCellLabel(symbol._macroBindings, ss, cellsDone, symbolsDone, true);
     }
 }
@@ -115,6 +115,7 @@ string Runtime::GenerateCellGraph(CELL_INDEX cellIndex, bool expandSymbols)
 
     ss << "digraph G {" << std::endl;
     ss << "graph[rankdir = \"LR\"];" << std::endl;
+    ss << "node [fontname = \"segoe ui semibold\"];" << std::endl;
 
     FormatCellLabel(cellIndex, ss, cellsDone, symbolsDone, expandSymbols);
 

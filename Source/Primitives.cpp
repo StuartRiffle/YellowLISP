@@ -218,6 +218,7 @@ CELL_INDEX Runtime::EVAL(const ArgumentList& args)
 
 CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
 {
+    /*
     RAISE_ERROR_IF(args.size() < 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
 
     CELL_INDEX symbolCell = args[0];
@@ -248,6 +249,16 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
 
     macroSymbol._type = SYMBOL_MACRO;
     macroSymbol._valueCell = bodyCell;
+
+    return symbolCell;
+    */
+
+
+    CELL_INDEX   symbolCell = DEFUN(args);
+    SYMBOL_INDEX symbolIndex = _cell[symbolCell]._data;
+    SymbolInfo&  functionSymbol = _symbol[symbolIndex];
+
+    functionSymbol._type = SYMBOL_MACRO;
 
     return symbolCell;
 }

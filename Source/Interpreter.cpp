@@ -98,7 +98,7 @@ void Interpreter::RunREPL()
         string source;
 
         SetTextColor(ANSI_YELLOW);
-        std::cout << std::endl << "-> ";
+        std::cout << "-> ";
         std::getline(std::cin, source);
         ResetTextColor();
 

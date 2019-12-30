@@ -10,11 +10,11 @@
 void PrintBanner()
 {
     SetTextColor(ANSI_YELLOW);
-    printf("__  __     ____              __    _________ ____ \n");
-    printf("\\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
-    printf(" \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
-    printf(" / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
-    printf("/_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n\n");
+    printf(" __  __     ____              __    _________ ____ \n");
+    printf(" \\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
+    printf("  \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
+    printf("  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
+    printf(" /_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n");
     ResetTextColor();
 }
 
@@ -47,7 +47,7 @@ bool gColorConsole = true;
 int main(int argc, char** argv)
 {
 #ifndef NDEBUG
-    SanityCheck();
+    //SanityCheck();
 #endif
 
     CommandLine commandLine(argc, argv);
