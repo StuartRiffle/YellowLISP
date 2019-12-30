@@ -9,8 +9,8 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     ErrorCode caughtError = ERROR_NONE;
     string output;
 
-    if (expectedOutput)
-        std::cout << source << " => " << expectedOutput << std::endl;
+    //if (expectedOutput)
+    //    std::cout << source << " => " << expectedOutput << std::endl;
 
     try
     {
@@ -19,6 +19,12 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     catch (YellowError error)
     {
         caughtError = error._code;
+    }
+    catch (...)
+    {
+        SetTextColor(ANSI_RED);
+        printf("UNHANDLED EXCEPTION!\n"); 
+        ResetTextColor();
     }
 
     string shouldHave;
@@ -168,22 +174,120 @@ void SanityCheck()
     VERIFY("(= 1 2)", "nil");
     VERIFY("(= 1 1.0)", "t");
     VERIFY("(= (+ 1 2) 3)", "t");
-    VERIFY("(= \"foo\" \"bar\")", "nil");
-    VERIFY("(= \"foo\" \"foo\")", "t");
-    VERIFY("(= \"foo\" \"FOO\")", "nil");
+    VERIFY("(= \"foo\" \"bar\")", ERROR_RUNTIME_INVALID_ARGUMENT);
     VERIFY("(progn (setq a 123) (= a 123))", "t");
     VERIFY("(= a a)", "t");
     VERIFY("(progn (setq b a) (= a b))", "t");
-    VERIFY("(progn (setq b 'a) (= a b))", "t");
-    VERIFY("(= b 123)", "t");
-    VERIFY("(= () ())", "t");
-    VERIFY("(= () nil)", "t");
-    VERIFY("(= '(a) '(b))", "nil");
-    VERIFY("(= '(1 2 3) '(1 2 3))", "t");
-    VERIFY("(= '(1 (2 3) 4) '(1 (2 3) 4))", "t");
-    VERIFY("(= (atom 'foo) (atom 'bar))", "t");
-    VERIFY("(= 'foo 'foo)", "t");
-    VERIFY("(= 'foo 'bar)", "nil");
+    VERIFY("(progn (setq b 'a) (= a b))", ERROR_RUNTIME_INVALID_ARGUMENT);
+    VERIFY("(= b 123)", ERROR_RUNTIME_INVALID_ARGUMENT);
+    VERIFY("(= () ())", ERROR_RUNTIME_INVALID_ARGUMENT);
+    VERIFY("(eq () ())", "t");
+    VERIFY("(eq () nil)", "t");
+    VERIFY("(eq '(a) '(b))", "nil");
+    VERIFY("(eq '(1 2 3) '(1 2 3))", "nil");
+    VERIFY("(eql '(1 2 3) '(1 2 3))", "nil");
+    VERIFY("(equal '(1 2 3) '(1 2 3))", "t");
+    VERIFY("(equal '(1 (2 3) 4) '(1 (2 3) 4))", "t");
+    VERIFY("(equal '(1 (2 3) 4) '(1 2 (3 4)))", "nil");
+    VERIFY("(eq (atom 'foo) (atom 'bar))", "t");
+    VERIFY("(eq 'foo 'foo)", "t");
+    VERIFY("(eq 'foo 'bar)", "nil");
+
+    VERIFY("(= 3)", "t");                
+    VERIFY("(= 3 3.0)", "t"); 
+    VERIFY("(= 3 3 3 3)", "t");                 
+    VERIFY("(= 3 3 5 3)", "nil");                
+    VERIFY("(= 3 6 5 2)", "nil");                
+    VERIFY("(= 3 2 3)", "nil");              
+    VERIFY("(= 0.0 -0.0)", "t");
+    VERIFY("(= 0 -0.0)", "t");            
+
+    /*
+    VERIFY("(/= 3)", "t");                
+    VERIFY("(/= 3 3 3 3)", "nil");  
+    VERIFY("(/= 3 3 5 3)", "nil");  
+    VERIFY("(/= 3 6 5 2)", "t");   
+    VERIFY("(/= 3 2 3)", "nil");    
+    VERIFY("(< 3)", "t");                
+    VERIFY("(< 0 3 4 6 7)", "t");            
+    VERIFY("(< 0 3 4 4 6)", "nil");         
+    VERIFY("(<= 3)", "t");                
+    VERIFY("(<= 0 3 4 6 7)", "t");    
+    VERIFY("(<= 0 3 4 4 6)", "t");    
+    VERIFY("(> 4 3 2 1 0)", "t");       
+    VERIFY("(> 4 3 3 2 0)", "nil");      
+    VERIFY("(> 4 3 1 2 0)", "nil");      
+    VERIFY("(>= 4 3 2 1 0)", "t"); 
+    VERIFY("(>= 4 3 3 2 0)", "t"); 
+    VERIFY("(>= 4 3 1 2 0)", "nil");
+    */
+
+    VERIFY("(< 3 5)", "t");                  
+    VERIFY("(< 3 -5)", "nil");                
+    VERIFY("(< 3 3)", "nil");                 
+    VERIFY("(< 0.0 -0.0)", "nil");
+    VERIFY("(<= 3 5)", "t");          
+    VERIFY("(<= 3 -5)", "nil");        
+    VERIFY("(<= 3 3)", "t");          
+    VERIFY("(> 4 3)", "t");             
+    VERIFY("(> 0.0 -0.0)", "nil");
+    VERIFY("(>= 4 3)", "t");       
+    VERIFY("(eq 'a 'b)", "nil");
+    VERIFY("(eq 'a 'a)", "t");
+    VERIFY("(eq 3 3.0)", "nil");
+    VERIFY("(eq (cons 'a 'b) (cons 'a 'c))", "nil");
+    VERIFY("(eq (cons 'a 'b) (cons 'a 'b))", "nil");
+    VERIFY("(progn (setq x (cons 'a 'b)) (eq x x))", "t");
+    VERIFY("(progn (setq x '(a . b)) (eq x x))", "t");
+    VERIFY("(let ((x \"Foo\")) (eq x x))", "t");
+    VERIFY("(eq \"FOO\" \"foo\")", "nil");
+    VERIFY("(eql 'a 'b)", "nil");
+    VERIFY("(eql 'a 'a)", "t");
+    VERIFY("(eql 3 3)", "t");
+    VERIFY("(eql 3 3.0)", "nil");
+    VERIFY("(eql 3.0 3.0)", "t");
+    VERIFY("(eql (cons 'a 'b) (cons 'a 'c))", "nil");
+    VERIFY("(eql (cons 'a 'b) (cons 'a 'b))", "nil");
+    VERIFY("(progn (setq x (cons 'a 'b)) (eql x x))", "t");
+    VERIFY("(progn (setq x '(a . b)) (eql x x))", "t");
+    VERIFY("(eql \"FOO\" \"foo\")", "nil");
+    VERIFY("(equal 'a 'b)", "nil");
+    VERIFY("(equal 'a 'a)", "t");
+    VERIFY("(equal 3 3)", "t");
+    VERIFY("(equal 3 3.0)", "nil");
+    VERIFY("(equal 3.0 3.0)", "t");
+    VERIFY("(equal (cons 'a 'b) (cons 'a 'c))", "nil");
+    VERIFY("(equal (cons 'a 'b) (cons 'a 'b))", "t");
+    VERIFY("(equal \"Foo\" \"Foo\")", "t");
+    VERIFY("(equal \"FOO\" \"foo\")", "nil");
+    VERIFY("(equal \"This-string\" \"This-string\")", "t");
+    VERIFY("(equal \"This-string\" \"this-string\")", "nil");
+    VERIFY("(equalp 'a 'b)", "nil");
+    VERIFY("(equalp 'a 'a)", "t");
+    VERIFY("(equalp 3 3)", "t");
+    VERIFY("(equalp 3 3.0)", "t");
+    VERIFY("(equalp 3.0 3.0)", "t");
+    VERIFY("(equalp (cons 'a 'b) (cons 'a 'c))", "nil");
+    VERIFY("(equalp (cons 'a 'b) (cons 'a 'b))", "t");
+    VERIFY("(equalp \"Foo\" \"Foo\")", "t");
+    VERIFY("(equalp \"FOO\" \"foo\")", "t");
+
+    /*
+
+(eql #\A #\A)", "t");
+(equal #\A #\A)", "t");
+(equal #\A #\a)", "nil");
+(equalp #\A #\A)", "t");
+(equalp #\A #\a)", "t");
+(eq \"Foo\" (copy-seq \"Foo\"))", "nil");
+(eq "string-seq" (copy-seq "string-seq"))", "nil");
+(eql \"Foo\" (copy-seq \"Foo\"))", "nil");
+(equal \"Foo\" (copy-seq \"Foo\"))", "t");
+(equalp \"Foo\" (copy-seq \"Foo\"))", "t");
+
+
+*/
+
 
     VERIFY("(< 1 2)", "t");
     VERIFY("(< 2 1)", "nil");

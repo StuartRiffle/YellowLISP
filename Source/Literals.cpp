@@ -19,7 +19,7 @@ void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
 {
     Cell& cell = _cell[index];
 
-    RAISE_ERROR_IF((cell._type != TYPE_INT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    //RAISE_ERROR_IF((cell._type != TYPE_INT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     cell._data = value;
     cell._type = TYPE_INT;
@@ -43,7 +43,7 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
 {
     Cell& cell = _cell[index];
 
-    RAISE_ERROR_IF((cell._type != TYPE_FLOAT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    //RAISE_ERROR_IF((cell._type != TYPE_FLOAT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     union { TDATA raw; float value; } pun;
     pun.value = value;
@@ -112,7 +112,7 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
 {
     Cell& cell = _cell[index];
 
-    RAISE_ERROR_IF((cell._type != TYPE_STRING) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    //RAISE_ERROR_IF((cell._type != TYPE_STRING) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     cell._type = TYPE_STRING;
 

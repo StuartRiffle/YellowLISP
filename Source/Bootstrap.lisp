@@ -1,77 +1,17 @@
 ;;;; YellowLISP
-;;;; Copyright (C) 2019 Stuart Riffle
+;;;; Copyright (C) 2020 Stuart Riffle
 
-; Disable the debugger in SBCL
-(progn (defun debug-ignore (c h) (declare (ignore h)) (print c) (abort)) (setf *debugger-hook* #'debug-ignore))
+(defmacro if (test then else) `(cond (,test ,then) (t ,else)))
+(defmacro defvar (n v) `(setq n ,v))
 
-
-(defun d (x) ((lambda (x) (* x 2)) x))
-
-(defmacro frick (x) ((lambda (x) (* x 898)) x))
-(defmacro assignme (vary valy) (list 'progn (list 'setq vary valy)))
-
-(defmacro defbork (n) `(setq ,'bork ,n))
-
-(setf moo (lambda (x) (* x x)))
-(progn (eval moo) 5)
-
-
-(defmacro dubs (n) `(setq ,n `(eval (lambda (x) (* x 3)) ,n)))
-
-(defun arith-expression (expr)
-    (progn 
-        (setq expr (arith-muldiv expr))
-        (while (or (= (cdr expr) '+') (= (cdr expr) '-'))
-            (setq op (cdr expr))
-            (setq expr (cadr expr))
-            (setq expr (list op expr (arith-expression expr)))) 
-        expr))
-        
-(defun arith-muldiv (expr)
-    (progn
-        (setq expr (arith-unary expr))
-        (while (or (= (cdr expr) '*') (= (cdr expr) '/') (= (cdr expr) '%'))
-            (setq op (cdr expr))
-            (setq expr (cadr expr))
-            (setq expr (list op expr (arith-expression expr)))) 
-        expr))
-    
-(defun arith-unary (expr)
-    (if (= (cdr expr) '-')
-        (list '*' -1 (arith-term (cdr expr)))
-        (arith-term expr)))
-        
-(def arith-term (expr))
-    
-
+(defun null   (x)   (eq x nil))
+(defun and    (a b) (cond (a (cond (b t)))))
+(defun or     (a b) (cond (a t) (b t)))
+(defun not    (x)   (cond (x nil) (t t)))
 (defun >      (a b) (< b a))
-(defun <=     (a b) (or (< a b) (= a b)))
-(defun >=     (a b) (or (> a b) (= a b)))
-(defun /=     (a b) (not (= a b)))
-
-(defun zerop  (x) (=  x 0))
-(defun plusp  (x) (<  0 x))
-(defun minusp (x) (<  x 0))
-(defun null   (x) (eq x nil))
-
-(defun append (x y)
-    (cond 
-        ((null x) y)
-        ('t (cons (car x) (append (cdr x) y)))))
-
-(defun append2 (x y) (cond) ((null x) y) ('t (cons (car x) (append (cdr x) y))))
-
-
-
-(defmacro if (test then else) 
-    `(cond 
-        (,test ,then) 
-        (T ,else)))
-
-
-
-
-;;; Really guys?
+(defun <=     (a b) (cond ((< b a) nil) (t t)))
+(defun >=     (a b) (cond ((< a b) nil) (t t)))
+(defun /=     (a b) (cond ((= a b) nil) (t t)))
 
 (defun caar   (x) (car (car   x)))
 (defun cadr   (x) (car (cdr   x)))
@@ -101,73 +41,3 @@
 (defun cddadr (x) (cdr (cdadr x)))
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
-
-(defconstant +PI+ 3.141592653589793)
-
-; greaterp - It takes one or more argument and returns t if either there is a single argument or the arguments are successively larger from left to right, or nil if otherwise.
-; lessp
-
-; The following code is from "The Roots of Lisp" by Paul Graham (2002)
-
-(defun null (x)
-    (eq x '()))
-
-(defun and (x y)
-    (cond
-        (x (cond (y 't) ('t '())))
-        ('t '())))
-
-(defun not (x)
-    (cond 
-        (x '()) 
-        ('t 't)))
-
-(defun append (x y)
-    (cond 
-        ((null x) y)
-        ('t (cons (car x) (append (cdr x) y)))))
-
-(defun pair (x y)
-    (cond
-        ((and (null x) (null y)) 
-         '())
-        ((and (not (atom x)) (not (atom y)))
-         (cons (list (car x) (car y)) (pair (cdr x) (cdr y))))))
-
-(defun assoc (x y)
-    (cond
-        ((eq (caar y) x) (cadar y))
-        ('t (assoc x (cdr y)))))
-
-(defun eval (e a)
-    (cond
-        ((atom e) (assoc e a))
-        ((atom (car e))
-         (cond
-             ((eq (car e) 'quote)    (cadr e))
-             ((eq (car e) 'atom)     (atom (eval (cadr e) a)))
-             ((eq (car e) 'eq)       (eq (eval (cadr e) a) (eval (caddr e) a)))
-             ((eq (car e) 'car)      (car (eval (cadr e) a)))
-             ((eq (car e) 'cdr)      (cdr (eval (cadr e) a)))
-             ((eq (car e) 'cons)     (cons (eval (cadr e) a) (eval (caddr e) a)))
-             ((eq (car e) 'cond)     (evcon (cdr e) a))
-             ('t                     (eval (cons (assoc (car e) a) (cdr e)) a))))
-        ((eq (caar e) 'label)
-         (eval (cons (caddar e) (cdr e))
-             (cons (list (cadar e) (car e)) a)))
-        ((eq (caar e) 'lambda)
-         (eval (caddar e)
-             (append (pair (cadar e) (evlis (cdr e) a)) a)))))
-
-(defun evcon (c a)
-    (cond ((eval (caar c) a)
-           (eval (cadar c) a))
-        ('t (evcon (cdr c) a))))
-
-(defun evlis (m a)
-    (cond ((null m) '())
-        ('t (cons (eval (car m) a)
-             (evlis (cdr m) a)))))
-
-
-

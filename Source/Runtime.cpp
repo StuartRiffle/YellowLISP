@@ -31,6 +31,9 @@ Runtime::Runtime()
     RegisterPrimitive("cdr",     &Runtime::CDR);
     RegisterPrimitive("cons",    &Runtime::CONS);//, SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("eq",      &Runtime::EQ);
+    RegisterPrimitive("eql",     &Runtime::EQL);
+    RegisterPrimitive("equal",   &Runtime::EQUAL);
+    RegisterPrimitive("equalp",  &Runtime::EQUALP);
     RegisterPrimitive("list",    &Runtime::LIST);
     RegisterPrimitive("progn",   &Runtime::PROGN, SYMBOLFLAG_DONT_EVAL_ARGS);
 
@@ -40,7 +43,7 @@ Runtime::Runtime()
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
     RegisterPrimitive("<",       &Runtime::LESS);
-    RegisterPrimitive("=",       &Runtime::EQ);
+    RegisterPrimitive("=",       &Runtime::EQLOP);
 
     RegisterPrimitive("round",   &Runtime::ROUND);
     RegisterPrimitive("trunc",   &Runtime::TRUNCATE);
@@ -129,7 +132,12 @@ CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, Sym
 
 CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
 {
+    DebugValidateCells();
+
     CELL_INDEX result = EncodeTreeNode(node);
+    DumpCellGraph(result, true);
+
+    DebugValidateCells();
     return result;
 }
 
@@ -177,7 +185,7 @@ CELL_INDEX Runtime::EncodeTreeNode(const NodeRef& node)
             {
                 CELL_INDEX listCell = AllocateCell(TYPE_LIST);
 
-                _cell[listCell]._data = EncodeSyntaxTree(elemNode);
+                _cell[listCell]._data = EncodeTreeNode(elemNode);
 
                 if (listPrevCell)
                     _cell[listPrevCell]._next = listCell;
@@ -204,6 +212,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
 
     switch (_cell[index]._type)
     {
+        case TYPE_CONS:
         case TYPE_LIST:
         {
             if (_cell[index]._data == _quote)

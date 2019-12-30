@@ -8,7 +8,7 @@
 
 enum Type : uint32_t  
 {                       // The data stored in the cell is...
-    TYPE_VOID,          //   zero, because the cell is uninitialized
+    TYPE_CONS,          //   unknown
     TYPE_FREE,          //   a link to the next free cell
     TYPE_LIST,          //   an index into the cell table
     TYPE_LAMBDA,        //   an index into the cell table for the binding list
@@ -149,7 +149,9 @@ class Runtime
     CELL_INDEX   RegisterReserved(const char* ident);
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);
     vector<CELL_INDEX> ExtractList(CELL_INDEX index);
-    bool TestEquality(CELL_INDEX a, CELL_INDEX b);
+
+    bool TestCellsEQL(CELL_INDEX a, CELL_INDEX b, bool strict);
+    bool TestStructureEQUAL(CELL_INDEX a, CELL_INDEX b, bool strict);
 
     Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
     CELL_INDEX CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
@@ -157,7 +159,7 @@ class Runtime
 
     // CellTable.cpp
 
-    void InitCellTable(size_t size = 8);
+    void InitCellTable(size_t size = 1024);
     void ExpandCellTable();
 
     CELL_INDEX AllocateCell(Type Type);
@@ -199,7 +201,10 @@ class Runtime
     CELL_INDEX DEFUN(const ArgumentList& args);
     CELL_INDEX DEFMACRO(const ArgumentList& args);
     CELL_INDEX EQ(const ArgumentList& args);
-    CELL_INDEX EQV(const ArgumentList& args);
+    CELL_INDEX EQL(const ArgumentList& args);
+    CELL_INDEX EQLOP(const ArgumentList& args);
+    CELL_INDEX EQUAL(const ArgumentList& args);
+    CELL_INDEX EQUALP(const ArgumentList& args);
     CELL_INDEX EVAL(const ArgumentList& args);
     CELL_INDEX LAMBDA(const ArgumentList& args);
     CELL_INDEX LESS(const ArgumentList& args);

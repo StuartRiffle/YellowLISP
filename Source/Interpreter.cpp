@@ -1,6 +1,7 @@
 // YellowLISP (c) 2019 Stuart Riffle (MIT license)
 
 #include "Yellow.h"
+#include "Bootstrap.h"
 #include "Interpreter.h"
 #include "Console.h"
 
@@ -8,6 +9,8 @@ Interpreter::Interpreter(const InterpreterSettings* settings)
 {
     if (settings)
         _settings = *settings;
+
+    RunSourceCode(gBootstrapCode);
 }
 
 void Interpreter::PrintErrorMessage(int code, const string& desc, const string& message)
@@ -23,7 +26,7 @@ vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
     for (auto& node : exps)
     {
         CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
-//        _parser.DumpSyntaxTree(node);
+        //_parser.DumpSyntaxTree(node);
 
         CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
         outputs.push_back(valueCell);    
@@ -85,8 +88,14 @@ string Interpreter::Evaluate(const string& source)
         std::cout << "CRITICAL ERROR: "; 
         ResetTextColor();
 
-        std::cout << "unhandled exception (this is not your fault)" << std::endl;
+        std::cout << "unhandled error (this is not your fault)" << std::endl;
         std::cout << error.what() << std::endl;
+    }
+    catch (...)
+    {
+        SetTextColor(ANSI_RED);
+        std::cout << "UNHANDLED EXCEPTION" << std::endl; 
+        ResetTextColor();
     }
 
     // This is a safe place to perform garbage collection. We can't do

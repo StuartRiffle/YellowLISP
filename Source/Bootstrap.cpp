@@ -3,6 +3,18 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 ;;;; YellowLISP
 ;;;; Copyright (C) 2019 Stuart Riffle
 
+(defmacro if (test then else) `(cond (,test ,then) (t ,else)))
+(defmacro defvar (n v) `(setq n ,v))
+
+(defun null   (x)   (eq x nil))
+(defun and    (a b) (cond (a (cond (b t)))))
+(defun or     (a b) (cond (a t) (b t)))
+(defun not    (x)   (cond (x nil) (t t)))
+(defun >      (a b) (< b a))
+(defun <=     (a b) (cond ((< b a) nil) (t t)))
+(defun >=     (a b) (cond ((< a b) nil) (t t)))
+(defun /=     (a b) (cond ((= a b) nil) (t t)))
+
 (defun caar   (x) (car (car   x)))
 (defun cadr   (x) (car (cdr   x)))
 (defun cdar   (x) (cdr (car   x)))
@@ -31,40 +43,5 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cddadr (x) (cdr (cdadr x)))
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
-
-(defmacro if (test then else) `(cond (,test ,then) (t ,else)))
-(defmacro defvar (n v) `(setq n ,v)))
-
-(defun null   (x)   (eq x nil))
-(defun and    (a b) (cond (a (cond (b T)))))
-(defun or     (a b) (cond (a T) (b T)))
-(defun not    (x)   (cond (x nil) (T T)))
-
-(defun >      (a b) (< b a)))
-(defun <=     (a b) (cond ((< b a) nil) (T T)))
-(defun >=     (a b) (cond ((< a b) nil) (T T)))
-(defun /=     (a b) (cond ((= a b) nil) (T T)))
-
-(defun zero? (x) (=  x 0))
-(ASSERT (zero? 0)))
-(ASSERT (not (zero? 1)))
-(ASSERT (not (zero? -1)))
-(ASSERT (not (zero? T)))
-(ASSERT (not (zero? NIL)))
-
-(defun plus? (x) (<  0 x))
-(ASSERT (plus? 1))
-(ASSERT (not (plus? 0)))
-(ASSERT (not (plus? -1)))
-(ASSERT (not (plus? T)))
-(ASSERT (not (plus? NIL)))
-
-(defun minus? (x) (<  x 0))
-(ASSERT (minus? -1))
-(ASSERT (not (minus? 0)))
-(ASSERT (not (minus? 1)))
-(ASSERT (not (minus? T)))
-(ASSERT (not (minus? NIL)))
-
 
 )LISP_BOOTSTRAP";

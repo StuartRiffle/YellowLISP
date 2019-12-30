@@ -176,6 +176,7 @@
     <ClInclude Include="Source\Runtime.h" />
     <ClInclude Include="Source\SlotPool.h" />
     <ClInclude Include="Source\Testing.h" />
+    <ClInclude Include="Source\Utility.h" />
     <ClInclude Include="Source\Yellow.h" />
   </ItemGroup>
   <ItemGroup>

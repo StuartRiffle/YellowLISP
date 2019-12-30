@@ -3,6 +3,7 @@
 #include "Yellow.h"
 #include "Runtime.h"
 #include "Errors.h"
+#include "Utility.h"
 
 CELL_INDEX Runtime::ATOM(const ArgumentList& args)
 {
@@ -11,7 +12,10 @@ CELL_INDEX Runtime::ATOM(const ArgumentList& args)
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    return (cell._type == TYPE_LIST) ? _nil : _true;
+    if ((cell._type == TYPE_LIST) || (cell._type == TYPE_CONS))
+        return _nil;
+
+    return _true;
 }
 
 CELL_INDEX Runtime::CAR(const ArgumentList& args)
@@ -64,45 +68,95 @@ CELL_INDEX Runtime::CONS(const ArgumentList& args)
     CELL_INDEX index = (CELL_INDEX)AllocateCell(TYPE_LIST);
 
     Cell& cell = _cell[index];
+    cell._type = TYPE_CONS;
     cell._data = head;
     cell._next = tail;
 
     return index;
 }
 
-bool Runtime::TestEquality(CELL_INDEX a, CELL_INDEX b)
+CELL_INDEX Runtime::EQLOP(const ArgumentList& args)
 {
+    RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "=");
+
+    // Numerical equality (regardless of type!)
+
+    for (size_t i = 0; i < args.size(); i++)
+        RAISE_ERROR_IF(!IS_NUMERIC_TYPE(args[i]), ERROR_RUNTIME_INVALID_ARGUMENT, "the operator '=' only works for numeric types");
+
+    double first = LoadNumericLiteral(args[0]);
+    for (size_t i = 1; i < args.size(); i++)
+        if (LoadNumericLiteral(args[i]) != first)
+            return _nil;
+
+    return _true;
+}
+
+CELL_INDEX Runtime::EQ(const ArgumentList& args)
+{
+    RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "EQ");
+
+    // EQ is only true if the arguments all refer to the same cell internally
+
+    for (size_t i = 1; i < args.size(); i++)
+        if (args[i] != args[0])
+            return _nil;
+
+    return _true;
+}
+
+bool Runtime::TestCellsEQL(CELL_INDEX a, CELL_INDEX b, bool strict)
+{
+    // EQL is like EQ, but also allows numbers (of the same type) and identical strings
+
     if (a == b)
         return true;
 
-    if (_cell[a]._type != _cell[b]._type)
-        return true;
+    if (!strict)
+    {
+        if (IS_NUMERIC_TYPE(a) && (IS_NUMERIC_TYPE(b)))
+            if (LoadNumericLiteral(a) == LoadNumericLiteral(b))
+                return true;
+    }
 
-    if (_cell[a]._tags & _cell[b]._tags & TAG_EMBEDDED)
+    if (_cell[a]._type != _cell[b]._type)
+        return false;
+
+    if (IS_NUMERIC_TYPE(a))
         if (_cell[a]._data == _cell[b]._data)
             return true;
 
-    if (IS_NUMERIC_TYPE(a) && IS_NUMERIC_TYPE(b))
+    if (_cell[a]._type == TYPE_STRING)
     {
-        double aval = LoadNumericLiteral(a);
-        double bval = LoadNumericLiteral(b);
+        string astr = LoadStringLiteral(a);
+        string bstr = LoadStringLiteral(b);
 
-        if (aval == bval)
+        if (!strict)
+        {
+            astr = Uppercase(astr);
+            bstr = Uppercase(bstr);
+        }
+
+        if (astr == bstr)
             return true;
     }
-    else if (_cell[a]._type == TYPE_STRING)
-    {
-        string vala = LoadStringLiteral(a);
-        string valb = LoadStringLiteral(b);
 
-        if (vala == valb)
+    if (_cell[a]._type == TYPE_CONS)
+        if ((_cell[a]._data == _cell[b]._data) && (_cell[a]._next == _cell[b]._next))
             return true;
-    }
-    else if (_cell[a]._type == TYPE_LIST)
+    
+    return false;
+}
+
+bool Runtime::TestStructureEQUAL(CELL_INDEX a, CELL_INDEX b, bool strict)
+{
+    // EQUAL is like EQL, but defined recursively for lists
+
+    if ((_cell[a]._type == TYPE_LIST) && (_cell[b]._type == TYPE_LIST))
     {
         while ((a != _nil) && (b != _nil))
         {
-            if (!TestEquality(_cell[a]._data, _cell[b]._data))
+            if (!TestStructureEQUAL(_cell[a]._data, _cell[b]._data, strict))
                 return false;
 
             a = (CELL_INDEX) _cell[a]._next;
@@ -111,23 +165,46 @@ bool Runtime::TestEquality(CELL_INDEX a, CELL_INDEX b)
 
         if ((a != _nil) || (b != _nil))
             return false;
-
-        return true;
-    }
-    else if (_cell[a]._type == TYPE_SYMBOL)
-    {
-        //return TestEquality(_cell[a]._data, _cell[b]._data);
     }
 
-    return false;
+    if (!TestCellsEQL(a, b, strict))
+        return false;
+
+    return true;
 }
 
-CELL_INDEX Runtime::EQ(const ArgumentList& args)
+
+CELL_INDEX Runtime::EQL(const ArgumentList& args)
 {
-    RAISE_ERROR_IF(args.size() < 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "=");
+    RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "EQL");
 
     for (size_t i = 1; i < args.size(); i++)
-        if (!TestEquality(args[0], args[i]))
+        if (!TestCellsEQL(args[0], args[i], true))
+            return _nil;
+
+    return _true;
+}
+
+CELL_INDEX Runtime::EQUAL(const ArgumentList& args)
+{
+    RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "EQUAL");
+
+    for (size_t i = 1; i < args.size(); i++)
+        if (!TestStructureEQUAL(args[0], args[i], true))
+            return _nil;
+
+    return _true;
+}
+
+CELL_INDEX Runtime::EQUALP(const ArgumentList& args)
+{
+    RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "EQUALP");
+
+    // The same as EQUAL, but numbers can be different types, and string
+    // comparison is not case sensitive
+
+    for (size_t i = 1; i < args.size(); i++)
+        if (!TestStructureEQUAL(args[0], args[i], false))
             return _nil;
 
     return _true;
