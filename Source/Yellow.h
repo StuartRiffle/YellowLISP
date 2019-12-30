@@ -25,6 +25,10 @@
 #define YELLOW_CATCH_EXCEPTIONS (1)
 #endif
 
+#ifndef YELLOW_ENABLE_GC
+#define YELLOW_ENABLE_GC (1)
+#endif
+
 #include <cstdint>
 using std::uint32_t;
 using std::uint64_t;

@@ -6,28 +6,22 @@
 
 CELL_INDEX Runtime::AllocateCell(Type type)
 {
-#if YELLOW_ENABLE_GC
-    if (VALID_CELL(_cellFreeList))
+    float pctUsed = _cellFreeCount * 1.0f / _cell.size();
+    assert((pctUsed >= 0) && (pctUsed <= 1));
+
+    if (pctUsed >= CELL_TABLE_EXPAND_THRESH)
     {
-        size_t numCellsFreed = CollectGarbage();
-
-        float pctFreed = numCellsFreed * 1.0f / _cell.size();
-        float pctUsed = 1 - pctFreed;
-
-        assert((pctUsed >= 0) && (pctUsed <= 1));
-
-        if (pctUsed >= CELL_TABLE_EXPAND_THRESH)
-        {
-            // The GC didn't free up much space. Expand the table now to avoid
-            // invoking GC over and over again as the working set increases.
-
-            ExpandCellTable();
-        }
+        ExpandCellTable();
+        _garbageCollectionNeeded = true;
     }
-#endif
 
     if (!VALID_CELL(_cellFreeList))
+    {
+        // This should be rare, because HandleGarbage() should
+        // expand the table before we hit the wall.
+
         ExpandCellTable();
+    }
 
     if (!VALID_CELL(_cellFreeList))
     {
@@ -37,10 +31,17 @@ CELL_INDEX Runtime::AllocateCell(Type type)
 
     CELL_INDEX index = _cellFreeList;
     _cellFreeList = _cell[_cellFreeList]._next;
+    _cellFreeCount--;
+
+    if (_cellFreeCount == 0)
+        assert(_cellFreeList == _nil);
+
+    if (_cellFreeList == _nil)
+        assert(_cellFreeCount == 0);
 
     _cell[index]._type = type;
     _cell[index]._next = _nil;
-    _cell[index]._tags = TAG_IN_USE;
+    _cell[index]._tags = 0;
 
     return index;
 }
@@ -53,12 +54,16 @@ void Runtime::FreeCell(CELL_INDEX index)
     _cell[index]._next = _cellFreeList;
 
     _cellFreeList = index;
+    _cellFreeCount++;
 }
 
-void Runtime::ExpandCellTable()
+void Runtime::ExpandCellTable(size_t minimumSize)
 {
     size_t oldSize = _cell.size();
     size_t newSize = oldSize + (oldSize / 2) + 1;
+
+    if (newSize < minimumSize)
+        newSize = minimumSize;
 
     _cell.resize(newSize);
 
@@ -118,13 +123,28 @@ size_t Runtime::CollectGarbage()
         for (auto& binding : scope)
             MarkCellsInUse(binding.second);
 
+    // Mark everything on the free list too, so it doesn't get clobbered
+
+    CELL_INDEX slot = _cellFreeList;
+    int numFree = 0;
+
+    while(VALID_CELL(slot))
+    {
+        assert(_cell[slot]._type == TYPE_VOID);
+
+        _cell[slot]._tags |= TAG_GC_MARK;
+        slot = _cell[slot]._next;
+        numFree++;
+    }
+
+    assert(_cellFreeCount == numFree);
+
     // Sweep away anything unreachable
 
     for (TINDEX i = 1; i < _cell.size(); i++)
     {
         if (_cell[i]._tags & TAG_GC_MARK)
         {
-            RAISE_ERROR_IF((_cell[i]._tags & TAG_IN_USE) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
             _cell[i]._tags &= ~TAG_GC_MARK;
         }
         else
@@ -156,6 +176,17 @@ size_t Runtime::CollectGarbage()
         }
     }
 
+    printf("Freed %d of %d cells\n", (int) numCellsFreed, (int) _cell.size());
     return numCellsFreed;
 }
 
+
+void Runtime::HandleGarbage()
+{
+    if (_garbageCollectionNeeded)
+    {
+        CollectGarbage();
+        _garbageCollectionNeeded = false;
+
+    }
+}

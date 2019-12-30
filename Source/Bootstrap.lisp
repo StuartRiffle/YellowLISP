@@ -2,7 +2,7 @@
 ;;;; Copyright (C) 2019 Stuart Riffle
 
 ; Disable the debugger in SBCL
-; (progn (defun debug-ignore (c h) (declare (ignore h)) (print c) (abort)) (setf *debugger-hook* #'debug-ignore))
+(progn (defun debug-ignore (c h) (declare (ignore h)) (print c) (abort)) (setf *debugger-hook* #'debug-ignore))
 
 
 (defun d (x) ((lambda (x) (* x 2)) x))
@@ -43,10 +43,6 @@
         
 (def arith-term (expr))
     
-        
-(import scheme-compat)
-
-
 
 (defun >      (a b) (< b a))
 (defun <=     (a b) (or (< a b) (= a b)))
@@ -62,6 +58,15 @@
     (cond 
         ((null x) y)
         ('t (cons (car x) (append (cdr x) y)))))
+
+(defun append2 (x y) (cond) ((null x) y) ('t (cons (car x) (append (cdr x) y))))
+
+
+
+(defmacro if (test then else) 
+    `(cond 
+        (,test ,then) 
+        (T ,else)))
 
 
 

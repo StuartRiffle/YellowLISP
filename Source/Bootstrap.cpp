@@ -32,7 +32,7 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
 
-(defmacro if (test then else) `(cond (,test ,then) (T ,else)))
+(defmacro if (test then else) `(cond (,test ,then) (t ,else)))
 (defmacro defvar (n v) `(setq n ,v)))
 
 (defun null   (x)   (eq x nil))

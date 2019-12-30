@@ -22,9 +22,8 @@ enum Type : uint32_t
 
 enum Tags
 {
-    TAG_IN_USE     = 1 << 0,   // Cell has been allocated
-    TAG_GC_MARK    = 1 << 1,   // Marks cell as "reachable" during mark-and-sweep garbage collection
-    TAG_EMBEDDED   = 1 << 2,   // The value is contained in the cell (as opposed to indexed)
+    TAG_GC_MARK    = 1 << 0,   // Marks cell as "reachable" during mark-and-sweep garbage collection
+    TAG_EMBEDDED   = 1 << 1,   // The value is contained in the cell (as opposed to indexed)
 
     TAG_BITS = 3
 };
@@ -134,6 +133,7 @@ class Runtime
 
     vector<Cell> _cell;
     CELL_INDEX _cellFreeList;
+    int _cellFreeCount;
 
     SlotPool<SymbolInfo> _symbol;
     std::unordered_map<THASH, SYMBOL_INDEX> _globalScope;
@@ -151,6 +151,8 @@ class Runtime
     CELL_INDEX  _unquote;
     CELL_INDEX  _quasiquote;
 
+    bool _garbageCollectionNeeded;
+
     SYMBOL_INDEX GetSymbolIndex(const char* ident);
     CELL_INDEX   RegisterReserved(const char* ident);
     CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);
@@ -165,7 +167,7 @@ class Runtime
 
     CELL_INDEX AllocateCell(Type Type);
     CELL_INDEX GenerateList(const vector<CELL_INDEX>& elements);
-    void ExpandCellTable();
+    void ExpandCellTable(size_t minimum_size = 64);
     void FreeCell(CELL_INDEX index);
 
     void MarkCellsInUse(CELL_INDEX index);
@@ -257,6 +259,9 @@ class Runtime
 
     CELL_INDEX Help(const ArgumentList& args);
     CELL_INDEX Exit(const ArgumentList& args);
+    CELL_INDEX RunGC(const ArgumentList& args);
+
+    CELL_INDEX EncodeTreeNode(const NodeRef& root);
 
 public:
     Runtime();
@@ -264,6 +269,7 @@ public:
 
     CELL_INDEX EncodeSyntaxTree(const NodeRef& root);
     CELL_INDEX EvaluateCell(CELL_INDEX cellIndex);
+    void HandleGarbage();
 
     string GetPrintedValue(CELL_INDEX index);
 };

@@ -86,6 +86,12 @@ string Interpreter::Evaluate(const string& source)
         ResetTextColor();
     }
 
+    // This is a safe place to perform garbage collection. We can't do
+    // it during evaluation, because there will be temporary cells in
+    // use that aren't reachable yet. 
+
+    _runtime.HandleGarbage();
+
     return output;
 }
 

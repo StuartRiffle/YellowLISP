@@ -62,10 +62,14 @@ NodeRef Parser::ParseElement()
 
     if (result && Consume('.'))
     {
-        // Convert A . B to (cons A B)
+        // Convert A . B to (cons A 'B)
 
-        NodeRef cons = IdentifierNode("cons");
-        result = ListNode({ cons, result, ParseElement() });
+        NodeRef cons  = IdentifierNode("cons");
+        NodeRef quote = IdentifierNode("quote");
+        NodeRef rhs = ParseElement();
+        NodeRef quoted = ListNode({ quote, rhs });
+
+        result = ListNode({ cons, result, quoted });
     }
 
     return result;

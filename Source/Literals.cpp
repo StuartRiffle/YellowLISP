@@ -55,10 +55,9 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
 
 double Runtime::LoadNumericLiteral(CELL_INDEX index)
 {
-    const Cell& cell = _cell[index];
     double value = 0;
 
-    switch (cell._type)
+    switch (_cell[index]._type)
     {
         case TYPE_INT:   value = LoadIntLiteral(index); break;
         case TYPE_FLOAT: value = LoadFloatLiteral(index); break;

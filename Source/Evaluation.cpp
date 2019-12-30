@@ -69,7 +69,7 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
     if (elements[0] == _unquote)
     {
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "unquote");
-        RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "can't unquote what isn't quasiquoted");
+        RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
         CELL_INDEX unquoted = elements[1];
 
@@ -107,7 +107,7 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
     return GenerateList(elements);
 }
 
-CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
+CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
 {
     if (!VALID_CELL(cellIndex))
         return _nil;
@@ -120,17 +120,16 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
         DumpCellGraph(cellIndex, sExpandSymbols);
 #endif
 
-    Cell& cell = _cell[cellIndex];
     CELL_INDEX lambdaCell = _nil;
     TINDEX primitiveIndex = 0;
     bool evaluateArguments = true;
     bool isMacro = false; // HACK
 
-    switch (cell._type)
+    switch (_cell[index]._type)
     {
         case TYPE_SYMBOL:
         {
-            SYMBOL_INDEX symbolIndex = cell._data;
+            SYMBOL_INDEX symbolIndex = _cell[index]._data;
 
             // Symbols in the current scope override globals
 
@@ -180,14 +179,14 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
         case TYPE_LIST:
         {
-            CELL_INDEX head = cell._data;
+            CELL_INDEX head = _cell[index]._data;
             assert(VALID_CELL(head));
 
             if (head == _quote)
             {
                 // Special form: quote
 
-                CELL_INDEX quoted = cell._next;
+                CELL_INDEX quoted = _cell[index]._next;
                 RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
                 RAISE_ERROR_IF(VALID_CELL(_cell[quoted]._next), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
@@ -198,7 +197,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
             {
                 // Special form: quasiquote
 
-                //CELL_INDEX quasiquoted = cell._next;
+                //CELL_INDEX quasiquoted = _cell[index]._next;
                 //RAISE_ERROR_IF(!VALID_CELL(quasiquoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                 //DumpCellGraph(_cell[quasiquoted]._data, sExpandSymbols);
@@ -252,7 +251,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
     if (primitiveIndex)
     {
-        CELL_INDEX argCellIndex = cell._next;
+        CELL_INDEX argCellIndex = _cell[index]._next;
         CELL_INDEX primResult = CallPrimitive(primitiveIndex, argCellIndex, evaluateArguments);
         return primResult;
     }
@@ -264,10 +263,10 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX cellIndex)
 
     // Bind the arguments
 
-    assert(_cell[bindingListIndex]._type == TYPE_LIST);
+    RAISE_ERROR_IF(_cell[bindingListIndex]._type != TYPE_LIST, ERROR_RUNTIME_INVALID_ARGUMENT);
 
-    CELL_INDEX argList = cell._next;
-    assert(_cell[argList]._type == TYPE_LIST);
+    CELL_INDEX argList = _cell[index]._next;
+    RAISE_ERROR_IF(_cell[argList]._type != TYPE_LIST, ERROR_RUNTIME_INVALID_ARGUMENT);
 
     Scope callScope = BindArguments(bindingListIndex, argList, evaluateArguments);
 

@@ -7,7 +7,9 @@ Runtime::Runtime()
 {
     _primitive.emplace_back(); // element 0 is invalid
 
+    _garbageCollectionNeeded = false;
     _cellFreeList = _nil;
+    _cellFreeCount = 0;
     ExpandCellTable();
 
     _nil = RegisterReserved("nil");
@@ -28,7 +30,7 @@ Runtime::Runtime()
     RegisterPrimitive("atom",    &Runtime::ATOM);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
-    RegisterPrimitive("cons",    &Runtime::CONS);
+    RegisterPrimitive("cons",    &Runtime::CONS);//, SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("list",    &Runtime::LIST);
     RegisterPrimitive("progn",   &Runtime::PROGN, SYMBOLFLAG_DONT_EVAL_ARGS);
@@ -39,7 +41,7 @@ Runtime::Runtime()
     RegisterPrimitive("/",       &Runtime::DIV);
     RegisterPrimitive("%",       &Runtime::MOD);
     RegisterPrimitive("<",       &Runtime::LESS);
-    RegisterPrimitive("=",       &Runtime::EQ, SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("=",       &Runtime::EQ);
 
     RegisterPrimitive("round",   &Runtime::ROUND);
     RegisterPrimitive("trunc",   &Runtime::TRUNCATE);
@@ -68,6 +70,8 @@ Runtime::Runtime()
     RegisterPrimitive("help",    &Runtime::Help);
     RegisterPrimitive("exit",    &Runtime::Exit);
     RegisterPrimitive("quit",    &Runtime::Exit);
+    RegisterPrimitive("gc",      &Runtime::RunGC);
+
 }
 
 Runtime::~Runtime()
@@ -124,32 +128,41 @@ CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, Sym
     return symbol._symbolCell;
 }
 
-
 CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
+{
+    CELL_INDEX result = EncodeTreeNode(node);
+    return result;
+}
+
+CELL_INDEX Runtime::EncodeTreeNode(const NodeRef& node)
 {
     switch (node->_type)
     {
         case AST_NODE_INT_LITERAL:
         {
             CELL_INDEX intCell = AllocateCell(TYPE_INT);
+
             StoreIntLiteral(intCell, node->_int);
             return intCell;
         }
         case AST_NODE_FLOAT_LITERAL:
         {
             CELL_INDEX floatCell = AllocateCell(TYPE_FLOAT);
+
             StoreFloatLiteral(floatCell, node->_float);
             return floatCell;
         }
         case AST_NODE_STRING_LITERAL:
         {
             CELL_INDEX stringCell = AllocateCell(TYPE_STRING);
+
             StoreStringLiteral(stringCell, node->_string.c_str());
             return stringCell;
         }
         case AST_NODE_IDENTIFIER:
         {
             CELL_INDEX symbolCell = GetSymbolIndex(node->_identifier.c_str());
+
             SymbolInfo& symbol = _symbol[symbolCell];
             return symbol._symbolCell;
         }
@@ -164,6 +177,7 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
             for (auto& elemNode : node->_list)
             {
                 CELL_INDEX listCell = AllocateCell(TYPE_LIST);
+
                 _cell[listCell]._data = EncodeSyntaxTree(elemNode);
 
                 if (listPrevCell)
@@ -187,27 +201,26 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
     if (index == 0)
         return "";
 
-    Cell& cell = _cell[index];
     std::stringstream ss;
 
-    switch (cell._type)
+    switch (_cell[index]._type)
     {
         case TYPE_LIST:
         {
-            if (cell._data == _quote)
+            if (_cell[index]._data == _quote)
             {
                 ss << "'";
-                ss << GetPrintedValue(_cell[cell._next]._data);
+                ss << GetPrintedValue(_cell[_cell[index]._next]._data);
             }
-            else if (cell._data == _unquote)
+            else if (_cell[index]._data == _unquote)
             {
                 ss << ",";
-                ss << GetPrintedValue(_cell[cell._next]._data);
+                ss << GetPrintedValue(_cell[_cell[index]._next]._data);
             }
-            else if (cell._data == _quasiquote)
+            else if (_cell[index]._data == _quasiquote)
             {
                 ss << "`";
-                ss << GetPrintedValue(_cell[cell._next]._data);
+                ss << GetPrintedValue(_cell[_cell[index]._next]._data);
             }
             else
             {
@@ -239,7 +252,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
         case TYPE_INT:    ss << LoadIntLiteral(index); break;
         case TYPE_FLOAT:  ss << LoadFloatLiteral(index); break;
         case TYPE_STRING: ss << '\"' << LoadStringLiteral(index) << '\"'; break;
-        case TYPE_SYMBOL: ss << _symbol[cell._data]._ident; break;
+        case TYPE_SYMBOL: ss << _symbol[_cell[index]._data]._ident; break;
         case TYPE_LAMBDA: ss << "<lambda " << index << ">"; break;
 
         default:          RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT); break;
