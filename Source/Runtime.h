@@ -9,6 +9,7 @@
 enum Type : uint32_t  
 {                       // The data stored in the cell is...
     TYPE_VOID,          //   zero, because the cell is uninitialized
+    TYPE_FREE,          //   a link to the next free cell
     TYPE_LIST,          //   an index into the cell table
     TYPE_LAMBDA,        //   an index into the cell table for the binding list
     TYPE_SYMBOL,        //   an index into the symbol table
@@ -36,7 +37,7 @@ const int DATA_BITS = sizeof(TDATA) * 8;
 const int METADATA_BITS = TYPE_BITS + TAG_BITS;
 const int INDEX_BITS = HEADER_BITS - METADATA_BITS;
 
-static_assert(TYPE_COUNT < (1 << TYPE_BITS), "Not enough type bits");
+static_assert(TYPE_COUNT <= (1 << TYPE_BITS), "Not enough type bits");
 static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index");
 
 typedef TDATA  TINDEX;
@@ -99,16 +100,6 @@ struct PrimitiveInfo
     PrimitiveFunc _func;
 };
 
-struct FunctionInfo
-{
-    string _name;
-    bool _isMacro;
-    CELL_INDEX _argListCell;
-    CELL_INDEX _bodyCell;
-
-    FunctionInfo() : _isMacro(0), _argListCell(0), _bodyCell(0) {}
-};
-
 struct StringInfo
 {
     string _str;
@@ -166,12 +157,14 @@ class Runtime
 
     // CellTable.cpp
 
-    CELL_INDEX AllocateCell(Type Type);
-    CELL_INDEX GenerateList(const vector<CELL_INDEX>& elements);
     void InitCellTable(size_t size = 8);
     void ExpandCellTable();
+
+    CELL_INDEX AllocateCell(Type Type);
+    CELL_INDEX GenerateList(const vector<CELL_INDEX>& elements);
     void FreeCell(CELL_INDEX index);
 
+    void DebugValidateCells();
     void MarkCellsInUse(CELL_INDEX index);
     size_t CollectGarbage();
 
@@ -255,7 +248,6 @@ class Runtime
     CELL_INDEX FLOATP(const ArgumentList& args);
     CELL_INDEX STRINGP(const ArgumentList& args);
     CELL_INDEX ENDP(const ArgumentList& args);
-
 
     // Commands.cpp
 

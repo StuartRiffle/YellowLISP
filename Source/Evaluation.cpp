@@ -112,7 +112,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
     if (!VALID_CELL(index))
         return _nil;
 
-#ifndef NDEBUG
+#if DEBUG_BUILD
     static int sDumpDebugGraph = 1;
     static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render

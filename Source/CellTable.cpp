@@ -10,20 +10,26 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     if (pctFree < GARBAGE_COLLECTION_THRESH)
         _garbageCollectionNeeded = true;
 
-    if (!VALID_CELL(_cellFreeList))
+    if (_cellFreeList == 0)
     {
+        assert(_cellFreeCount == 0);
         ExpandCellTable();
     }
 
-    if (!VALID_CELL(_cellFreeList))
+    if (_cellFreeList == 0)
     {
         RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY);
         return 0;
     }
 
+    if (_nil)
+        assert(_cellFreeList != _nil);
+
     CELL_INDEX index = _cellFreeList;
     _cellFreeList = _cell[_cellFreeList]._next;
     _cellFreeCount--;
+
+    assert(_cell[index]._type == TYPE_FREE);
 
     if (_cellFreeCount == 0)
         assert(_cellFreeList == 0);
@@ -40,7 +46,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
 
 void Runtime::FreeCell(CELL_INDEX index)
 {
-    _cell[index]._type = TYPE_VOID;
+    _cell[index]._type = TYPE_FREE;
     _cell[index]._tags = 0;
     _cell[index]._data = 0;
     _cell[index]._next = _cellFreeList;
@@ -57,6 +63,8 @@ void Runtime::InitCellTable(size_t size)
 
     for (size_t i = size - 1; i > 0; i--)
         FreeCell((CELL_INDEX)i);
+
+    DebugValidateCells();
 }
 
 
@@ -67,14 +75,15 @@ void Runtime::ExpandCellTable()
 
     _cell.resize(newSize);
 
-    for (size_t i = oldSize; i < newSize; i++)
+    for (size_t i = newSize - 1; i >= oldSize; i--)
         FreeCell((CELL_INDEX)i);
+
+    DebugValidateCells();
 }
 
 void Runtime::MarkCellsInUse(CELL_INDEX index)
 {
     Cell& cell = _cell[index];
-
     if (cell._tags & TAG_GC_MARK)
         return;
 
@@ -84,6 +93,7 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
     {
         MarkCellsInUse(cell._data);
 
+        assert(cell._next != 0);
         if (VALID_CELL(cell._next))
             MarkCellsInUse(cell._next);
     }
@@ -98,9 +108,35 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
     }
 }
 
+void Runtime::DebugValidateCells()
+{
+    CELL_INDEX slot = _cellFreeList;
+    int numInFreeList = 0;
+
+    while(slot)
+    {
+        assert(_cell[slot]._type == TYPE_FREE);
+        numInFreeList++;
+
+        slot = _cell[slot]._next;
+    }
+
+    int numMarkedFree = 0;
+
+    for (TINDEX i = 1; i < _cell.size(); i++)
+    {
+        //assert((_cell[i]._tags & TAG_GC_MARK) == 0);
+        if (_cell[i]._type == TYPE_FREE)
+            numMarkedFree++;
+    }
+
+    assert(_cellFreeCount == numInFreeList);
+    assert(_cellFreeCount == numMarkedFree);
+}
+
 size_t Runtime::CollectGarbage()
 {
-    size_t numCellsFreed = 0;
+    DebugValidateCells();
 
     // Mark everything in the global scope
 
@@ -109,12 +145,12 @@ size_t Runtime::CollectGarbage()
         SYMBOL_INDEX symbolIndex = iter.second;
         SymbolInfo& symbol = _symbol[symbolIndex];
 
-        if (VALID_CELL(symbol._symbolCell))
-        {
-            MarkCellsInUse(symbol._symbolCell);
-            MarkCellsInUse(symbol._valueCell);
-            MarkCellsInUse(symbol._macroBindings);
-        }
+        //std::cout << "symbol " << symbolIndex << " -> cell " << symbol._symbolCell << std::endl;
+        assert(symbol._symbolCell);
+
+        MarkCellsInUse(symbol._symbolCell);
+        MarkCellsInUse(symbol._valueCell);
+        MarkCellsInUse(symbol._macroBindings);
     }
 
     // Mark cells with references on the callstack that got us here
@@ -128,14 +164,16 @@ size_t Runtime::CollectGarbage()
     CELL_INDEX slot = _cellFreeList;
     int numFree = 0;
 
-    while(VALID_CELL(slot))
+    while(slot)
     {
-        assert(_cell[slot]._type == TYPE_VOID);
+        assert(_cell[slot]._type == TYPE_FREE);
 
         _cell[slot]._tags |= TAG_GC_MARK;
         slot = _cell[slot]._next;
         numFree++;
     }
+
+    DebugValidateCells();
 
     // FIXME
     //
@@ -144,8 +182,11 @@ size_t Runtime::CollectGarbage()
 
 
     assert(_cellFreeCount == numFree);
+    assert(_cell[_nil]._tags & TAG_GC_MARK);
 
     // Sweep away anything unreachable
+
+    size_t numCellsFreed = 0;
 
     for (TINDEX i = 1; i < _cell.size(); i++)
     {
@@ -182,6 +223,8 @@ size_t Runtime::CollectGarbage()
         }
     }
 
+    DebugValidateCells();
+
     printf("Freed %d of %d cells\n", (int) numCellsFreed, (int) _cell.size());
     return numCellsFreed;
 }
@@ -198,6 +241,7 @@ void Runtime::HandleGarbage()
         if (pctFree < CELL_TABLE_EXPAND_THRESH)
         {
             // The GC didn't free up much space, so expand the table to avoid thrashing
+
 
             ExpandCellTable();
         }

@@ -9,7 +9,8 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     ErrorCode caughtError = ERROR_NONE;
     string output;
 
-    printf("%s  =>  %s\n", source, expectedOutput);
+    if (expectedOutput)
+        std::cout << source << " => " << expectedOutput << std::endl;
 
     try
     {

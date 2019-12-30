@@ -82,8 +82,11 @@ string Interpreter::Evaluate(const string& source)
             throw;
 
         SetTextColor(ANSI_RED);
-        std::cout << "CRITICAL ERROR: unhandled exception" << std::endl;
+        std::cout << "CRITICAL ERROR: "; 
         ResetTextColor();
+
+        std::cout << "unhandled exception (this is not your fault)" << std::endl;
+        std::cout << error.what() << std::endl;
     }
 
     // This is a safe place to perform garbage collection. We can't do

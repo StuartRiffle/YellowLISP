@@ -46,7 +46,7 @@ bool gColorConsole = true;
 
 int main(int argc, char** argv)
 {
-#ifndef NDEBUG
+#if DEBUG_BUILD
     SanityCheck();
 #endif
 
