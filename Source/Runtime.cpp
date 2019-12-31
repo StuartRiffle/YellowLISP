@@ -3,7 +3,7 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
-Runtime::Runtime()
+Runtime::Runtime(Console* console) : _console(console)
 {
     _primitive.emplace_back(); // element 0 is invalid
 

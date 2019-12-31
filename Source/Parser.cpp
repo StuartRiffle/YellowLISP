@@ -21,6 +21,11 @@ list<NodeRef> Parser::ParseExpressionList(const string& source)
         result.push_back(element);
 
         //DumpSyntaxTree(element);
+
+        // (quote (unquote X)) -> X
+        // if (match quote)
+        //   if (recursive match subexpr subpattern)
+        // []() ->
     }
 
     return result;
@@ -59,20 +64,6 @@ NodeRef Parser::ParseElement()
     {
         result = ParseAtom();
     }
-
-    /*
-    if (result && Consume('.'))
-    {
-        // Convert A . B to (cons A 'B)
-
-        NodeRef cons  = IdentifierNode("cons");
-        NodeRef quote = IdentifierNode("quote");
-        NodeRef rhs = ParseElement();
-        NodeRef quoted = ListNode({ quote, rhs });
-
-        result = ListNode({ cons, result, quoted });
-    }
-    */
 
     return result;
 }
@@ -194,28 +185,28 @@ NodeRef Parser::ListNode(const vector<NodeRef>& elems)
 void Parser::DumpSyntaxTree(NodeRef node, int indent)
 {
     for (int i = 0; i < indent; i++)
-        std::cout << ' ';
+        _console->Print(" ");
 
     switch (node->_type)
     {
         case AST_NODE_INT_LITERAL: 
-            std::cout << "[int]    " << node->_int << std::endl; 
+            _console->PrintDebug("[int] %d", node->_int); 
             break;
 
         case AST_NODE_FLOAT_LITERAL:
-            std::cout << "[float]  " << node->_float << std::endl;
+            _console->PrintDebug("[float] %f", node->_float);
             break;
 
         case AST_NODE_STRING_LITERAL:
-            std::cout << "[string] " << node->_string << std::endl;
+            _console->PrintDebug("[string] ", node->_string.c_str());
             break;
 
         case AST_NODE_IDENTIFIER:
-            std::cout << "[symbol] " << node->_identifier << std::endl;
+            _console->PrintDebug("[symbol] ", node->_identifier.c_str());
             break;
 
         case AST_NODE_LIST:
-            std::cout << "[list]" << std::endl;
+            _console->PrintDebug("[list]...\n");
             for (auto& elem : node->_list)
                 DumpSyntaxTree(elem, indent + 4);
             break;

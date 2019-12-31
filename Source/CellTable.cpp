@@ -148,7 +148,6 @@ size_t Runtime::CollectGarbage()
         SYMBOL_INDEX symbolIndex = iter.second;
         SymbolInfo& symbol = _symbol[symbolIndex];
 
-        //std::cout << "symbol " << symbolIndex << " -> cell " << symbol._symbolCell << std::endl;
         assert(symbol._symbolCell);
 
         MarkCellsInUse(symbol._symbolCell);
@@ -224,7 +223,7 @@ size_t Runtime::CollectGarbage()
 
     DebugValidateCells();
 
-    printf("[GC freed %d of %d cells]\n", (int) numCellsFreed, (int) _cell.size());
+    _console->PrintDebug("[GC freed %d of %d cells]\n", (int) numCellsFreed, (int) _cell.size());
     return numCellsFreed;
 }
 

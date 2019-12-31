@@ -20,6 +20,23 @@ public:
         return false;
     }
 
+    bool HasParam(const char* name, string& value)
+    {
+        for (int i = 1; i < _argc; i++)
+        {
+            if (strcmp(_argv[i], name))
+                continue;
+
+            if (i < _argc - 1)
+            {
+                value = _argv[i + 1];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     vector<string> ArgsEndingWith(const char* ext)
     {
         vector<string> result;

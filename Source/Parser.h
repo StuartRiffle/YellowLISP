@@ -2,6 +2,7 @@
 
 #pragma once
 #include "Yellow.h"
+#include "Console.h"
 
 enum NodeType
 {
@@ -33,6 +34,7 @@ struct NodeVariant
 
 class Parser
 {
+    Console* _console;
     const char* _code;
 
     inline void SkipWhitespace()
@@ -79,6 +81,8 @@ class Parser
     NodeRef Simplify(NodeRef node);
 
 public:
+    Parser(Console* console) : _console(console) {}
+
     list<NodeRef> ParseExpressionList(const string& source);
     void DumpSyntaxTree(NodeRef node, int indent = 0);
 

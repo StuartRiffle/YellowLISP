@@ -5,6 +5,7 @@
 #include "Hash.h"
 #include "Parser.h"
 #include "Errors.h"
+#include "Console.h"
 
 enum Type : uint32_t  
 {                       // The data stored in the cell is...
@@ -120,6 +121,8 @@ struct StringInfo
 
 class Runtime
 {
+    Console* _console;
+
     vector<PrimitiveInfo> _primitive;
 
     vector<Cell> _cell;
@@ -263,7 +266,7 @@ class Runtime
     CELL_INDEX EncodeTreeNode(const NodeRef& root);
 
 public:
-    Runtime();
+    Runtime(Console* console); 
     ~Runtime();
 
     CELL_INDEX EncodeSyntaxTree(const NodeRef& root);

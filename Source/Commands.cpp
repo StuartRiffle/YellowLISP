@@ -6,7 +6,7 @@
 CELL_INDEX Runtime::Help(const ArgumentList& args)
 {
     (args);
-    std::cout << "TODO" << std::endl;
+    _console->Print("TODO\n");
     return 0;
 }
 
@@ -39,7 +39,7 @@ CELL_INDEX Runtime::RunGC(const ArgumentList& args)
         slot = _cell[slot]._next;
     }
 
-    printf("%d cells reclaimed, %d/%d now available\n", (int) numReclaimed, (int) numFree, (int) numTotal);
+    _console->PrintDebug("%d cells reclaimed, %d/%d now available\n", (int) numReclaimed, (int) numFree, (int) numTotal);
     return 0;
 }
 

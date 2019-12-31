@@ -7,47 +7,47 @@
 #include "CommandLine.h"
 
 
-void PrintBanner()
+void PrintBanner(Console* console)
 {
-    SetTextColor(ANSI_YELLOW);
-    printf(" __  __     ____              __    _________ ____ \n");
-    printf(" \\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
-    printf("  \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
-    printf("  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
-    printf(" /_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n");
-    ResetTextColor();
+    console->PrintColor(COLOR_YELLOW, " __  __     ____              __    _________ ____ \n");
+    console->PrintColor(COLOR_YELLOW, " \\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
+    console->PrintColor(COLOR_YELLOW, "  \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
+    console->PrintColor(COLOR_YELLOW, "  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
+    console->PrintColor(COLOR_YELLOW, " /_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n");
 }
 
-void PrintOptions()
+void PrintOptions(Console* console)
 {
-    printf("Usage: YellowLISP [options] [lisp files]\n\n");
+    console->Print("Usage: YellowLISP [options] [lisp files]\n\n");
 
-    printf("This is an interpreter for a [very] small subset of LISP. It is a work in\n");
-    printf("progress, and should not be used for production work.\n\n");
+    console->Print("This is an interpreter for a [very] small subset of LISP. It is a work in\n");
+    console->Print("progress, and should not be used for production.\n\n");
 
-    printf("LISP files have the extension \".lisp\". If any are specified, they will\n"); 
-    printf("be loaded and evaluated in the order given. YellowLISP will exit after that.\n\n");
-    printf("Type \"(help)\" at the interactive prompt to see the runtime options.\n");
-    printf("Type \"(exit)\" (or hit CTRL-C) to end your session.\n\n");
+    console->Print("LISP files have the extension \".lisp\". If any are specified, they will\n"); 
+    console->Print("be loaded and evaluated in the order given. YellowLISP will exit after that.\n\n");
+    console->Print("Type \"(help)\" at the interactive prompt to see the runtime options.\n");
+    console->Print("Type \"(exit)\" (or hit CTRL-C) to end your session.\n\n");
 
-    printf("Available command line options are:\n");
-    printf("  --repl      Drop to an interactive prompt after running any LISP files\n");
-    printf("  --debug     Run in debug mode (verbose diagnostic output)\n");
-    printf("  --no-color  Disable colored console output\n");
-    printf("  --version   Print just the version and exit\n");
-    printf("  --help      Display this message and exit\n");
-    printf("\n");
+    console->Print("Available command line options are:\n");
+    console->Print("  --repl       Drop to an interactive prompt after running any LISP files\n");
+    console->Print("  --debug      Run in debug mode (verbose diagnostic output)\n");
+    console->Print("  --no-color   Disable colored console output\n");
+    console->Print("  --log <file> Mirror output to <file>\n");
+    console->Print("  --version    Print just the version and exit\n");
+    console->Print("  --help       Display this message and exit\n");
+    console->Print("\n");
 
-    printf("The latest version of YellowLISP can [theoretically] be found at:\n");
-    printf("  https://github.com/StuartRiffle/YellowLISP\n");
+    console->Print("The latest version of YellowLISP can [theoretically] be found at:\n");
+    console->Print("  https://github.com/StuartRiffle/YellowLISP\n");
 }
-
-bool gColorConsole = true;
 
 int main(int argc, char** argv)
 {
+    std::unique_ptr<Console> console(new Console());
+
 #if DEBUG_BUILD
-    SanityCheck();
+    console->EnableDebugOutput(true);
+    SanityCheck(console.get());
 #endif
 
     CommandLine commandLine(argc, argv);
@@ -58,17 +58,24 @@ int main(int argc, char** argv)
 
     // Handle flags
 
+    if (commandLine.HasFlag("--no-color"))
+        console->EnableColor(false);
+
     if (commandLine.HasFlag("--version"))
     {
-        printf("%s\n", versionStr);
+        console->Print("%s\n", versionStr);
         return RETURN_SUCCESS;
     }
 
-    PrintBanner();
+    console->PrintColor(COLOR_GRAY, "This is some gray\n");
+    console->PrintColor(COLOR_SILVER, "This is some gray\n");
+    console->PrintColor(COLOR_WHITE, "This is some gray\n");
+
+    PrintBanner(console.get());
 
     if (commandLine.HasFlag("--help"))
     {
-        PrintOptions();
+        PrintOptions(console.get());
         return RETURN_SUCCESS;
     }
 
@@ -76,14 +83,18 @@ int main(int argc, char** argv)
         settings._repl = true;
 
     if (commandLine.HasFlag("--debug"))
+    {
+        console->EnableDebugOutput(true);
         settings._debugMode = true;
+    }
 
-    if (commandLine.HasFlag("--no-color"))
-        gColorConsole = false;
+    string logFileName;
+    if (commandLine.HasParam("--log", logFileName))
+        console->LogToFile(logFileName.c_str());
 
     // Now let's try and LISP something
 
-    Interpreter lisp(&settings);
+    Interpreter lisp(console.get(), &settings);
 
     vector<string> sourceFiles = commandLine.ArgsEndingWith(".lisp");
     if (sourceFiles.size() > 0)
@@ -95,8 +106,10 @@ int main(int argc, char** argv)
             std::ifstream file(filename);
             if (!file)
             {
-                printf("ERROR: File not found: %s\n", filename.c_str());
-                return -1; // FIXME: make this a proper return value
+                console->PrintColor(COLOR_RED, "ERROR: ");
+                console->Print("file not found: %s\n", filename.c_str());
+
+                return RETURN_PARSING_ERROR;
             }
 
             std::stringstream ss;
@@ -104,7 +117,7 @@ int main(int argc, char** argv)
             string source = ss.str();
 
             string output = lisp.Evaluate(source);
-            printf("%s\n", output.c_str());
+            console->Print("%s\n", output.c_str());
         }
 
         if (!settings._repl)
@@ -113,9 +126,9 @@ int main(int argc, char** argv)
 
     // Otherwise, drop into the REPL
 
-    SetTextColor(ANSI_BLACK, ANSI_YELLOW);
-    printf("\n %s \n", versionStr);
-    ResetTextColor();
+    console->SetTextColor(COLOR_YELLOW, COLOR_BLACK);
+    console->Print("\n %s \n", versionStr);
+    console->ResetTextColor();
 
     lisp.RunREPL();
 

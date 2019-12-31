@@ -4,13 +4,15 @@
 #include "Console.h"
 #include "Interpreter.h"
 
-void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
+void CheckOutput(Console* console, Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
 {
     ErrorCode caughtError = ERROR_NONE;
     string output;
 
-    //if (expectedOutput)
-    //    std::cout << source << " => " << expectedOutput << std::endl;
+    if (expectedOutput)
+        console->PrintDebug("Checking %s  ==>  %s\n", source, expectedOutput);
+    else
+        console->PrintDebug("Checking %s  ==>  %s\n", source, YellowError::GetDesc(expectedError));
 
     try
     {
@@ -22,9 +24,8 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     }
     catch (...)
     {
-        SetTextColor(ANSI_RED);
-        printf("UNHANDLED EXCEPTION!\n"); 
-        ResetTextColor();
+        console->PrintColor(COLOR_RED, "ERROR: ");
+        console->Print("unhandled exception!\n");
     }
 
     string shouldHave;
@@ -55,31 +56,28 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
     else 
         ss << "but output \"" << output << "\"";
 
-    SetTextColor(ANSI_RED);
-    printf("SANITY CHECK FAILED: "); 
-    ResetTextColor();
-
-    printf("% s\n", ss.str().c_str());
+    console->PrintColor(COLOR_RED, "TEST FAILED: ");
+    console->Print("% s\n", ss.str().c_str());
 
     static int sRetryOnError = 0;
     if (sRetryOnError)
-        CheckOutput(lisp, source, expectedOutput, expectedError);
+        CheckOutput(console, lisp, source, expectedOutput, expectedError);
 }
 
-void CheckOutput(Interpreter& lisp, const char* source, ErrorCode expectedError)
+void CheckOutput(Console* console, Interpreter& lisp, const char* source, ErrorCode expectedError)
 {
-    CheckOutput(lisp, source, NULL, expectedError);
+    CheckOutput(console, lisp, source, NULL, expectedError);
 }
 
-#define VERIFY(_IN, _OUT) CheckOutput(lisp, _IN, _OUT)
+#define VERIFY(_IN, _OUT) CheckOutput(console, lisp, _IN, _OUT)
 
-void SanityCheck()
+void SanityCheck(Console* console)
 {
     InterpreterSettings settings;
     settings._repl = false;
     settings._catchExceptions = false;
 
-    Interpreter lisp(&settings);
+    Interpreter lisp(console, &settings);
     
     VERIFY("(setq x 123)", "123");
     VERIFY("`(x x)", "(x x)");

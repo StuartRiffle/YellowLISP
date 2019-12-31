@@ -5,17 +5,16 @@
 #include "Interpreter.h"
 #include "Console.h"
 
-Interpreter::Interpreter(const InterpreterSettings* settings)
+Interpreter::Interpreter(Console* console, const InterpreterSettings* settings) :
+    _parser(console),
+    _runtime(console)
 {
+    _console = console;
+
     if (settings)
         _settings = *settings;
 
     RunSourceCode(gBootstrapCode);
-}
-
-void Interpreter::PrintErrorMessage(int code, const string& desc, const string& message)
-{
-    std::cout << desc << " " << code << ": " << message << std::endl;
 }
 
 vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
@@ -69,11 +68,8 @@ string Interpreter::Evaluate(const string& source)
         if (!_settings._catchExceptions)
             throw;
 
-        SetTextColor(ANSI_RED);
-        std::cout << "ERROR " << error._code << ": ";
-        ResetTextColor();
-
-        std::cout << error.what() << std::endl;
+        _console->PrintColor(COLOR_RED, "ERROR %d: ", error._code);
+        _console->Print("%s\n", error.what());
     }
     catch (std::exception error)
     {
@@ -84,18 +80,13 @@ string Interpreter::Evaluate(const string& source)
         if (!_settings._catchExceptions)
             throw;
 
-        SetTextColor(ANSI_RED);
-        std::cout << "CRITICAL ERROR: "; 
-        ResetTextColor();
-
-        std::cout << "unhandled error (this is not your fault)" << std::endl;
-        std::cout << error.what() << std::endl;
+        _console->PrintColor(COLOR_RED, "INTERNAL ERROR: ");
+        _console->Print("%s\n", error.what());
     }
     catch (...)
     {
-        SetTextColor(ANSI_RED);
-        std::cout << "UNHANDLED EXCEPTION" << std::endl; 
-        ResetTextColor();
+        _console->PrintColor(COLOR_RED, "INTERNAL ERROR: ");
+        _console->Print("unhandled exception\n");
     }
 
     // This is a safe place to perform garbage collection. We can't do
@@ -113,17 +104,13 @@ void Interpreter::RunREPL()
 
     for (;;)
     {
-        string source;
+        _console->PrintColor(COLOR_YELLOW, "-> ");
 
-        SetTextColor(ANSI_YELLOW);
-        std::cout << "-> ";
-        std::getline(std::cin, source);
-        ResetTextColor();
-
+        string source = _console->ReadLine();
         string output = Evaluate(source);
 
         if (output.length() > 0)
-            std::cout << output << std::endl;
+            _console->Print("%s\n", output.c_str());
     }
 }
 
