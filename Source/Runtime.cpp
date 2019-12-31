@@ -24,18 +24,18 @@ Runtime::Runtime()
     RegisterPrimitive("defmacro",&Runtime::DEFMACRO, SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("defun",   &Runtime::DEFUN,    SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("progn",   &Runtime::PROGN,    SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("setq",    &Runtime::SETQ,     SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("atom",    &Runtime::ATOM);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
-    RegisterPrimitive("cons",    &Runtime::CONS);//, SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("cons",    &Runtime::CONS);
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("eql",     &Runtime::EQL);
     RegisterPrimitive("equal",   &Runtime::EQUAL);
     RegisterPrimitive("equalp",  &Runtime::EQUALP);
     RegisterPrimitive("list",    &Runtime::LIST);
-    RegisterPrimitive("progn",   &Runtime::PROGN, SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);
@@ -72,8 +72,7 @@ Runtime::Runtime()
     RegisterPrimitive("help",    &Runtime::Help);
     RegisterPrimitive("exit",    &Runtime::Exit);
     RegisterPrimitive("quit",    &Runtime::Exit);
-    RegisterPrimitive("gc",      &Runtime::RunGC);
-
+    RegisterPrimitive("run-gc",  &Runtime::RunGC);
 }
 
 Runtime::~Runtime()
@@ -135,7 +134,7 @@ CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
     DebugValidateCells();
 
     CELL_INDEX result = EncodeTreeNode(node);
-    DumpCellGraph(result, true);
+    //DumpCellGraph(result, true);
 
     DebugValidateCells();
     return result;
@@ -183,7 +182,7 @@ CELL_INDEX Runtime::EncodeTreeNode(const NodeRef& node)
 
             for (auto& elemNode : node->_list)
             {
-                CELL_INDEX listCell = AllocateCell(TYPE_LIST);
+                CELL_INDEX listCell = AllocateCell(TYPE_CONS);
 
                 _cell[listCell]._data = EncodeTreeNode(elemNode);
 
@@ -213,7 +212,6 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
     switch (_cell[index]._type)
     {
         case TYPE_CONS:
-        case TYPE_LIST:
         {
             if (_cell[index]._data == _quote)
             {
@@ -240,7 +238,7 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
                     ss << GetPrintedValue(_cell[curr]._data);
                     CELL_INDEX next = _cell[curr]._next;
 
-                    if (VALID_CELL(next) && (_cell[next]._type != TYPE_LIST))
+                    if (VALID_CELL(next) && (_cell[next]._type != TYPE_CONS))
                     {
                         ss << " . " << GetPrintedValue(next);
                         break;

@@ -8,12 +8,9 @@ vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
 {
     vector<CELL_INDEX> result;
 
-    while (VALID_CELL(cellIndex) && (_cell[cellIndex]._type == TYPE_LIST))
+    while (VALID_CELL(cellIndex) && (_cell[cellIndex]._type == TYPE_CONS))
     {
         result.push_back(_cell[cellIndex]._data);
-        //if (_cell[cellIndex]._type != TYPE_LIST)
-        //    break;
-
         cellIndex = _cell[cellIndex]._next;
     }
 
@@ -27,7 +24,7 @@ CELL_INDEX Runtime::GenerateList(const vector<CELL_INDEX>& elements)
     for (auto iter = elements.crbegin(); iter != elements.crend(); ++iter)
     {
         CELL_INDEX elem = *iter;
-        CELL_INDEX elemLink = AllocateCell(TYPE_LIST);
+        CELL_INDEX elemLink = AllocateCell(TYPE_CONS);
 
         _cell[elemLink]._data = elem;
         _cell[elemLink]._next = head;
@@ -41,7 +38,7 @@ CELL_INDEX Runtime::GenerateList(const vector<CELL_INDEX>& elements)
 
 CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 {
-    DumpCellGraph(cellIndex, true);
+    //DumpCellGraph(cellIndex, true);
 
     vector<CELL_INDEX> elements = ExtractList(cellIndex);
     if (elements.empty())
@@ -113,7 +110,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
         return _nil;
 
 #if DEBUG_BUILD
-    static int sDumpDebugGraph = 1;
+    static int sDumpDebugGraph = 0;
     static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render
     if (sDumpDebugGraph)
@@ -177,7 +174,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
             break;
         }
 
-        case TYPE_LIST:
+        case TYPE_CONS:
         {
             CELL_INDEX head = _cell[index]._data;
             assert(VALID_CELL(head));
@@ -228,7 +225,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
                     isMacro = true;
                 }
             }
-            else if (_cell[head]._type == TYPE_LIST)
+            else if (_cell[head]._type == TYPE_CONS)
             {
                 lambdaCell = EvaluateCell(head);
             }
@@ -263,10 +260,10 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
 
     // Bind the arguments
 
-    RAISE_ERROR_IF(_cell[bindingListIndex]._type != TYPE_LIST, ERROR_RUNTIME_INVALID_ARGUMENT);
+    RAISE_ERROR_IF(_cell[bindingListIndex]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
 
     CELL_INDEX argList = _cell[index]._next;
-    RAISE_ERROR_IF(_cell[argList]._type != TYPE_LIST, ERROR_RUNTIME_INVALID_ARGUMENT);
+    RAISE_ERROR_IF(_cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
 
     Scope callScope = BindArguments(bindingListIndex, argList, evaluateArguments);
 

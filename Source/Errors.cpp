@@ -12,7 +12,6 @@ const char* YellowError::GetDesc(ErrorCode code)
         case ERROR_PARSER_LIST_EXPECTED:            return "list expected";
         case ERROR_PARSER_LIST_UNTERMINATED:        return "list unterminated";
         case ERROR_PARSER_INVALID_IDENTIFIER:       return "invalid identifier";
-        case ERROR_PARSER_BRACE_MISMATCH:           return "brace mismatch";
 
         case ERROR_RUNTIME_NOT_IMPLEMENTED:         return "not implemented";
         case ERROR_RUNTIME_WRONG_NUM_PARAMS:        return "wrong number of parameters";

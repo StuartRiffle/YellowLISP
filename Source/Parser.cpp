@@ -30,7 +30,7 @@ NodeRef Parser::ParseElement()
 {
     NodeRef result;
 
-    if (Peek('(') || Peek('['))
+    if (Consume('('))
     {
         result = ParseList();
     }
@@ -77,20 +77,12 @@ NodeRef Parser::ParseElement()
 
 NodeRef Parser::ParseList()
 {
-    char matchingBrace = Consume('(') ? ')' : Consume('[') ? ']' : 0;
-    char wrongBrace = (matchingBrace == ')') ? ']' : ')';
-
-    RAISE_ERROR_IF(!matchingBrace, ERROR_PARSER_LIST_EXPECTED);
-
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
 
-    while (*_code && !Peek(')') && !Peek(']'))
+    while (*_code && !Peek(')'))
         listNode->_list.push_back(ParseElement());
 
-    if (Consume(wrongBrace))
-        RAISE_ERROR(ERROR_PARSER_BRACE_MISMATCH);
-
-    if (!Consume(matchingBrace))
+    if (!Consume(')'))
         RAISE_ERROR(ERROR_PARSER_LIST_UNTERMINATED);
     
     return listNode;
@@ -130,20 +122,28 @@ NodeRef Parser::ParseNumber()
     char* end = NULL;
     float val = strtof(_code, &end);
 
-    assert(end > _code);
+    RAISE_ERROR_IF(end == _code, ERROR_PARSER_SYNTAX, "invalid number");
+
+    bool isFloat = false;
+    for (const char* c = _code; c < end; c++)
+        if ((*c == '.') || (*c == 'e') || (*c == 'E'))
+            isFloat = true;
+
+    if (!isFloat)
+        assert(val == (int) val);
+
     _code = end;
 
-    int integer = (int)val;
-    if (integer == val)
+    if (isFloat)
     {
-        NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
-        intNode->_int = integer;
-        return intNode;
+        NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));
+        floatNode->_float = val;
+        return floatNode;
     }
 
-    NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));
-    floatNode->_float = val;
-    return floatNode;
+    NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
+    intNode->_int = (int) val;
+    return intNode;
 }
 
 NodeRef Parser::ParseIdentifier()
@@ -223,13 +223,54 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
             RAISE_ERROR(ERROR_INTERNAL_AST_CORRUPT);
             break;
     }
-
-
-
-
-
-    // macro stores arg list
-    // 
-
 }
 
+NodeRef Parser::Simplify(NodeRef node)
+{
+    /*
+    // How to resolve constants over multiple calls to parse? Implies the
+    // AST needs to hang around?
+
+    switch (node->_type)
+    {
+        case AST_NODE_IDENTIFIER:
+            return node;
+
+        case AST_NODE_LIST:
+        {
+            for (auto& elem : node->_list)
+                elem = Simplify(elem);
+
+            if (node->_list.size() < 1)
+                break;
+
+            if (node->IsIdent("defmacro"))
+            {
+                // Expand macro and store in macro table
+            }
+            {
+                NodeRef funcNode = Simplify(node->_list[0]);
+                if (funcNode->IsIdent("+")
+
+                if (funcNode->_type == AST_NODE_IDENTIFIER)
+                {
+                    string ident = funcNode->_identifier;
+                    if (ident == '+')
+                }
+            }
+            if (_node->_identifier == "defmacro")
+            {
+                string 
+            }
+        }
+
+        case AST_NODE_INT_LITERAL: 
+        case AST_NODE_FLOAT_LITERAL:
+        case AST_NODE_STRING_LITERAL:
+        default:
+            break;
+    }
+
+    */
+    return node;
+}

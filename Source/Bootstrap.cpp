@@ -21,7 +21,7 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cddr   (x) (cdr (cdr   x)))
 (defun caaar  (x) (car (caar  x)))
 (defun caadr  (x) (car (cadr  x)))
-(defun cadar  (x) (car (cdar  x)))
+(defun cadar  (x) (car (cdar  x))) 
 (defun caddr  (x) (car (cddr  x)))
 (defun cdaar  (x) (cdr (caar  x)))
 (defun cdadr  (x) (cdr (cadr  x)))
@@ -43,5 +43,8 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cddadr (x) (cdr (cdadr x)))
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
+
+
+(defun sum (x) (cond ((< x 1) 0) (t (+ x (sum (- x 1))))))
 
 )LISP_BOOTSTRAP";

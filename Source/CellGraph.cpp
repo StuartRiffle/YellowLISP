@@ -18,7 +18,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
 
     switch (_cell[cellIndex]._type)
     {
-        case TYPE_LIST:   cellTypeName = "LIST";   ssValue << "cell " << _cell[cellIndex]._data; fillColor = "lemonchiffon"; break;
+        case TYPE_CONS:   cellTypeName = "CONS";   ssValue << "cell " << _cell[cellIndex]._data; fillColor = "lemonchiffon"; break;
         case TYPE_INT:    cellTypeName = "INT";    ssValue << LoadIntLiteral(cellIndex); break;
         case TYPE_FLOAT:  cellTypeName = "FLOAT";  ssValue << LoadFloatLiteral(cellIndex); break;
         case TYPE_STRING: cellTypeName = "STRING"; ssValue << LoadStringLiteral(cellIndex);  break;
@@ -58,7 +58,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         FormatSymbolLabel(symbolIndex, ss, cellsDone, symbolsDone);
     }
 
-    if (_cell[cellIndex]._type == TYPE_LIST)
+    if (_cell[cellIndex]._type == TYPE_CONS)
     {
         ss << "cell" << cellIndex << ":data -> cell" << _cell[cellIndex]._data << ":header;" << std::endl;
         FormatCellLabel(_cell[cellIndex]._data, ss, cellsDone, symbolsDone, expandSymbols);

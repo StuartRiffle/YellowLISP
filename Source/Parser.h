@@ -27,6 +27,8 @@ struct NodeVariant
     int    _int;
     float  _float;
     NodeRef _dotted;
+
+    bool IsIdent(string id) { return (_type == AST_NODE_IDENTIFIER) && (_identifier == id); }
 };
 
 class Parser
@@ -73,6 +75,8 @@ class Parser
 
     NodeRef IdentifierNode(const string& ident);
     NodeRef ListNode(const vector<NodeRef>& elems);
+
+    NodeRef Simplify(NodeRef node);
 
 public:
     list<NodeRef> ParseExpressionList(const string& source);

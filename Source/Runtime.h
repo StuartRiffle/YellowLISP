@@ -8,9 +8,8 @@
 
 enum Type : uint32_t  
 {                       // The data stored in the cell is...
-    TYPE_CONS,          //   unknown
     TYPE_FREE,          //   a link to the next free cell
-    TYPE_LIST,          //   an index into the cell table
+    TYPE_CONS,          //   an index into the cell table
     TYPE_LAMBDA,        //   an index into the cell table for the binding list
     TYPE_SYMBOL,        //   an index into the symbol table
     TYPE_STRING,        //   a tiny string literal, or an index into the string table
@@ -159,7 +158,7 @@ class Runtime
 
     // CellTable.cpp
 
-    void InitCellTable(size_t size = 1024);
+    void InitCellTable(size_t size = 8);
     void ExpandCellTable();
 
     CELL_INDEX AllocateCell(Type Type);
@@ -186,7 +185,7 @@ class Runtime
     void StoreFloatLiteral(CELL_INDEX index, float value);
 
     double LoadNumericLiteral(CELL_INDEX index);
-    CELL_INDEX CreateNumericLiteral(double value);
+    CELL_INDEX CreateNumericLiteral(double value, bool storeAsInt = false);
 
     string LoadStringLiteral(CELL_INDEX index);
     void StoreStringLiteral(CELL_INDEX index, const char* str);

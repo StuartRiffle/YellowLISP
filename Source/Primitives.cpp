@@ -12,7 +12,7 @@ CELL_INDEX Runtime::ATOM(const ArgumentList& args)
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    if ((cell._type == TYPE_LIST) || (cell._type == TYPE_CONS))
+    if (cell._type == TYPE_CONS)
         return _nil;
 
     return _true;
@@ -25,7 +25,7 @@ CELL_INDEX Runtime::CAR(const ArgumentList& args)
     CELL_INDEX index = args[0];
 
     const Cell& cell = _cell[index];
-    if (cell._type != TYPE_LIST)
+    if (cell._type != TYPE_CONS)
         return _nil;
 
     return cell._data;
@@ -65,10 +65,8 @@ CELL_INDEX Runtime::CONS(const ArgumentList& args)
     CELL_INDEX head = args[0];
     CELL_INDEX tail = args[1];
 
-    CELL_INDEX index = (CELL_INDEX)AllocateCell(TYPE_LIST);
-
+    CELL_INDEX index = (CELL_INDEX)AllocateCell(TYPE_CONS);
     Cell& cell = _cell[index];
-    cell._type = TYPE_CONS;
     cell._data = head;
     cell._next = tail;
 
@@ -113,11 +111,9 @@ bool Runtime::TestCellsEQL(CELL_INDEX a, CELL_INDEX b, bool strict)
         return true;
 
     if (!strict)
-    {
         if (IS_NUMERIC_TYPE(a) && (IS_NUMERIC_TYPE(b)))
             if (LoadNumericLiteral(a) == LoadNumericLiteral(b))
                 return true;
-    }
 
     if (_cell[a]._type != _cell[b]._type)
         return false;
@@ -141,10 +137,6 @@ bool Runtime::TestCellsEQL(CELL_INDEX a, CELL_INDEX b, bool strict)
             return true;
     }
 
-    if (_cell[a]._type == TYPE_CONS)
-        if ((_cell[a]._data == _cell[b]._data) && (_cell[a]._next == _cell[b]._next))
-            return true;
-    
     return false;
 }
 
@@ -152,7 +144,14 @@ bool Runtime::TestStructureEQUAL(CELL_INDEX a, CELL_INDEX b, bool strict)
 {
     // EQUAL is like EQL, but defined recursively for lists
 
-    if ((_cell[a]._type == TYPE_LIST) && (_cell[b]._type == TYPE_LIST))
+    if (a == b)
+        return true;
+
+    if (strict)
+        if (_cell[a]._type != _cell[b]._type)
+            return false;
+
+    if ((_cell[a]._type == TYPE_CONS) && (_cell[b]._type == TYPE_CONS))
     {
         while ((a != _nil) && (b != _nil))
         {
@@ -165,6 +164,8 @@ bool Runtime::TestStructureEQUAL(CELL_INDEX a, CELL_INDEX b, bool strict)
 
         if ((a != _nil) || (b != _nil))
             return false;
+
+        return true;
     }
 
     if (!TestCellsEQL(a, b, strict))
@@ -231,11 +232,28 @@ CELL_INDEX Runtime::LIST(const ArgumentList& args)
     vector<CELL_INDEX> listCells;
     listCells.reserve(args.size());
 
-    for (CELL_INDEX elem : args)
+    for (size_t i = 0; i < args.size(); i++)
     {
-        CELL_INDEX elemCell = AllocateCell(TYPE_LIST);
-        _cell[elemCell]._data = elem;
+        CELL_INDEX elem = args[i];
+        CELL_INDEX elemCell = _nil;
 
+        //CELL_INDEX elemNext = _cell[elem]._next;
+
+//        if ((elemNext == _nil) || (_cell[elemNext]._type == TYPE_CONS))
+        {
+            elemCell = AllocateCell(TYPE_CONS);
+            _cell[elemCell]._data = elem;
+        }
+        /*
+        else
+
+        {
+            bool isLast = (i == args.size() - 1);
+            RAISE_ERROR_IF(!isLast, ERROR_RUNTIME_INVALID_ARGUMENT, "improper list");
+
+            elemCell = elem;
+        }
+        */
         if (!listCells.empty())
             _cell[listCells.back()]._next = elemCell;
 
@@ -305,7 +323,7 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
     SymbolInfo& macroSymbol = _symbol[symbolIndex];
 
     CELL_INDEX bindingListCell = args[1];
-    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "macro arguments");
+    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "macro arguments");
     macroSymbol._macroBindings = bindingListCell;
 
     assert(macroSymbol._symbolCell == symbolCell);
@@ -322,7 +340,7 @@ CELL_INDEX Runtime::DEFMACRO(const ArgumentList& args)
     RAISE_ERROR_IF(args.size() < onArg, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
     CELL_INDEX bodyCell = args[onArg];
 
-    RAISE_ERROR_IF((bodyCell != _nil) && (_cell[bodyCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "macro body");
+    RAISE_ERROR_IF((bodyCell != _nil) && (_cell[bodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "macro body");
 
     macroSymbol._type = SYMBOL_MACRO;
     macroSymbol._valueCell = bodyCell;
@@ -348,10 +366,10 @@ CELL_INDEX Runtime::DEFUN(const ArgumentList& args)
     RAISE_ERROR_IF(_cell[symbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_TYPE_MISMATCH, "function name");
 
     CELL_INDEX bindingListCell  = args[1];
-    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "function arguments");
+    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "function arguments");
 
     CELL_INDEX functionBodyCell = args[2];
-    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "function body");
+    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "function body");
 
     ArgumentList lambdaArgs = { bindingListCell, functionBodyCell };
     CELL_INDEX lambdaCell = LAMBDA(lambdaArgs);
@@ -370,10 +388,10 @@ CELL_INDEX Runtime::LAMBDA(const ArgumentList& args)
     RAISE_ERROR_IF(args.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LAMBDA");
 
     CELL_INDEX bindingListCell = args[0];
-    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "lambda binding list");
+    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda binding list");
 
     CELL_INDEX functionBodyCell = args[1];
-    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_LIST), ERROR_RUNTIME_TYPE_MISMATCH, "lambda function body");
+    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda function body");
 
     CELL_INDEX lambdaCell = AllocateCell(TYPE_LAMBDA);
     _cell[lambdaCell]._data = bindingListCell;

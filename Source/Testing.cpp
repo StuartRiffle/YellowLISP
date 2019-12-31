@@ -61,7 +61,9 @@ void CheckOutput(Interpreter& lisp, const char* source, const char* expectedOutp
 
     printf("% s\n", ss.str().c_str());
 
-    //CheckOutput(lisp, source, expectedOutput, expectedError);
+    static int sRetryOnError = 0;
+    if (sRetryOnError)
+        CheckOutput(lisp, source, expectedOutput, expectedError);
 }
 
 void CheckOutput(Interpreter& lisp, const char* source, ErrorCode expectedError)
@@ -79,13 +81,11 @@ void SanityCheck()
 
     Interpreter lisp(&settings);
     
-    lisp.Evaluate("(setq x 123)");
-
+    VERIFY("(setq x 123)", "123");
     VERIFY("`(x x)", "(x x)");
     VERIFY("`(x ,x)", "(x 123)");
     VERIFY("`(x ',x)", "(x '123)");
     VERIFY("`(x ,'x)", "(x x)");
-
     VERIFY("`(x ,'`(x ,'x))", "(x `(x ,'x))"); 
     VERIFY("`(x `(x x))", "(x `(x x))"); 
     VERIFY("`(x ,`(x x))", "(x (x x))"); 
@@ -103,12 +103,6 @@ void SanityCheck()
     VERIFY("`(x ,`(x ,'x))", "(x (x x))"); 
     VERIFY("`(x ',`(x ,'x))", "(x '(x x))"); 
     VERIFY("`(x ,'`(x ,'x))", "(x `(x ,'x))"); 
-
-//    VERIFY("`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)", "(a `(b ,(+ 1 2) ,(foo 4 d) e) f)");
-
-
-
-
 
     VERIFY("", "");
     VERIFY(";(", "");
@@ -141,9 +135,9 @@ void SanityCheck()
     VERIFY("(atom 3)", "t");
     VERIFY("(atom 'foo)", "t");
     VERIFY("(atom (atom 3))", "t");
-    VERIFY("(atom [atom 3])", "t");
-    VERIFY("[atom [atom 3]]", "t");
-    VERIFY("[atom (atom 3)]", "t");
+    VERIFY("(atom [atom 3])", ERROR_PARSER_INVALID_IDENTIFIER);
+    VERIFY("[atom [atom 3]]", ERROR_PARSER_INVALID_IDENTIFIER);
+    VERIFY("[atom (atom 3)]", ERROR_PARSER_INVALID_IDENTIFIER);
     VERIFY("(atom '(atom 3))", "nil");
     VERIFY("(atom (list 1 2))", "nil");
     VERIFY("(atom (cons 1 2))", "nil");
@@ -201,27 +195,6 @@ void SanityCheck()
     VERIFY("(= 3 2 3)", "nil");              
     VERIFY("(= 0.0 -0.0)", "t");
     VERIFY("(= 0 -0.0)", "t");            
-
-    /*
-    VERIFY("(/= 3)", "t");                
-    VERIFY("(/= 3 3 3 3)", "nil");  
-    VERIFY("(/= 3 3 5 3)", "nil");  
-    VERIFY("(/= 3 6 5 2)", "t");   
-    VERIFY("(/= 3 2 3)", "nil");    
-    VERIFY("(< 3)", "t");                
-    VERIFY("(< 0 3 4 6 7)", "t");            
-    VERIFY("(< 0 3 4 4 6)", "nil");         
-    VERIFY("(<= 3)", "t");                
-    VERIFY("(<= 0 3 4 6 7)", "t");    
-    VERIFY("(<= 0 3 4 4 6)", "t");    
-    VERIFY("(> 4 3 2 1 0)", "t");       
-    VERIFY("(> 4 3 3 2 0)", "nil");      
-    VERIFY("(> 4 3 1 2 0)", "nil");      
-    VERIFY("(>= 4 3 2 1 0)", "t"); 
-    VERIFY("(>= 4 3 3 2 0)", "t"); 
-    VERIFY("(>= 4 3 1 2 0)", "nil");
-    */
-
     VERIFY("(< 3 5)", "t");                  
     VERIFY("(< 3 -5)", "nil");                
     VERIFY("(< 3 3)", "nil");                 
@@ -232,6 +205,7 @@ void SanityCheck()
     VERIFY("(> 4 3)", "t");             
     VERIFY("(> 0.0 -0.0)", "nil");
     VERIFY("(>= 4 3)", "t");       
+
     VERIFY("(eq 'a 'b)", "nil");
     VERIFY("(eq 'a 'a)", "t");
     VERIFY("(eq 3 3.0)", "nil");
@@ -241,6 +215,7 @@ void SanityCheck()
     VERIFY("(progn (setq x '(a . b)) (eq x x))", "t");
     VERIFY("(let ((x \"Foo\")) (eq x x))", "t");
     VERIFY("(eq \"FOO\" \"foo\")", "nil");
+
     VERIFY("(eql 'a 'b)", "nil");
     VERIFY("(eql 'a 'a)", "t");
     VERIFY("(eql 3 3)", "t");
@@ -251,6 +226,7 @@ void SanityCheck()
     VERIFY("(progn (setq x (cons 'a 'b)) (eql x x))", "t");
     VERIFY("(progn (setq x '(a . b)) (eql x x))", "t");
     VERIFY("(eql \"FOO\" \"foo\")", "nil");
+
     VERIFY("(equal 'a 'b)", "nil");
     VERIFY("(equal 'a 'a)", "t");
     VERIFY("(equal 3 3)", "t");
@@ -262,6 +238,7 @@ void SanityCheck()
     VERIFY("(equal \"FOO\" \"foo\")", "nil");
     VERIFY("(equal \"This-string\" \"This-string\")", "t");
     VERIFY("(equal \"This-string\" \"this-string\")", "nil");
+
     VERIFY("(equalp 'a 'b)", "nil");
     VERIFY("(equalp 'a 'a)", "t");
     VERIFY("(equalp 3 3)", "t");
@@ -271,23 +248,6 @@ void SanityCheck()
     VERIFY("(equalp (cons 'a 'b) (cons 'a 'b))", "t");
     VERIFY("(equalp \"Foo\" \"Foo\")", "t");
     VERIFY("(equalp \"FOO\" \"foo\")", "t");
-
-    /*
-
-(eql #\A #\A)", "t");
-(equal #\A #\A)", "t");
-(equal #\A #\a)", "nil");
-(equalp #\A #\A)", "t");
-(equalp #\A #\a)", "t");
-(eq \"Foo\" (copy-seq \"Foo\"))", "nil");
-(eq "string-seq" (copy-seq "string-seq"))", "nil");
-(eql \"Foo\" (copy-seq \"Foo\"))", "nil");
-(equal \"Foo\" (copy-seq \"Foo\"))", "t");
-(equalp \"Foo\" (copy-seq \"Foo\"))", "t");
-
-
-*/
-
 
     VERIFY("(< 1 2)", "t");
     VERIFY("(< 2 1)", "nil");
@@ -315,59 +275,9 @@ void SanityCheck()
     VERIFY("(cons (list 'a) (list 'b))", "((a) b)");
 
     VERIFY("(list 1 . (2))", "(1 2)");
+    VERIFY("(list (cons 1 2) (cons 3 4))", "((1 . 2) (3 . 4))");
     VERIFY("(list 'a 'b . ('c 'd 'e . ()))", "(a b c d e)");
 
-    // Need test cases:
-    //  unquote
-    //  quasiquote
-    //  defmacro
-    //  defun
-    //  lambda
-    //  setq
-    //  cond
-    //  eq
-    //  eval
-    //  progn
-    //  + - * / %
-
-    //
-    //
-    // `(,a b)
-    // (qq ((uq a) b)
-
-
-
-    //
-    /*
-
-    (defmacro if (test then else) `(cond (,test ,then) (T ,else)))
-
-    `(cond (,test ,then) (T ,else))
-    (qq (cond ((uq test) (uq then)) (T (uq else))))
-
-    ((q cond) ((test then) (T else))
-
-    (if ((< 1 3) 1 2))
-    `(cond (,test foo ,then) (T ,else))
-    (qq (cond ((uq test) foo (uq then)) (T (uq else))))
-    ((q cond) ((test (q foo) then) (T else))
-    (cond (((eval (< 1 3)) foo
-
-    qq has one parameter
-    recurse
-    first level every list element that is not quoted, gets quoted
-    every element (uq foo)
-    elements of the form (q foo) become (q (q foo))
-
-    every element that is not uq gets q, and the uq are elided
-
-
-
-    qq sets q state on
-    recurse in
-
-
-    */
 
 
     //VERIFY("(append '(a b c) '())", "(a b c)");
@@ -382,20 +292,13 @@ void SanityCheck()
     //VERIFY("(append)", "nil");
     //VERIFY("(append 'a)", "a");
 
-    //
-
-    // TODO: dot notation
-    // TODO: backquote
-
-    // The error section needs a *lot* more test cases
+    // A lot more error test cases are needed everywhere
 
     VERIFY("\"foo",       ERROR_PARSER_STRING_UNTERMINATED);
     VERIFY("(",           ERROR_PARSER_LIST_UNTERMINATED);
     VERIFY("(setq } 3)",  ERROR_PARSER_INVALID_IDENTIFIER);
     VERIFY("(setq quote 3)", ERROR_RUNTIME_RESERVED_SYMBOL);
     VERIFY("(foo 1 2)",   ERROR_RUNTIME_UNDEFINED_FUNCTION);
-    VERIFY("(atom 3]",    ERROR_PARSER_BRACE_MISMATCH);
-    VERIFY("(atom [3)]",  ERROR_PARSER_BRACE_MISMATCH);
     VERIFY("(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);
     VERIFY("(atom unbound)", ERROR_RUNTIME_VARIABLE_UNBOUND);
     VERIFY("(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
@@ -403,5 +306,7 @@ void SanityCheck()
 
 
 /*
-
+(defun fib (n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))
 */
+
+

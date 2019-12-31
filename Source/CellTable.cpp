@@ -83,19 +83,20 @@ void Runtime::ExpandCellTable()
 
 void Runtime::MarkCellsInUse(CELL_INDEX index)
 {
+    if (index == _nil)
+        return;
+
     Cell& cell = _cell[index];
+
     if (cell._tags & TAG_GC_MARK)
         return;
 
     cell._tags |= TAG_GC_MARK;
 
-    if (cell._type == TYPE_LIST)
+    if (cell._type == TYPE_CONS)
     {
         MarkCellsInUse(cell._data);
-
-        assert(cell._next != 0);
-        if (VALID_CELL(cell._next))
-            MarkCellsInUse(cell._next);
+        MarkCellsInUse(cell._next);
     }
 
     if (cell._type == TYPE_LAMBDA)
@@ -110,6 +111,7 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
 
 void Runtime::DebugValidateCells()
 {
+#if DEBUG_BUILD
     CELL_INDEX slot = _cellFreeList;
     int numInFreeList = 0;
 
@@ -132,6 +134,7 @@ void Runtime::DebugValidateCells()
 
     assert(_cellFreeCount == numInFreeList);
     assert(_cellFreeCount == numMarkedFree);
+#endif
 }
 
 size_t Runtime::CollectGarbage()
@@ -175,14 +178,7 @@ size_t Runtime::CollectGarbage()
 
     DebugValidateCells();
 
-    // FIXME
-    //
-    // GC is dropping elements from the free list
-    // numFree 75, cellFreeCount 90
-
-
     assert(_cellFreeCount == numFree);
-    assert(_cell[_nil]._tags & TAG_GC_MARK);
 
     // Sweep away anything unreachable
 
@@ -190,6 +186,9 @@ size_t Runtime::CollectGarbage()
 
     for (TINDEX i = 1; i < _cell.size(); i++)
     {
+        if (i == _nil)
+            continue;
+
         if (_cell[i]._tags & TAG_GC_MARK)
         {
             _cell[i]._tags &= ~TAG_GC_MARK;
@@ -225,7 +224,7 @@ size_t Runtime::CollectGarbage()
 
     DebugValidateCells();
 
-    printf("Freed %d of %d cells\n", (int) numCellsFreed, (int) _cell.size());
+    printf("[GC freed %d of %d cells]\n", (int) numCellsFreed, (int) _cell.size());
     return numCellsFreed;
 }
 

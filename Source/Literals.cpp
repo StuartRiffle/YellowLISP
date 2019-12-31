@@ -69,13 +69,15 @@ double Runtime::LoadNumericLiteral(CELL_INDEX index)
     return value;
 }
 
-CELL_INDEX Runtime::CreateNumericLiteral(double value)
+CELL_INDEX Runtime::CreateNumericLiteral(double value, bool storeAsInt)
 {
-    int asInt = (int)value;
-    if (asInt == value)
+    if (storeAsInt)
     {
+        int intValue = (int)value;
+        assert(intValue == value);
+
         CELL_INDEX index = AllocateCell(TYPE_INT);
-        StoreIntLiteral(index, asInt);
+        StoreIntLiteral(index, intValue);
         return index;
     }
 
@@ -142,6 +144,7 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
             _stringTable[hash] = stringIndex;
         }
 
+        cell._data = stringIndex;
         _string[stringIndex]._refCount++;
     }
 }

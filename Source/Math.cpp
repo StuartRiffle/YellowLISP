@@ -11,7 +11,8 @@ CELL_INDEX Runtime::_OPNAME(const ArgumentList& args) \
     double a = LoadNumericLiteral(args[0]); \
     double b = LoadNumericLiteral(args[1]); \
     double value = (_EXPR); \
-    return CreateNumericLiteral(value); \
+    bool isInt = ((_cell[args[0]]._type == TYPE_INT) && (_cell[args[1]]._type == TYPE_INT)); \
+    return CreateNumericLiteral(value, isInt); \
 }
 
 IMPLEMENT_BINARY_OP(ADD, (a + b))
@@ -26,7 +27,7 @@ CELL_INDEX Runtime::MOD(const ArgumentList& args)
     double b = LoadNumericLiteral(args[1]);
 
     if ((_cell[args[0]]._type == TYPE_INT) && (_cell[args[1]]._type == TYPE_INT))
-        return CreateNumericLiteral((int)a % (int)b);
+        return CreateNumericLiteral((int)a % (int)b, true);
 
     return CreateNumericLiteral(fmod(a, b));
 }
