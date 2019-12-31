@@ -262,6 +262,8 @@ void SanityCheck()
     VERIFY("(sqr 5)", "25");
 
     VERIFY("(cons 1 2)", "(1 . 2)");
+    VERIFY("(cons 1 '2)", "(1 . 2)");
+    VERIFY("(cons 1 '(2))", "(1 2)");
     VERIFY("(cons 1 nil)", "(1)");
     VERIFY("(cons nil 2)", "(nil . 2)");
     VERIFY("(cons nil nil)", "(nil)");
@@ -274,7 +276,9 @@ void SanityCheck()
     VERIFY("(cons 'a (list 'b))", "(a b)");
     VERIFY("(cons (list 'a) (list 'b))", "((a) b)");
 
+    VERIFY("(cons 1 . (2))", "(1 . 2)");
     VERIFY("(list 1 . (2))", "(1 2)");
+    VERIFY("(list (cons 1 2))", "((1 . 2))");
     VERIFY("(list (cons 1 2) (cons 3 4))", "((1 . 2) (3 . 4))");
     VERIFY("(list 'a 'b . ('c 'd 'e . ()))", "(a b c d e)");
 
