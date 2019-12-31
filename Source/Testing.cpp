@@ -24,7 +24,7 @@ void CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
     }
     catch (...)
     {
-        console->PrintColor(COLOR_RED, "ERROR: ");
+        console->PrintErrorPrefix("INTERNAL ERROR");
         console->Print("unhandled exception!\n");
     }
 
@@ -56,7 +56,7 @@ void CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
     else 
         ss << "but output \"" << output << "\"";
 
-    console->PrintColor(COLOR_RED, "TEST FAILED: ");
+    console->PrintErrorPrefix("INTERNAL TEST FAILED");
     console->Print("% s\n", ss.str().c_str());
 
     static int sRetryOnError = 0;

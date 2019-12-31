@@ -17,7 +17,7 @@ enum
     COLOR_BLUE,
     COLOR_LIME,
     COLOR_CYAN,
-    COLOR_PINK,
+    COLOR_BRIGHT_RED,
     COLOR_MAGENTA,
     COLOR_YELLOW,
     COLOR_WHITE,
@@ -58,15 +58,9 @@ class Console
         return ss.str();
     }
 
-    //template<typename... ARGS>
-    //void LogLine(const char* format, ARGS... args)
     void LogLine(const char* format, va_list args)
     {
-        //va_list args;
-        //va_copy(args, inputArgs);
-        //va_start(args, format);
-
-        char line[1024];
+        char line[128];
         char* str = line;
 
         int len = vsnprintf(line, sizeof(line), format, args);
@@ -90,7 +84,6 @@ class Console
         }
 
         WriteOutput(str);
-        //va_end(args);
     }
 
 protected:
@@ -115,9 +108,9 @@ public:
         // Enable color by default if we're running in a console
 
 #ifdef _MSC_VER
-        DWORD processId = 0;
-        GetWindowThreadProcessId(GetConsoleWindow(), &processId);
-        if (processId == GetCurrentProcessId())
+        //DWORD processId = 0;
+        //GetWindowThreadProcessId(GetConsoleWindow(), &processId);
+        //if (processId == GetCurrentProcessId())
             _enableColor = true;
 #else
         if (isatty(STDOUT_FILENO))
@@ -156,6 +149,11 @@ public:
         _enableColor = enabled;
     }
 
+    bool IsColor()
+    {
+        return _enableColor;
+    }
+
     void EnableDebugOutput(bool enabled)
     {
         _debugOutput = enabled;
@@ -170,8 +168,6 @@ public:
             _logFile = fopen(filename, "a");
     }
 
-    //template<typename... ARGS>
-    //void Print(const char* format, ARGS... args)
     void Print(const char* format, ...)
     {
         va_list args;
@@ -180,11 +176,9 @@ public:
         va_end(args);
     }
 
-    //template<typename... TARGS>
-    //void PrintColor(int color, const char* format, TARGS... args)
-    void PrintColor(int color, const char* format, ...)
+    void PrintColor(int fg, int bg, const char* format, ...)
     {
-        SetTextColor(color);
+        SetTextColor(fg, bg);
 
         va_list args;
         va_start(args, format);
@@ -194,7 +188,6 @@ public:
         ResetTextColor();
     }
 
-    //template<typename... TARGS>
     void PrintDebug(const char* format, ...)
     {
         if (!_debugOutput)
@@ -208,6 +201,39 @@ public:
         va_end(args);
 
         ResetTextColor();
+    }
+
+    void PrintErrorPrefix(const char* desc = "ERROR", int code = 0)
+    {
+        if (_enableColor)
+        {
+            PrintColor(COLOR_WHITE, COLOR_RED, " %s ", desc);
+            if (code)
+                PrintColor(COLOR_WHITE, COLOR_RED, "%d ", code);
+        }
+        else
+        {
+            Print(desc);
+            if (code)
+                Print(" %d", code);
+            Print(":");
+        }
+
+        Print(" ");
+    }
+
+    void PrintColorTest()
+    {
+        for (int fg = 0; fg < 16; fg++)
+        {
+            for (int bg = 0; bg < 16; bg++)
+            {
+                SetTextColor(fg, bg);
+                std::cout << "(a)";
+            }
+            ResetTextColor();
+            std::cout << std::endl;
+        }
     }
 
     string ReadLine()

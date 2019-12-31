@@ -9,14 +9,14 @@
 
 void PrintBanner(Console* console)
 {
-    console->PrintColor(COLOR_YELLOW, " __  __     ____              __    _________ ____ \n");
-    console->PrintColor(COLOR_YELLOW, " \\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
-    console->PrintColor(COLOR_YELLOW, "  \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
-    console->PrintColor(COLOR_YELLOW, "  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
-    console->PrintColor(COLOR_YELLOW, " /_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n");
+    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, " __  __     ____              __    _________ ____ \n");
+    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, " \\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
+    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, "  \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
+    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, "  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
+    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, " /_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n\n");
 }
 
-void PrintOptions(Console* console)
+void PrintOptions(Console* console, const char* version)
 {
     console->Print("Usage: YellowLISP [options] [lisp files]\n\n");
 
@@ -34,21 +34,15 @@ void PrintOptions(Console* console)
     console->Print("  --no-color   Disable colored console output\n");
     console->Print("  --log <file> Mirror output to <file>\n");
     console->Print("  --version    Print just the version and exit\n");
-    console->Print("  --help       Display this message and exit\n");
-    console->Print("\n");
+    console->Print("  --help       Display this message and exit\n\n");
 
-    console->Print("The latest version of YellowLISP can [theoretically] be found at:\n");
-    console->Print("  https://github.com/StuartRiffle/YellowLISP\n");
+    console->Print("%s (c) 2020 Stuart Riffle\n", version);
+    console->Print("Open source and free, released under the MIT license\n");
 }
 
 int main(int argc, char** argv)
 {
     std::unique_ptr<Console> console(new Console());
-
-#if DEBUG_BUILD
-    console->EnableDebugOutput(true);
-    SanityCheck(console.get());
-#endif
 
     CommandLine commandLine(argc, argv);
     InterpreterSettings settings;
@@ -67,15 +61,16 @@ int main(int argc, char** argv)
         return RETURN_SUCCESS;
     }
 
-    console->PrintColor(COLOR_GRAY, "This is some gray\n");
-    console->PrintColor(COLOR_SILVER, "This is some gray\n");
-    console->PrintColor(COLOR_WHITE, "This is some gray\n");
+#if DEBUG_BUILD
+    console->EnableDebugOutput(true);
+    SanityCheck(console.get());
+#endif
 
     PrintBanner(console.get());
 
     if (commandLine.HasFlag("--help"))
     {
-        PrintOptions(console.get());
+        PrintOptions(console.get(), versionStr);
         return RETURN_SUCCESS;
     }
 
@@ -106,7 +101,7 @@ int main(int argc, char** argv)
             std::ifstream file(filename);
             if (!file)
             {
-                console->PrintColor(COLOR_RED, "ERROR: ");
+                console->PrintErrorPrefix();
                 console->Print("file not found: %s\n", filename.c_str());
 
                 return RETURN_PARSING_ERROR;
@@ -126,9 +121,8 @@ int main(int argc, char** argv)
 
     // Otherwise, drop into the REPL
 
-    console->SetTextColor(COLOR_YELLOW, COLOR_BLACK);
-    console->Print("\n %s \n", versionStr);
-    console->ResetTextColor();
+    const char* pad = console->IsColor()? " " : "";
+    console->PrintColor(COLOR_BLACK, COLOR_YELLOW, "%s%s%s\n", pad, versionStr, pad);
 
     lisp.RunREPL();
 

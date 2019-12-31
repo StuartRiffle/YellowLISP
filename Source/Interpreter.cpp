@@ -68,7 +68,7 @@ string Interpreter::Evaluate(const string& source)
         if (!_settings._catchExceptions)
             throw;
 
-        _console->PrintColor(COLOR_RED, "ERROR %d: ", error._code);
+        _console->PrintErrorPrefix("ERROR", error._code);
         _console->Print("%s\n", error.what());
     }
     catch (std::exception error)
@@ -80,12 +80,12 @@ string Interpreter::Evaluate(const string& source)
         if (!_settings._catchExceptions)
             throw;
 
-        _console->PrintColor(COLOR_RED, "INTERNAL ERROR: ");
+        _console->PrintErrorPrefix("INTERNAL ERROR");
         _console->Print("%s\n", error.what());
     }
     catch (...)
     {
-        _console->PrintColor(COLOR_RED, "INTERNAL ERROR: ");
+        _console->PrintErrorPrefix("INTERNAL ERROR");
         _console->Print("unhandled exception\n");
     }
 
@@ -104,7 +104,7 @@ void Interpreter::RunREPL()
 
     for (;;)
     {
-        _console->PrintColor(COLOR_YELLOW, "-> ");
+        _console->PrintColor(COLOR_YELLOW, 0, "-> ");
 
         string source = _console->ReadLine();
         string output = Evaluate(source);
