@@ -60,6 +60,7 @@ NodeRef Parser::ParseElement()
         result = ParseAtom();
     }
 
+    /*
     if (result && Consume('.'))
     {
         // Convert A . B to (cons A 'B)
@@ -71,6 +72,7 @@ NodeRef Parser::ParseElement()
 
         result = ListNode({ cons, result, quoted });
     }
+    */
 
     return result;
 }
@@ -125,7 +127,7 @@ NodeRef Parser::ParseNumber()
     RAISE_ERROR_IF(end == _code, ERROR_PARSER_SYNTAX, "invalid number");
 
     bool isFloat = false;
-    for (const char* c = _code; c < end; c++)
+    for (const char* c = _code + 1; c < end; c++)
         if ((*c == '.') || (*c == 'e') || (*c == 'E'))
             isFloat = true;
 

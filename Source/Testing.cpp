@@ -213,7 +213,6 @@ void SanityCheck()
     VERIFY("(eq (cons 'a 'b) (cons 'a 'b))", "nil");
     VERIFY("(progn (setq x (cons 'a 'b)) (eq x x))", "t");
     VERIFY("(progn (setq x '(a . b)) (eq x x))", "t");
-    VERIFY("(let ((x \"Foo\")) (eq x x))", "t");
     VERIFY("(eq \"FOO\" \"foo\")", "nil");
 
     VERIFY("(eql 'a 'b)", "nil");
@@ -283,6 +282,7 @@ void SanityCheck()
     VERIFY("(list 'a 'b . ('c 'd 'e . ()))", "(a b c d e)");
 
 
+    //    VERIFY("(let ((x \"Foo\")) (eq x x))", "t");
 
     //VERIFY("(append '(a b c) '())", "(a b c)");
     //VERIFY("(append '() '(a b c))", "(a b c)");

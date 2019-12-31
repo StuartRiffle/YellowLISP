@@ -136,6 +136,7 @@ class Runtime
     vector<Scope> _environment;
 
     CELL_INDEX  _nil;
+    CELL_INDEX  _dot;
     CELL_INDEX  _true;
     CELL_INDEX  _eval;
     CELL_INDEX  _quote;

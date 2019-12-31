@@ -61,9 +61,23 @@ CELL_INDEX Runtime::COND(const ArgumentList& args)
 
 CELL_INDEX Runtime::CONS(const ArgumentList& args)
 {
-    VERIFY_NUM_PARAMETERS(args.size(), 2, "CONS");
-    CELL_INDEX head = args[0];
-    CELL_INDEX tail = args[1];
+    RAISE_ERROR_IF(args.size() < 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "CONS");
+
+    CELL_INDEX head = EvaluateCell(args[0]);
+    CELL_INDEX tail = EvaluateCell(args[1]);
+
+    // HACK: special case the stupid fucking dot notation
+
+    if (tail == _dot)
+    {
+        RAISE_ERROR_IF(args.size() != 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "CONS");
+
+        tail = args[2];
+        if (tail != _nil)
+            RAISE_ERROR_IF(_cell[tail]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "a list must follow the dot");
+
+        tail = _cell[tail]._data;
+    }
 
     CELL_INDEX index = (CELL_INDEX)AllocateCell(TYPE_CONS);
     Cell& cell = _cell[index];
@@ -237,23 +251,37 @@ CELL_INDEX Runtime::LIST(const ArgumentList& args)
         CELL_INDEX elem = args[i];
         CELL_INDEX elemCell = _nil;
 
-        //CELL_INDEX elemNext = _cell[elem]._next;
+        if (elem == _dot)
+        {
+            // HACK: if there is a dot, it must be the second-to-last element,
+            // and followed by a list
 
-//        if ((elemNext == _nil) || (_cell[elemNext]._type == TYPE_CONS))
+            RAISE_ERROR_IF(i < 1, ERROR_RUNTIME_INVALID_ARGUMENT, "a list cannot start with a dot");
+
+            // Skip the dot
+
+            i++;
+
+            RAISE_ERROR_IF(i != (args.size() - 1), ERROR_RUNTIME_INVALID_ARGUMENT, "the dot must go before the last argument");
+
+            elem = args[i];
+            if (elem == _nil)
+                break;
+
+            RAISE_ERROR_IF(_cell[elem]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the dot must be followed by a list");
+
+            // Evaluate the elements of the tail list (recursively, because it might
+            // have a dot as well)
+
+            vector<CELL_INDEX> tailList = ExtractList(elem);
+            elemCell = LIST(tailList);//GenerateList(tailList);
+        }
+        else
         {
             elemCell = AllocateCell(TYPE_CONS);
-            _cell[elemCell]._data = elem;
+            _cell[elemCell]._data = EvaluateCell(elem);
         }
-        /*
-        else
 
-        {
-            bool isLast = (i == args.size() - 1);
-            RAISE_ERROR_IF(!isLast, ERROR_RUNTIME_INVALID_ARGUMENT, "improper list");
-
-            elemCell = elem;
-        }
-        */
         if (!listCells.empty())
             _cell[listCells.back()]._next = elemCell;
 

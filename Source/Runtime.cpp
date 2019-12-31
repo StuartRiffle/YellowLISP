@@ -12,6 +12,7 @@ Runtime::Runtime()
     _garbageCollectionNeeded = false;
 
     _nil = RegisterReserved("nil");
+    _dot = RegisterReserved(".");
     _true = RegisterReserved("t");
     _eval = RegisterPrimitive("eval", &Runtime::EVAL);
     _quote = RegisterPrimitive("quote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
@@ -21,21 +22,21 @@ Runtime::Runtime()
     // Language primitives
 
     RegisterPrimitive("cond",    &Runtime::COND,     SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("cons",    &Runtime::CONS,     SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("defmacro",&Runtime::DEFMACRO, SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("defun",   &Runtime::DEFUN,    SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("list",    &Runtime::LIST,     SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("progn",   &Runtime::PROGN,    SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("setq",    &Runtime::SETQ,     SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("atom",    &Runtime::ATOM);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
-    RegisterPrimitive("cons",    &Runtime::CONS);
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("eql",     &Runtime::EQL);
     RegisterPrimitive("equal",   &Runtime::EQUAL);
     RegisterPrimitive("equalp",  &Runtime::EQUALP);
-    RegisterPrimitive("list",    &Runtime::LIST);
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);
