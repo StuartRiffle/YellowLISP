@@ -9,6 +9,8 @@
 void Runtime::FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLID>& cellsDone, set<SYMBOLIDX>& symbolsDone, bool expandSymbols)
 {
     assert(cellIndex.IsValid());
+    if (cellIndex == _nil)
+        return;
 
     if (cellsDone.count(cellIndex))
         return;
@@ -84,14 +86,21 @@ void Runtime::FormatSymbolLabel(SYMBOLIDX symbolIndex, std::stringstream& ss, se
 
     ss << "symbol" << symbolIndex << " [shape=Mrecord,style=filled,fillcolor=lightblue1,label=\"<header>SYMBOL " << symbolIndex << " | ";
     ss << "{ { ident | primIndex | symbolCell | valueCell | macroBindings } | ";
-    ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | ";
+    ss << "{ <ident>" << symbol._ident;
+    ss << " | <primIndex>"; 
+    if (symbol._primIndex.IsValid()) 
+        ss << symbol._primIndex;
+    ss << " | <symbolCell>";
+    if (symbol._symbolCell.IsValid())
+        ss << symbol._symbolCell;
+    ss << " | ";
 
-    if (symbol._valueCell != _nil)
+    if (symbol._valueCell.IsValid() && (symbol._valueCell != _nil))
         ss << "<valueCell>cell " << symbol._valueCell;
 
     ss << "| <macroBindings>";
     
-    if (symbol._macroBindings != _nil)
+    if (symbol._macroBindings.IsValid() && (symbol._macroBindings != _nil))
         ss << symbol._macroBindings;
 
     ss << " } }\"];" << std::endl;

@@ -24,7 +24,7 @@ CELLID Runtime::GenerateList(const CELLVEC& elements)
     int idx = elements.size() - 1;
     for (int i = 0; i < elements.size(); i++)
     {
-        CELLID elem = idx--;
+        CELLID elem = elements[idx--];
         CELLID elemLink = AllocateCell(TYPE_CONS);
 
         _cell[elemLink]._data = elem;
@@ -190,7 +190,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
                 CELLID quoted = _cell[index]._next;
                 RAISE_ERROR_IF(quoted == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
-                RAISE_ERROR_IF(_cell[quoted]._next == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                RAISE_ERROR_IF(_cell[quoted]._next != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                 return _cell[quoted]._data;
             }

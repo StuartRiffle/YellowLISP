@@ -10,6 +10,8 @@ CELLID Runtime::ATOM(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "ATOM");
 
     CELLID index = args[0];
+    if (index == _nil)
+        return _true;
 
     const Cell& cell = _cell[index];
     if (cell._type == TYPE_CONS)
@@ -22,6 +24,9 @@ CELLID Runtime::CAR(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CAR");
 
+    if (args[0] == _nil)
+        return _nil;
+
     const Cell& cell = _cell[args[0]];
     if (cell._type != TYPE_CONS)
         return _nil;
@@ -32,6 +37,9 @@ CELLID Runtime::CAR(const CELLVEC& args)
 CELLID Runtime::CDR(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CDR");
+
+    if (args[0] == _nil)
+        return _nil;
 
     const Cell& cell = _cell[args[0]];
     if (cell._next != _nil)

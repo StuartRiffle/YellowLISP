@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="CELLID">
+    <DisplayString Condition="_index == 0xCCCCCCCC">UNINITIALIZED</DisplayString>
+    <DisplayString Condition="_index == 0xFFFFFFFF">INVALID</DisplayString>
+    <DisplayString Condition="_index == 0">INVALID (ZERO)</DisplayString>
+    <DisplayString>cell {_index}</DisplayString>
+  </Type>
+  <Type Name="SYMBOLIDX">
+    <DisplayString Condition="_index == 0xCCCCCCCC">UNINITIALIZED</DisplayString>
+    <DisplayString Condition="_index == 0xFFFFFFFF">INVALID</DisplayString>
+    <DisplayString>symbol {_index}</DisplayString>
+  </Type>
+  <Type Name="STRINGIDX">
+    <DisplayString Condition="_index == 0xCCCCCCCC">UNINITIALIZED</DisplayString>
+    <DisplayString Condition="_index == 0xFFFFFFFF">INVALID</DisplayString>
+    <DisplayString>string {_index}</DisplayString>
+  </Type>
+  <Type Name="PRIMIDX">
+    <DisplayString Condition="_index == 0xCCCCCCCC">UNINITIALIZED</DisplayString>
+    <DisplayString Condition="_index == 0xFFFFFFFF">INVALID</DisplayString>
+    <DisplayString>primitive {_index}</DisplayString>
+  </Type>
+</AutoVisualizer>

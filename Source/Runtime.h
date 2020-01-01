@@ -34,7 +34,6 @@ const int HEADER_BITS   = sizeof(uint32_t) * 8;
 const int DATA_BITS     = sizeof(uint32_t) * 8;
 const int METADATA_BITS = TYPE_BITS + TAG_BITS;
 const int INDEX_BITS    = HEADER_BITS - METADATA_BITS;
-const int NIL_CELL      = 1;
 
 static_assert(TYPE_COUNT <= (1 << TYPE_BITS), "Not enough type bits");
 static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index");
@@ -52,14 +51,16 @@ struct Cell
 template<typename TAG = void*, bool ZERO_VALID = true>
 class INDEX
 {
-    enum { INVALID = ~uint32_t(0) };
+    enum : uint32_t { INVALID = ~uint32_t(0) };
     uint32_t _index;
 public:
     inline INDEX(uint32_t index = INVALID) : _index(index) {}
-    explicit inline INDEX(size_t index) : _index((uint32_t) index) { assert(_index == index); }
+    explicit inline INDEX(size_t index) : _index((uint32_t) index) { assert(_index == index); assert(IsValid()); }
+    inline INDEX& operator=(uint32_t index) { _index = index; assert(IsValid()); }
+    inline operator uint32_t() const { assert(IsValid()); return _index; }
 
     inline bool IsValid() const { return (_index != INVALID) && (ZERO_VALID || (_index != 0)); }
-    inline operator uint32_t() const { assert(IsValid()); return _index; }
+    inline void SetInvalid() { _index = INVALID; }
 
     struct Hash 
     {
@@ -96,15 +97,15 @@ struct SymbolInfo
     string  _ident;
     string  _comment;
     PRIMIDX _primIndex;
-    CELLID _symbolCell;
-    CELLID _valueCell;
-    CELLID _macroBindings;
+    CELLID  _symbolCell;
+    CELLID  _valueCell;
+    CELLID  _macroBindings;
 };
 
 #define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
 
 
-template<class T, typename TINDEX = size_t, int ELEMENTS = 16>
+template<class T, int ELEMENTS = 16>
 class StaticVector
 {
     T _embedded[ELEMENTS];
@@ -119,8 +120,8 @@ public:
             this->push_back(elem); 
     }
 
-    inline T& operator[](TINDEX idx)             { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
-    inline const T& operator[](TINDEX idx) const { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
+    inline T& operator[](size_t idx)             { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
+    inline const T& operator[](size_t idx) const { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
 
     inline int  size() const  { return _count; }
     inline bool empty() const { return (_count == 0); }
@@ -145,7 +146,7 @@ public:
     }
 };
 
-typedef StaticVector<CELLID, CELLID> CELLVEC; 
+typedef StaticVector<CELLID> CELLVEC; 
 
 class Runtime;
 typedef CELLID (Runtime::*PrimitiveFunc)(const CELLVEC& args);
@@ -181,7 +182,7 @@ class Runtime
 
     friend class CELLITER;
     vector<Cell> _cell;
-    CELLID       _cellFreeList;
+    uint32_t     _cellFreeList;
     int          _cellFreeCount;
 
     SlotPool<SymbolInfo, SYMBOLIDX> _symbol;
@@ -205,7 +206,7 @@ class Runtime
 
     bool    _garbageCollectionNeeded;
 
-    SYMBOLIDX StoreSymbol(const char* ident, CELLID cellIndex, STRINGHASH hash = 0);
+    SYMBOLIDX StoreSymbol(const char* ident, CELLID cellIndex, SymbolType symbolType, STRINGHASH hash = 0);
     SYMBOLIDX GetSymbolIndex(const char* ident);
     CELLID   RegisterReserved(const char* ident);
     CELLID   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);

@@ -100,12 +100,11 @@ void Runtime::MarkCellsInUse(CELLID index)
 void Runtime::DebugValidateCells()
 {
 #if 1//DEBUG_BUILD
-    CELLID slot = _cellFreeList;
+    uint32_t slot = _cellFreeList;
     int numInFreeList = 0;
 
     while(slot)
     {
-        assert(_cell[slot]._next);
         assert(_cell[slot]._type == TYPE_FREE);
         numInFreeList++;
 

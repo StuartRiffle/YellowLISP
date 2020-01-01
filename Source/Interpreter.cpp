@@ -36,14 +36,15 @@ vector<CELLID> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 
 CELLID Interpreter::RunSourceCode(const string& source)
 {
-    list<NodeRef> exps = _parser.ParseExpressionList(source);
+    CELLID result;
 
+    list<NodeRef> exps = _parser.ParseExpressionList(source);
     vector<CELLID> values = EvaluateExpressions(exps);
 
     if (!values.empty())
-        return values.back();
+        result = values.back();
 
-    return 0;
+    return result;
 }
 
 string Interpreter::Evaluate(const string& source)
@@ -57,7 +58,8 @@ string Interpreter::Evaluate(const string& source)
     try
     {
         CELLID valueCell = RunSourceCode(source);
-        output = _runtime.GetPrintedValue(valueCell);
+        if (valueCell.IsValid())
+            output = _runtime.GetPrintedValue(valueCell);
     }
     catch (YellowError error)
     {

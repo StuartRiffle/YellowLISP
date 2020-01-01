@@ -5,14 +5,14 @@
 
 Runtime::Runtime(Console* console) : _console(console)
 {
-    // Cell 0 is unused and invalid
+    // Cell 0 is unused and invalid. Attempting to access it will assert.
+    // Cell 1 is nil, the empty list. Its _next field is 0, to prevent walking through it. 
 
     _cell.resize(2);
 
-    // Cell 1 is nil
-
-    _nil = NIL_CELL;
-    StoreSymbol("_nil", _nil);
+    _nil = 1;
+    _cell[_nil]._type = TYPE_CONS;
+    StoreSymbol("nil", _nil, SYMBOL_RESERVED);
 
     _cellFreeList  = 0;
     _cellFreeCount = 0;
@@ -95,7 +95,7 @@ CELLID Runtime::RegisterReserved(const char* ident)
     return cellIndex;
 }
 
-SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, STRINGHASH hash)
+SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, SymbolType symbolType, STRINGHASH hash)
 {
     if (!hash)
         hash = HashString(ident);
@@ -106,10 +106,10 @@ SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, STRINGHASH h
     _cell[cellIndex]._data = symbolIndex;
 
     SymbolInfo& symbol = _symbol[symbolIndex];
-    symbol._type = SYMBOL_INVALID;
+    symbol._type = symbolType;
     symbol._ident = ident;
     symbol._symbolCell = cellIndex;
-    symbol._valueCell = 0;
+    symbol._valueCell.SetInvalid();
 
     return symbolIndex;
 }
@@ -123,7 +123,7 @@ SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
         return iter->second;
 
     CELLID cellIndex = AllocateCell(TYPE_SYMBOL);
-    SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex, hash);
+    SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex, SYMBOL_INVALID, hash);
 
     return symbolIndex;
 }
@@ -194,8 +194,8 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
             if (node->_list.empty())
                 return _nil;
 
-            CELLID listHeadCell = 0;
-            CELLID listPrevCell = 0;
+            CELLID listHeadCell;
+            CELLID listPrevCell;
 
             for (auto& elemNode : node->_list)
             {
@@ -203,7 +203,7 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
 
                 _cell[listCell]._data = EncodeTreeNode(elemNode);
 
-                if (listPrevCell)
+                if (listPrevCell.IsValid())
                     _cell[listPrevCell]._next = listCell;
                 else
                     listHeadCell = listCell;
@@ -222,6 +222,8 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
 string Runtime::GetPrintedValue(CELLID index)
 {
     assert(index.IsValid());
+    if (index == _nil)
+        return "nil";
 
     std::stringstream ss;
 
