@@ -79,6 +79,9 @@ void SanityCheck(Console* console)
 
     Interpreter lisp(console, &settings);
     
+    // (progn (defmacro foo (x) `(+ ,x 1)) (defmacro bar (x) `(* ,x (foo ,x))) (bar 123)) => 15252
+
+
     VERIFY("(setq x 123)", "123");
     VERIFY("`(x x)", "(x x)");
     VERIFY("`(x ,x)", "(x 123)");

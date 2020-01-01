@@ -84,8 +84,12 @@ class Parser
     NodeRef ParseNumber();
     NodeRef ParseIdentifier();
 
-    NodeRef IdentifierNode(const string& ident);
-    NodeRef ListNode(const vector<NodeRef>& elems);
+    NodeRef MakeIdentifierNode(const string& ident);
+    NodeRef MakeListNode(const vector<NodeRef>& elems);
+    NodeRef MakeIntNode(int value);
+    NodeRef MakeFloatNode(float value);
+    NodeRef MakeNumericNode(bool isInteger, double value);
+
 
     NodeRef UntangleQuasiquotes(NodeRef node, int level = 0);
     NodeRef ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues);

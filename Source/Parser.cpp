@@ -46,22 +46,22 @@ NodeRef Parser::ParseElement()
     {
         // 'FOO -> (quote FOO)
 
-        NodeRef quote = IdentifierNode("quote");
-        result = ListNode({ quote, ParseElement() });
+        NodeRef quote = MakeIdentifierNode("quote");
+        result = MakeListNode({ quote, ParseElement() });
     }
     else if (Consume('`'))
     {
         // `FOO -> (quasiquote FOO)
 
-        NodeRef quasiquote = IdentifierNode("quasiquote");
-        result = ListNode({ quasiquote, ParseElement() });
+        NodeRef quasiquote = MakeIdentifierNode("quasiquote");
+        result = MakeListNode({ quasiquote, ParseElement() });
     }
     else if (Consume(','))
     {
         // ,FOO -> (unquote FOO)
 
-        NodeRef unquote = IdentifierNode("unquote");
-        result = ListNode({ unquote, ParseElement() });
+        NodeRef unquote = MakeIdentifierNode("unquote");
+        result = MakeListNode({ unquote, ParseElement() });
     }
     else if (*_code)
     {
@@ -165,24 +165,41 @@ NodeRef Parser::ParseIdentifier()
     string ident(_code, end - _code);
     _code = end;
 
-    NodeRef identNode = IdentifierNode(ident);
+    NodeRef identNode = MakeIdentifierNode(ident);
     return identNode;
 }
 
-NodeRef Parser::IdentifierNode(const string& ident)
+NodeRef Parser::MakeIdentifierNode(const string& ident)
 {
     NodeRef node(new NodeVariant(AST_NODE_IDENTIFIER));
     node->_identifier = ident;
-
     return node;
 }
 
-NodeRef Parser::ListNode(const vector<NodeRef>& elems)
+NodeRef Parser::MakeListNode(const vector<NodeRef>& elems)
 {
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
     listNode->_list = elems;
-
     return listNode;
+}
+
+NodeRef Parser::MakeIntNode(int value)
+{
+    NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
+    intNode->_int = value;
+    return intNode;
+}
+
+NodeRef Parser::MakeFloatNode(float value)
+{
+    NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));
+    floatNode->_float = value;
+    return floatNode;
+}
+
+NodeRef Parser::MakeNumericNode(bool isInteger, double value)
+{
+    return isInteger? MakeIntNode((int) value) : MakeFloatNode((float) value);
 }
 
 void Parser::DumpSyntaxTree(NodeRef node, int indent)
@@ -236,7 +253,7 @@ NodeRef Parser::UntangleQuasiquotes(NodeRef node, int level)
                     return Simplify(tail);
 
                 NodeRef expanded = UntangleQuasiquotes(tail, level);
-                return ListNode({ head, expanded });
+                return MakeListNode({ head, expanded });
             }
             else if (head->IsIdent("unquote"))
             {
@@ -246,14 +263,14 @@ NodeRef Parser::UntangleQuasiquotes(NodeRef node, int level)
                     return Simplify(tail);
 
                 NodeRef expanded = UntangleQuasiquotes(tail, level - 1);
-                return ListNode({ head, expanded });
+                return MakeListNode({ head, expanded });
             }
             else if (head->IsIdent("quasiquote"))
             {
                 NodeRef expanded = UntangleQuasiquotes(tail, level + 1);
 
                 if (level > 0)
-                    return ListNode({ head, expanded });
+                    return MakeListNode({ head, expanded });
 
                 return expanded;
             }
@@ -310,12 +327,7 @@ NodeRef Parser::Simplify(NodeRef node)
         {
             NodeRef& head = node->_list[0];
 
-            if (head->IsIdent("quasiquote"))
-            {
-                RAISE_ERROR_IF(node->_list.size() != 2, ERROR_PARSER_SYNTAX, "wrong number of paramters to QUASIQUOTE");
-                return UntangleQuasiquotes(node);
-            }
-            else if (head->IsIdent("defmacro"))
+            if (head->IsIdent("defmacro"))
             {
                 // Store macro definitions
 
@@ -329,7 +341,7 @@ NodeRef Parser::Simplify(NodeRef node)
                 RAISE_ERROR_IF(args->_type != AST_NODE_LIST, ERROR_PARSER_SYNTAX, "expected macro argument list");
 
                 MacroDef& macroDef = _macros[name->_identifier];
-                macroDef._macroBody = body;
+                macroDef._macroBody = UntangleQuasiquotes(body);
 
                 for (NodeRef arg : args->_list)
                 {
@@ -337,7 +349,7 @@ NodeRef Parser::Simplify(NodeRef node)
                     macroDef._argNames.push_back(arg->_identifier);
                 }
 
-                // Macros are expanded by the parser, so nothing to do at runtime
+                // Macros will be expanded here in the parser, so there's nothing to evaluate now
 
                 return NULL;
             }
@@ -357,7 +369,55 @@ NodeRef Parser::Simplify(NodeRef node)
                         argValues[macroDef._argNames[i]] = Simplify(node->_list[i + 1]);
 
                     NodeRef expanded = ExpandMacroBody(macroDef._macroBody, argValues);
-                    return Simplify(expanded);
+                    NodeRef simplified = Simplify(expanded);
+
+                    return simplified;
+                }
+            }
+
+            if (node->_list.size() == 3)
+            {
+                // Fold constant expressions
+
+                NodeRef a = node->_list[1];
+                NodeRef b = node->_list[2];
+
+                if (a->IsNumeric() && b->IsNumeric())
+                {
+                    double lhs = a->GetNumericValue();
+                    double rhs = b->GetNumericValue();
+
+                    bool isInteger = ((a->_type == AST_NODE_INT_LITERAL) && (b->_type == AST_NODE_INT_LITERAL));
+
+                    if (head->IsIdent("+"))
+                        return MakeNumericNode(isInteger, lhs + rhs);
+
+                    if (head->IsIdent("-"))
+                        return MakeNumericNode(isInteger, lhs - rhs);
+
+                    if (head->IsIdent("*"))
+                        return MakeNumericNode(isInteger, lhs * rhs);
+
+                    if (head->IsIdent("/"))
+                        return MakeNumericNode(isInteger, lhs / rhs);
+
+                    if (head->IsIdent("="))
+                        return MakeIdentifierNode((lhs == rhs)? "t" : "nil");
+
+                    if (head->IsIdent("/="))
+                        return MakeIdentifierNode((lhs != rhs)? "t" : "nil");
+
+                    if (head->IsIdent("<"))
+                        return MakeIdentifierNode((lhs < rhs)?  "t" : "nil");
+
+                    if (head->IsIdent("<="))
+                        return MakeIdentifierNode((lhs <= rhs)? "t" : "nil");
+
+                    if (head->IsIdent(">"))
+                        return MakeIdentifierNode((lhs > rhs)?  "t" : "nil");
+
+                    if (head->IsIdent(">="))
+                        return MakeIdentifierNode((lhs >= rhs)? "t" : "nil");
                 }
             }
         }
