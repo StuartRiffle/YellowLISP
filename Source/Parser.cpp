@@ -353,7 +353,9 @@ NodeRef Parser::Simplify(NodeRef node)
 
                 return NULL;
             }
-            else if (head->_type == AST_NODE_IDENTIFIER)
+
+
+            if (head->_type == AST_NODE_IDENTIFIER)
             {
                 // Expand macro invocations
 
@@ -375,10 +377,28 @@ NodeRef Parser::Simplify(NodeRef node)
                 }
             }
 
+            // Fold constant expressions
+
+            if (head->IsIdent("cond"))
+            {
+                for (size_t i = 1; i < node->_list.size(); i++)
+                {
+                    NodeRef pair = node->_list[i];
+                    RAISE_ERROR_IF(pair->_type != AST_NODE_LIST, ERROR_PARSER_SYNTAX, "parameters to COND must be lists");
+                    RAISE_ERROR_IF(pair->_list.size() != 2, ERROR_PARSER_SYNTAX, "parameters to COND must be lists of two elements");
+
+                    if (pair->_list[0]->IsIdent("t"))
+                        return pair->_list[1];
+
+                    if (!pair->_list[0]->IsIdent("nil"))
+                        return node;
+                }
+
+                return MakeIdentifierNode("nil");
+            }
+
             if (node->_list.size() == 3)
             {
-                // Fold constant expressions
-
                 NodeRef a = node->_list[1];
                 NodeRef b = node->_list[2];
 
