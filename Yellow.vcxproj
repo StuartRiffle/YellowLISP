@@ -98,6 +98,9 @@
     <PostBuildEvent>
       <Command>xcopy /y $(TargetDir)$(TargetFileName) $(SolutionDir)Build\</Command>
     </PostBuildEvent>
+    <Link>
+      <AdditionalOptions>/STACK:0x4000000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -143,6 +146,7 @@
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile />
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalOptions>/STACK:0x4000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y $(TargetDir)$(TargetFileName) $(SolutionDir)Build\</Command>
@@ -187,6 +191,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="Yellow.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

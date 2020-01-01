@@ -104,4 +104,7 @@
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="Yellow.natvis" />
+  </ItemGroup>
 </Project>
