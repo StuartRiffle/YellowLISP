@@ -11,7 +11,7 @@ Runtime::Runtime(Console* console) : _console(console)
     _cell.resize(2);
 
     _nil = 1;
-    _cell[_nil]._type = TYPE_CONS;
+    _cell[_nil]._type = TYPE_SYMBOL;
     StoreSymbol("nil", _nil, SYMBOL_RESERVED);
 
     _cellFreeList  = 0;
@@ -200,8 +200,8 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
             for (auto& elemNode : node->_list)
             {
                 CELLID listCell = AllocateCell(TYPE_CONS);
-
-                _cell[listCell]._data = EncodeTreeNode(elemNode);
+                CELLID nodeCell = EncodeTreeNode(elemNode);
+                _cell[listCell]._data = nodeCell;
 
                 if (listPrevCell.IsValid())
                     _cell[listPrevCell]._next = listCell;

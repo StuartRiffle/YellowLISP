@@ -288,7 +288,8 @@ CELLID Runtime::LIST(const CELLVEC& args)
         else
         {
             elemCell = AllocateCell(TYPE_CONS);
-            _cell[elemCell]._data = EvaluateCell(elem);
+            CELLID value = EvaluateCell(elem);
+            _cell[elemCell]._data = value;
         }
 
         if (!listCells.empty())
