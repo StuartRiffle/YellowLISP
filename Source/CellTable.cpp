@@ -55,35 +55,22 @@ void Runtime::FreeCell(CELLID index)
     _cellFreeCount++;
 }
 
-void Runtime::InitCellTable(size_t size)
-{
-    _cell.resize(size);
-    _cellFreeList  = 0;
-    _cellFreeCount = 0;
-
-    for (size_t i = size - 1; i > 0; i--)
-        FreeCell((CELLID)i);
-
-    DebugValidateCells();
-}
-
-
 void Runtime::ExpandCellTable()
 {
-    size_t oldSize = _cell.size();
-    size_t newSize = oldSize + (oldSize / 2) + 1;
+    uint32_t oldSize = (uint32_t) _cell.size();
+    uint32_t newSize = oldSize + (oldSize / 2) + 1;
 
     _cell.resize(newSize);
 
-    for (size_t i = newSize - 1; i >= oldSize; i--)
-        FreeCell((CELLID)i);
+    for (uint32_t i = newSize - 1; i >= oldSize; i--)
+        FreeCell(i);
 
     DebugValidateCells();
 }
 
 void Runtime::MarkCellsInUse(CELLID index)
 {
-    assert(VALID_INDEX(index));
+    index.IsValid();
     if (index == _nil)
         return;
 
@@ -127,9 +114,8 @@ void Runtime::DebugValidateCells()
 
     int numMarkedFree = 0;
 
-    for (TINDEX i = 1; i < _cell.size(); i++)
+    for (size_t i = 0; i < _cell.size(); i++)
     {
-        //assert((_cell[i]._tags & TAG_GC_MARK) == 0);
         if (_cell[i]._type == TYPE_FREE)
             numMarkedFree++;
     }
@@ -185,7 +171,7 @@ size_t Runtime::CollectGarbage()
 
     size_t numCellsFreed = 0;
 
-    for (TINDEX i = 1; i < _cell.size(); i++)
+    for (CELLID i = 1; i < _cell.size(); i = i + 1)
     {
         if (i == _nil)
             continue;
@@ -210,7 +196,7 @@ size_t Runtime::CollectGarbage()
                     {
                         _string.Free(stringIndex);
 
-                        THASH hash = HashString(info._str.c_str());
+                        STRINGHASH hash = HashString(info._str.c_str());
                         RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
 
                         _stringTable.erase(hash);

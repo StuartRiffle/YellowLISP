@@ -4,51 +4,51 @@
 #include "Yellow.h"
 #include "Errors.h"
 
-template< typename T >
+template<typename T, typename TINDEX>
 class SlotPool
 {
-    vector<T> _elems;
-    vector<INDEX> _freeSlots;
+    vector<T>      _elems;
+    vector<TINDEX> _freeSlots;
 
 public:
 
-    inline T& operator[](INDEX index) 
+    inline T& operator[](TINDEX index) 
     {
         RAISE_ERROR_IF(!index.IsValid() || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
         return _elems[index];
     }
 
-    inline INDEX Alloc()
+    inline TINDEX Alloc()
     {
-        INDEX index;
+        TINDEX index;
 
         if (_freeSlots.empty())
             ExpandPool();
 
         if (!_freeSlots.empty())
         {
-            index = (INDEX) _freeSlots.back();
+            index = _freeSlots.back();
             _freeSlots.pop_back();
         }
 
         return(index);
     }
 
-    inline void Free(INDEX index)
+    inline void Free(TINDEX index)
     {
-        RAISE_ERROR_IF(!index.IsValid || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
+        RAISE_ERROR_IF(!index.IsValid() || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
         _freeSlots.push_back(index);
     }
 
     void ExpandPool()
     {
-        INDEX firstNewElem = (INDEX) _elems.size();
+        size_t firstNewElem = _elems.size();
 
         _elems.emplace_back();
         _elems.resize(_elems.capacity());
 
-        for (INDEX i = firstNewElem; i < _elems.capacity(); i++)
-            Free(i);
+        for (size_t i = firstNewElem; i < _elems.capacity(); i++)
+            Free((uint32_t) i);
     }
 
     size_t GetPoolSize() const
@@ -63,7 +63,7 @@ public:
 
     size_t GetMemoryFootprint() const
     {
-        return (_elems.capacity() * sizeof(T)) + (_freeSlots.capacity() * sizeof(INDEX));
+        return (_elems.capacity() * sizeof(T)) + (_freeSlots.capacity() * sizeof(TINDEX));
     }
 };
 

@@ -3,14 +3,14 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
-CELL_INDEX Runtime::Help(const ArgumentList& args)
+CELLID Runtime::Help(const CELLVEC& args)
 {
     (args);
     _console->Print("TODO\n");
     return 0;
 }
 
-CELL_INDEX Runtime::Exit(const ArgumentList& args)
+CELLID Runtime::Exit(const CELLVEC& args)
 {
     int returnValue = RETURN_SUCCESS;
 
@@ -24,7 +24,7 @@ CELL_INDEX Runtime::Exit(const ArgumentList& args)
     exit(returnValue);
 }
 
-CELL_INDEX Runtime::RunGC(const ArgumentList& args)
+CELLID Runtime::RunGC(const CELLVEC& args)
 {
     (args);
 
@@ -32,9 +32,11 @@ CELL_INDEX Runtime::RunGC(const ArgumentList& args)
     size_t numTotal = _cell.size();
     size_t numFree = 0;
 
-    CELL_INDEX slot = _cellFreeList;
-    while(VALID_CELL(slot))
+    CELLID slot = _cellFreeList;
+    while(slot != _nil)
     {
+        assert(slot.IsValid());
+
         numFree++;
         slot = _cell[slot]._next;
     }

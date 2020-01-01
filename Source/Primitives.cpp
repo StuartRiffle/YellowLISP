@@ -22,9 +22,7 @@ CELLID Runtime::CAR(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CAR");
 
-    CELLID index = args[0];
-
-    const Cell& cell = _cell[index];
+    const Cell& cell = _cell[args[0]];
     if (cell._type != TYPE_CONS)
         return _nil;
 
@@ -35,10 +33,8 @@ CELLID Runtime::CDR(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CDR");
 
-    CELLID index = args[0];
-
-    const Cell& cell = _cell[index];
-    if (VALID_CELL(cell._next))
+    const Cell& cell = _cell[args[0]];
+    if (cell._next != _nil)
         return cell._next;
 
     return _nil;
@@ -49,7 +45,7 @@ CELLID Runtime::COND(const CELLVEC& args)
     for (int i = 0; i < args.size(); i++)
     {
         CELLVEC elements;
-        ExtractList(args[i], elements);
+        ExtractList(args[i], &elements);
 
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_INVALID_ARGUMENT, "Arguments to COND must be lists of two elements");
 
@@ -81,10 +77,9 @@ CELLID Runtime::CONS(const CELLVEC& args)
         tail = _cell[tail]._data;
     }
 
-    CELLID index = (CELLID)AllocateCell(TYPE_CONS);
-    Cell& cell = _cell[index];
-    cell._data = head;
-    cell._next = tail;
+    CELLID index = AllocateCell(TYPE_CONS);
+    _cell[index]._data = head;
+    _cell[index]._next = tail;
 
     return index;
 }
@@ -95,11 +90,11 @@ CELLID Runtime::EQLOP(const CELLVEC& args)
 
     // Numerical equality (regardless of type!)
 
-    for (size_t i = 0; i < args.size(); i++)
+    for (int i = 0; i < args.size(); i++)
         RAISE_ERROR_IF(!IS_NUMERIC_TYPE(args[i]), ERROR_RUNTIME_INVALID_ARGUMENT, "the operator '=' only works for numeric types");
 
     double first = LoadNumericLiteral(args[0]);
-    for (size_t i = 1; i < args.size(); i++)
+    for (int i = 1; i < args.size(); i++)
         if (LoadNumericLiteral(args[i]) != first)
             return _nil;
 
@@ -112,7 +107,7 @@ CELLID Runtime::EQ(const CELLVEC& args)
 
     // EQ is only true if the arguments all refer to the same cell internally
 
-    for (size_t i = 1; i < args.size(); i++)
+    for (int i = 1; i < args.size(); i++)
         if (args[i] != args[0])
             return _nil;
 
@@ -174,8 +169,10 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
             if (!TestStructureEQUAL(_cell[a]._data, _cell[b]._data, strict))
                 return false;
 
-            a = (CELLID) _cell[a]._next;
-            b = (CELLID) _cell[b]._next;
+            a = _cell[a]._next;
+            b = _cell[b]._next;
+
+            assert(a.IsValid() && b.IsValid());
         }
 
         if ((a != _nil) || (b != _nil))
@@ -195,7 +192,7 @@ CELLID Runtime::EQL(const CELLVEC& args)
 {
     RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "EQL");
 
-    for (size_t i = 1; i < args.size(); i++)
+    for (int i = 1; i < args.size(); i++)
         if (!TestCellsEQL(args[0], args[i], true))
             return _nil;
 
@@ -206,7 +203,7 @@ CELLID Runtime::EQUAL(const CELLVEC& args)
 {
     RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "EQUAL");
 
-    for (size_t i = 1; i < args.size(); i++)
+    for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], true))
             return _nil;
 
@@ -220,7 +217,7 @@ CELLID Runtime::EQUALP(const CELLVEC& args)
     // The same as EQUAL, but numbers can be different types, and string
     // comparison is not case sensitive
 
-    for (size_t i = 1; i < args.size(); i++)
+    for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], false))
             return _nil;
 
@@ -248,7 +245,7 @@ CELLID Runtime::LIST(const CELLVEC& args)
     vector<CELLID> listCells;
     listCells.reserve(args.size());
 
-    for (size_t i = 0; i < args.size(); i++)
+    for (int i = 0; i < args.size(); i++)
     {
         CELLID elem = args[i];
         CELLID elemCell = _nil;
@@ -275,8 +272,10 @@ CELLID Runtime::LIST(const CELLVEC& args)
             // Evaluate the elements of the tail list (recursively, because it might
             // have a dot as well)
 
-            vector<CELLID> tailList = ExtractList(elem);
-            elemCell = LIST(tailList);//GenerateList(tailList);
+            CELLVEC tailList;
+            ExtractList(elem, &tailList);
+
+            elemCell = LIST(tailList);
         }
         else
         {
@@ -300,7 +299,7 @@ CELLID Runtime::SETQ(const CELLVEC& args)
 
     CELLID valueCell = _nil;
 
-    for (size_t argIdx = 0; argIdx < args.size(); argIdx += 2)
+    for (int argIdx = 0; argIdx < args.size(); argIdx += 2)
     {
         CELLID symbolCell = args[argIdx];
         valueCell = EvaluateCell(args[argIdx + 1]);
@@ -312,7 +311,7 @@ CELLID Runtime::SETQ(const CELLVEC& args)
         SymbolInfo& symbol = _symbol[symbolIndex];
         assert(symbol._symbolCell == symbolCell);
 
-        if (VALID_INDEX(symbol._primIndex))
+        if (symbol._primIndex.IsValid())
             RAISE_ERROR(ERROR_RUNTIME_RESERVED_SYMBOL, symbol._ident.c_str());
 
         symbol._type = SYMBOL_VARIABLE;
@@ -327,7 +326,7 @@ CELLID Runtime::PROGN(const CELLVEC& args)
 {
     CELLID result = _nil;
 
-    for (size_t i = 0; i < args.size(); i++)
+    for (int i = 0; i < args.size(); i++)
         result = EvaluateCell(args[i]);
 
     return result;

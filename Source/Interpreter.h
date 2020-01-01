@@ -8,14 +8,9 @@
 
 struct InterpreterSettings
 {
-    bool _debugMode;
-    bool _repl;
-    bool _catchExceptions;
-
-    InterpreterSettings() :
-        _debugMode(false),
-        _repl(false),
-        _catchExceptions(true) {}
+    bool _debugMode         = false;
+    bool _repl              = false;
+    bool _catchExceptions   = false;
 };
 
 class Interpreter
@@ -30,8 +25,8 @@ class Interpreter
 
     void PrintErrorMessage(int code, const string& desc, const string& message);
 
-    vector<CELL_INDEX> EvaluateExpressions(const list<NodeRef>& exps);
-    CELL_INDEX RunSourceCode(const string& source);
+    vector<CELLID> EvaluateExpressions(const list<NodeRef>& exps);
+    CELLID RunSourceCode(const string& source);
 
 public:
     Interpreter(Console* console, const InterpreterSettings* settings = NULL);

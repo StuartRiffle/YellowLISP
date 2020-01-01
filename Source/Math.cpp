@@ -5,7 +5,7 @@
 #include "Errors.h"
 
 #define IMPLEMENT_BINARY_OP(_OPNAME, _EXPR) \
-CELL_INDEX Runtime::_OPNAME(const ArgumentList& args) \
+CELLID Runtime::_OPNAME(const CELLVEC& args) \
 { \
     VERIFY_NUM_PARAMETERS(args.size(), 2, #_OPNAME); \
     double a = LoadNumericLiteral(args[0]); \
@@ -20,7 +20,7 @@ IMPLEMENT_BINARY_OP(SUB, (a - b))
 IMPLEMENT_BINARY_OP(MUL, (a * b))
 IMPLEMENT_BINARY_OP(DIV, (a / b))
 
-CELL_INDEX Runtime::MOD(const ArgumentList& args)
+CELLID Runtime::MOD(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 2, "MOD");
     double a = LoadNumericLiteral(args[0]);
@@ -33,7 +33,7 @@ CELL_INDEX Runtime::MOD(const ArgumentList& args)
 }
 
 #define IMPLEMENT_MATH_FUNCTION(_FUNCNAME, _EXPR) \
-CELL_INDEX Runtime::_FUNCNAME(const ArgumentList& args) \
+CELLID Runtime::_FUNCNAME(const CELLVEC& args) \
 { \
     VERIFY_NUM_PARAMETERS(args.size(), 1, #_FUNCNAME); \
     double a = LoadNumericLiteral(args[1]); \

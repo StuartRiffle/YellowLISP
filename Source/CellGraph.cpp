@@ -6,8 +6,10 @@
 // This is for debugging. It generates a .dot file that can be rendered by GraphViz,
 // to visualize cell connections. 
 
-void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone, bool expandSymbols)
+void Runtime::FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLID>& cellsDone, set<SYMBOLIDX>& symbolsDone, bool expandSymbols)
 {
+    assert(cellIndex.IsValid());
+
     if (cellsDone.count(cellIndex))
         return;
 
@@ -43,7 +45,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         
     ss << "<next>";
 
-    if (VALID_CELL(_cell[cellIndex]._next))
+    if (_cell[cellIndex]._next != _nil)
         ss << "cell " << _cell[cellIndex]._next;
 
     ss << "| <data>" << ssValue.str() << " } }\"];" << std::endl;
@@ -52,7 +54,7 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
 
     if (expandSymbols && (_cell[cellIndex]._type == TYPE_SYMBOL))
     {
-        SYMBOL_INDEX symbolIndex = _cell[cellIndex]._data;
+        SYMBOLIDX symbolIndex = _cell[cellIndex]._data;
         ss << "cell" << cellIndex << ":data -> symbol" << symbolIndex << ":header;" << std::endl;
 
         FormatSymbolLabel(symbolIndex, ss, cellsDone, symbolsDone);
@@ -64,14 +66,14 @@ void Runtime::FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<C
         FormatCellLabel(_cell[cellIndex]._data, ss, cellsDone, symbolsDone, expandSymbols);
     }
 
-    if (VALID_CELL(_cell[cellIndex]._next))
+    if (_cell[cellIndex]._next != _nil)
     {
         ss << "cell" << cellIndex << ":next -> cell" << _cell[cellIndex]._next << ":header;" << std::endl;
         FormatCellLabel(_cell[cellIndex]._next, ss, cellsDone, symbolsDone, expandSymbols);
     }
 }
 
-void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone)
+void Runtime::FormatSymbolLabel(SYMBOLIDX symbolIndex, std::stringstream& ss, set<CELLID>& cellsDone, set<SYMBOLIDX>& symbolsDone)
 {
     if (symbolsDone.count(symbolIndex))
         return;
@@ -84,36 +86,36 @@ void Runtime::FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss,
     ss << "{ { ident | primIndex | symbolCell | valueCell | macroBindings } | ";
     ss << "{ <ident>" << symbol._ident << " | <primIndex>" << symbol._primIndex << " | <symbolCell>" << symbol._symbolCell << " | ";
 
-    if (VALID_CELL(symbol._valueCell))
+    if (symbol._valueCell != _nil)
         ss << "<valueCell>cell " << symbol._valueCell;
 
     ss << "| <macroBindings>";
     
-    if (VALID_CELL(symbol._macroBindings))
+    if (symbol._macroBindings != _nil)
         ss << symbol._macroBindings;
 
     ss << " } }\"];" << std::endl;
 
     symbolsDone.insert(symbolIndex);
 
-    if (VALID_CELL(symbol._valueCell))
+    if (symbol._valueCell.IsValid() && (symbol._valueCell != _nil))
     {
         ss << "symbol" << symbolIndex << ":valueCell -> cell" << symbol._valueCell << ":header;" << std::endl;
         FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone, true);
     }
 
-    if (VALID_CELL(symbol._macroBindings))
+    if (symbol._macroBindings.IsValid() && (symbol._macroBindings != _nil))
     {
         ss << "symbol" << symbolIndex << ":macroBindings -> cell" << symbol._macroBindings << ":header;" << std::endl;
         FormatCellLabel(symbol._macroBindings, ss, cellsDone, symbolsDone, true);
     }
 }
 
-string Runtime::GenerateCellGraph(CELL_INDEX cellIndex, bool expandSymbols)
+string Runtime::GenerateCellGraph(CELLID cellIndex, bool expandSymbols)
 {
     std::stringstream ss;
-    set<CELL_INDEX> cellsDone;
-    set<SYMBOL_INDEX> symbolsDone;
+    set<CELLID> cellsDone;
+    set<SYMBOLIDX> symbolsDone;
 
     ss << "digraph G {" << std::endl;
     ss << "graph[rankdir = \"LR\"];" << std::endl;
@@ -125,12 +127,12 @@ string Runtime::GenerateCellGraph(CELL_INDEX cellIndex, bool expandSymbols)
     return ss.str();
 }
 
-void Runtime::DumpCellGraph(CELL_INDEX cellIndex, bool expandSymbols)
+void Runtime::DumpCellGraph(CELLID cellIndex, bool expandSymbols)
 {
     string graph = GenerateCellGraph(cellIndex, expandSymbols);
 
     char filename[80];
-    sprintf(filename, "cell%d.dot", cellIndex);
+    sprintf(filename, "cell%d.dot", (int) cellIndex);
 
     std::ofstream outFile(filename);
     if (outFile)

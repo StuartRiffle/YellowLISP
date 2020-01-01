@@ -4,27 +4,27 @@
 #include "Runtime.h"
 
 
-vector<CELLID> Runtime::ExtractList(CELLID cellIndex)
+size_t Runtime::ExtractList(CELLID index, CELLVEC* dest)
 {
-    vector<CELLID> result;
-
-    // FIXME: wtf is this
-    while (VALID_CELL(cellIndex) && (_cell[cellIndex]._type == TYPE_CONS))
+    while ((index != _nil) && (_cell[index]._type == TYPE_CONS))
     {
-        result.push_back(_cell[cellIndex]._data);
-        cellIndex = _cell[cellIndex]._next;
+        dest->push_back(_cell[index]._data);
+        index = _cell[index]._next;
     }
 
-    return result;
+    return dest->size();
 }
 
-CELLID Runtime::GenerateList(const vector<CELLID>& elements)
+CELLID Runtime::GenerateList(const CELLVEC& elements)
 {
     CELLID head = _nil;
 
-    for (auto iter = elements.crbegin(); iter != elements.crend(); ++iter)
+    // FIXME: improper lists?
+
+    int idx = elements.size() - 1;
+    for (int i = 0; i < elements.size(); i++)
     {
-        CELLID elem = *iter;
+        CELLID elem = idx--;
         CELLID elemLink = AllocateCell(TYPE_CONS);
 
         _cell[elemLink]._data = elem;
@@ -37,17 +37,19 @@ CELLID Runtime::GenerateList(const vector<CELLID>& elements)
 }
 
 
-CELLID Runtime::ExpandQuasiquoted(CELLID cellIndex, int level)
+CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
 {
     //DumpCellGraph(cellIndex, true);
 
-    vector<CELLID> elements = ExtractList(cellIndex);
+    CELLVEC elements;
+    ExtractList(index, &elements);
+
     if (elements.empty())
     {
         if (level == 0)
-            return EvaluateCell(cellIndex);
+            return EvaluateCell(index);
 
-        return cellIndex;
+        return index;
     }
 
     if (elements[0] == _quote)
@@ -99,7 +101,7 @@ CELLID Runtime::ExpandQuasiquoted(CELLID cellIndex, int level)
         return expanded;
     }
 
-    for (size_t i = 0; i < elements.size(); i++)
+    for (int i = 0; i < elements.size(); i++)
         elements[i] = ExpandQuasiquoted(elements[i], level);
 
     return GenerateList(elements);
@@ -107,7 +109,7 @@ CELLID Runtime::ExpandQuasiquoted(CELLID cellIndex, int level)
 
 CELLID Runtime::EvaluateCell(CELLID index)
 {
-    assert(VALID_INDEX(index));
+    assert(index.IsValid());
     if (index == _nil)
         return _nil;
 
@@ -120,7 +122,8 @@ CELLID Runtime::EvaluateCell(CELLID index)
 #endif
 
     CELLID lambdaCell = _nil;
-    TINDEX primitiveIndex = INVALID_INDEX;
+    PRIMIDX primitiveIndex;
+
     bool evaluateArguments = true;
     bool isMacro = false; // HACK
 
@@ -179,15 +182,15 @@ CELLID Runtime::EvaluateCell(CELLID index)
         case TYPE_CONS:
         {
             CELLID head = _cell[index]._data;
-            assert(VALID_CELL(head));
+            assert(head.IsValid());
 
             if (head == _quote)
             {
                 // Special form: quote
 
                 CELLID quoted = _cell[index]._next;
-                RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-                RAISE_ERROR_IF(VALID_CELL(_cell[quoted]._next), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                RAISE_ERROR_IF(quoted == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                RAISE_ERROR_IF(_cell[quoted]._next == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                 return _cell[quoted]._data;
             }
@@ -196,10 +199,6 @@ CELLID Runtime::EvaluateCell(CELLID index)
             {
                 // Special form: quasiquote
 
-                //CELLID quasiquoted = _cell[index]._next;
-                //RAISE_ERROR_IF(!VALID_CELL(quasiquoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
-
-                //DumpCellGraph(_cell[quasiquoted]._data, sExpandSymbols);
                 return ExpandQuasiquoted(index);
             }
 
@@ -232,7 +231,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
                 lambdaCell = EvaluateCell(head);
             }
 
-            RAISE_ERROR_IF(!VALID_CELL(lambdaCell) && !primitiveIndex, ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
+            RAISE_ERROR_IF((lambdaCell == _nil) && !primitiveIndex.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
             break;
         }
 
@@ -248,17 +247,17 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
     // At this point we [should] have something callable
 
-    if (VALID_INDEX(primitiveIndex))
+    if (primitiveIndex.IsValid())
     {
-        CELLID argCellIndex = _cell[index]._next;
-        CELLID primResult = CallPrimitive(primitiveIndex, argCellIndex, evaluateArguments);
+        CELLID argCell    = _cell[index]._next;
+        CELLID primResult = CallPrimitive(primitiveIndex, argCell, evaluateArguments);
         return primResult;
     }
 
     assert(lambdaCell != _nil);
 
     CELLID bindingListIndex = _cell[lambdaCell]._data;
-    CELLID bodyCellIndex = _cell[lambdaCell]._next;
+    CELLID bodyCell = _cell[lambdaCell]._next;
 
     // Bind the arguments
 
@@ -276,7 +275,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
     try
     {
-        callResult = EvaluateCell(bodyCellIndex);
+        callResult = EvaluateCell(bodyCell);
 
         if (isMacro)
             callResult = EvaluateCell(callResult);
@@ -295,9 +294,9 @@ Runtime::Scope Runtime::BindArguments(CELLID bindingList, CELLID argList, bool e
 {
     Scope scope;
 
-    while (VALID_CELL(argList))
+    while (argList != _nil)
     {
-        RAISE_ERROR_IF(!VALID_CELL(bindingList), ERROR_RUNTIME_WRONG_NUM_PARAMS);
+        RAISE_ERROR_IF(bindingList == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
         CELLID boundSymbolCell = _cell[bindingList]._data;
         SYMBOLIDX boundSymbolIndex = _cell[boundSymbolCell]._data;
@@ -315,24 +314,19 @@ Runtime::Scope Runtime::BindArguments(CELLID bindingList, CELLID argList, bool e
     return scope;
 }
 
-CELLID Runtime::CallPrimitive(TINDEX primIndex, CELLID argCellIndex, bool evaluateArgs)
+CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateArgs)
 {
+    CELLVEC args;
+    ExtractList(argCell, &args);
+
     PrimitiveInfo& prim = _primitive[primIndex];
-    CELLVEC primArgs = ExtractList(argCellIndex);
 
     if (evaluateArgs)
-    {
-        for (size_t i = 0; i < primArgs.size(); i++)
-        {
-            CELLID value = primArgs[i];//_cell[primArgs[i]]._data;
-            value = EvaluateCell(value);
+        for (int i = 0; i < args.size(); i++)
+            args[i] = EvaluateCell(args[i]);
 
-            primArgs[i] = value;
-        }
-    }
-
-    CELLID primResult = (*this.*prim._func)(primArgs);
-    return primResult;
+    CELLID result = (*this.*prim._func)(args);
+    return result;
 }
 
 

@@ -6,6 +6,7 @@
 
 int Runtime::LoadIntLiteral(CELLID index)
 {
+    assert(index.IsValid());
     const Cell& cell = _cell[index];
 
     RAISE_ERROR_IF(cell._type != TYPE_INT,           ERROR_INTERNAL_CELL_TABLE_CORRUPT);
@@ -17,6 +18,7 @@ int Runtime::LoadIntLiteral(CELLID index)
 
 void Runtime::StoreIntLiteral(CELLID index, int value)
 {
+    assert(index.IsValid());
     Cell& cell = _cell[index];
 
     //RAISE_ERROR_IF((cell._type != TYPE_INT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
@@ -28,12 +30,13 @@ void Runtime::StoreIntLiteral(CELLID index, int value)
 
 float Runtime::LoadFloatLiteral(CELLID index)
 {
+    assert(index.IsValid());
     const Cell& cell = _cell[index];
 
     RAISE_ERROR_IF(cell._type != TYPE_FLOAT,         ERROR_INTERNAL_CELL_TABLE_CORRUPT);
     RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
-    union { TDATA raw; float value; } pun;
+    union { uint32_t raw; float value; } pun;
     pun.raw = cell._data;
 
     return(pun.value);
@@ -45,7 +48,7 @@ void Runtime::StoreFloatLiteral(CELLID index, float value)
 
     //RAISE_ERROR_IF((cell._type != TYPE_FLOAT) && (cell._type != TYPE_VOID), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
-    union { TDATA raw; float value; } pun;
+    union { uint32_t raw; float value; } pun;
     pun.value = value;
 
     cell._data = pun.raw;
@@ -88,6 +91,7 @@ CELLID Runtime::CreateNumericLiteral(double value, bool storeAsInt)
 
 string Runtime::LoadStringLiteral(CELLID index)
 {
+    assert(index.IsValid());
     const Cell& cell = _cell[index];
 
     RAISE_ERROR_IF(cell._type != TYPE_STRING, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
@@ -102,11 +106,9 @@ string Runtime::LoadStringLiteral(CELLID index)
     }
 
     STRINGIDX stringIndex = cell._data;
-    RAISE_ERROR_IF(!VALID_INDEX(stringIndex) || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF(!stringIndex.IsValid() || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     const string& value = _string[stringIndex]._str;
-    RAISE_ERROR_IF(value.length() <= sizeof(TDATA), ERROR_INTERNAL_STRING_TABLE_CORRUPT);
-
     return value;
 }
 
@@ -127,20 +129,20 @@ void Runtime::StoreStringLiteral(CELLID index, const char* value)
     }
     else
     {
-        STRINGIDX stringIndex = INVALID_INDEX;
+        STRINGIDX stringIndex;
+        STRINGHASH hash = HashString(value);
 
-        THASH hash = HashString(value);
         auto existing = _stringTable.find(hash);
         if (existing != _stringTable.end())
         {
             stringIndex = existing->second;
-            assert(VALID_INDEX(stringIndex));
+            assert(stringIndex.IsValid());
 
             RAISE_ERROR_IF(_string[stringIndex]._str != value, ERROR_INTERNAL_HASH_COLLISION);
         }
         else
         {
-            stringIndex = (STRINGIDX)_string.Alloc();
+            stringIndex = _string.Alloc();
             _string[stringIndex]._str = value;
             _stringTable[hash] = stringIndex;
         }

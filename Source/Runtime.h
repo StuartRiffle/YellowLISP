@@ -49,25 +49,28 @@ struct Cell
     Cell() : _type(TYPE_VOID), _tags(0), _next(0), _data(0) {}
 };
 
-// Indices are strongly typed to help avoid silly mistakes
-
-template<typename TAG = void*>
+template<typename TAG = void*, bool ZERO_VALID = true>
 class INDEX
 {
     enum { INVALID = ~uint32_t(0) };
     uint32_t _index;
 public:
     inline INDEX(uint32_t index = INVALID) : _index(index) {}
-    inline bool IsValid() const { return (_index != INVALID); }
-    inline operator uint32_t() { return _index; }
+    explicit inline INDEX(size_t index) : _index((uint32_t) index) { assert(_index == index); }
+
+    inline bool IsValid() const { return (_index != INVALID) && (ZERO_VALID || (_index != 0)); }
+    inline operator uint32_t() const { assert(IsValid()); return _index; }
+
+    struct Hash 
+    {
+        size_t operator()(const INDEX& obj) const { return WangMix32(obj._index + 1); }
+    };
 };
 
-class CELLID   : public INDEX<CELLID>   { public: using INDEX::INDEX; };
-class SYMBOLIDX : public INDEX<SYMBOLIDX> { public: using INDEX::INDEX; };
-class STRINGIDX : public INDEX<STRINGIDX> { public: using INDEX::INDEX; };
-class PRIMIDX   : public INDEX<PRIMIDX>   { public: using INDEX::INDEX; };
-
-// 
+class CELLID    : public INDEX<CELLID, false>   { public: using INDEX::INDEX; };
+class SYMBOLIDX : public INDEX<SYMBOLIDX>       { public: using INDEX::INDEX; };
+class STRINGIDX : public INDEX<STRINGIDX>       { public: using INDEX::INDEX; };
+class PRIMIDX   : public INDEX<PRIMIDX>         { public: using INDEX::INDEX; };
 
 enum SymbolType
 {
@@ -101,9 +104,7 @@ struct SymbolInfo
 #define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
 
 
-
-
-template<class T, int ELEMENTS = 16>
+template<class T, typename TINDEX = size_t, int ELEMENTS = 16>
 class StaticVector
 {
     T _embedded[ELEMENTS];
@@ -111,8 +112,15 @@ class StaticVector
     int _count = 0;
 
 public:
-    inline T& operator[](size_t idx)             { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
-    inline const T& operator[](size_t idx) const { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
+    StaticVector() {}
+    StaticVector(const std::initializer_list<T>& elems) 
+    { 
+        for (auto elem : elems) 
+            this->push_back(elem); 
+    }
+
+    inline T& operator[](TINDEX idx)             { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
+    inline const T& operator[](TINDEX idx) const { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
 
     inline int  size() const  { return _count; }
     inline bool empty() const { return (_count == 0); }
@@ -137,42 +145,7 @@ public:
     }
 };
 
-typedef StaticVector<CELLID> CELLVEC; 
-
-class CELLITER
-{
-    Runtime& _runtime;
-    CELLID   _index;
-
-public:
-    CELLITER(Runtime& runtime, CELLID index) : _runtime(runtime), _index(index) {}
-
-    inline Cell& operator*()  { return _runtime._cell[_index]; }
-    inline Cell& operator->() { return _runtime._cell[_index]; }
-
-    inline Cell& GetNext()
-    { 
-        CELLID next = _runtime._cell[_index]._next;
-        assert(next);
-
-        return _runtime._cell[next];
-    }
-
-    inline Cell& operator++(int)
-    {
-        Cell& curr = _runtime._cell[_index];
-
-        assert(_index);
-        assert(_index != NIL_CELL);
-        _index = _runtime._cell[_index]._next;
-        assert(_index);
-
-        return curr;
-    }
-};
-
-
-
+typedef StaticVector<CELLID, CELLID> CELLVEC; 
 
 class Runtime;
 typedef CELLID (Runtime::*PrimitiveFunc)(const CELLVEC& args);
@@ -192,7 +165,9 @@ struct StringInfo
 #define STUB_UNIMPLEMENTED(_FUNCNAME) \
     CELLID Runtime::_FUNCNAME(const CELLVEC& args) \
     { \
-        if (args.max_size()) /* prevent unreachable code warning */ \
+        (args); \
+        static volatile int preventingWarning = 1; \
+        if (preventingWarning) \
             RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED); \
         return 0; \
     }
@@ -209,17 +184,16 @@ class Runtime
     CELLID       _cellFreeList;
     int          _cellFreeCount;
 
-    SlotPool<SymbolInfo> _symbol;
-    std::unordered_map<THASH, SYMBOLIDX> _globalScope;
+    SlotPool<SymbolInfo, SYMBOLIDX> _symbol;
+    SlotPool<StringInfo, STRINGIDX> _string;
 
-    SlotPool<StringInfo> _string;
-    std::unordered_map<THASH, STRINGIDX> _stringTable;
+    std::unordered_map<STRINGHASH, SYMBOLIDX> _globalScope;
+    std::unordered_map<STRINGHASH, STRINGIDX> _stringTable;
 
-    typedef unordered_map<SYMBOLIDX, CELLID> Scope;
+    typedef unordered_map<SYMBOLIDX, CELLID, SYMBOLIDX::Hash> Scope;
     vector<Scope> _environment;
 
     vector<PrimitiveInfo> _primitive;
-
 
     CELLID  _nil;
     CELLID  _dot;
@@ -229,13 +203,13 @@ class Runtime
     CELLID  _unquote;
     CELLID  _quasiquote;
 
-    bool _garbageCollectionNeeded;
+    bool    _garbageCollectionNeeded;
 
-    SYMBOLIDX StoreSymbol(const char* ident, CELLID cellIndex);
+    SYMBOLIDX StoreSymbol(const char* ident, CELLID cellIndex, STRINGHASH hash = 0);
     SYMBOLIDX GetSymbolIndex(const char* ident);
     CELLID   RegisterReserved(const char* ident);
     CELLID   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);
-    vector<CELLID> ExtractList(CELLID index);
+    size_t   ExtractList(CELLID index, CELLVEC* dest);
 
     bool TestCellsEQL(CELLID a, CELLID b, bool strict);
     bool TestStructureEQUAL(CELLID a, CELLID b, bool strict);
@@ -246,11 +220,10 @@ class Runtime
 
     // CellTable.cpp
 
-    void InitCellTable(size_t size = 8);
     void ExpandCellTable();
 
     CELLID AllocateCell(CellType Type);
-    CELLID GenerateList(const vector<CELLID>& elements);
+    CELLID GenerateList(const CELLVEC& elements);
     void FreeCell(CELLID index);
 
     void DebugValidateCells();

@@ -5,16 +5,17 @@
 
 Runtime::Runtime(Console* console) : _console(console)
 {
-    // Cell zero is unused
+    // Cell 0 is unused and invalid
 
     _cell.resize(2);
-    _cellFreeList  = 0;
-    _cellFreeCount = 0;
+
+    // Cell 1 is nil
 
     _nil = NIL_CELL;
     StoreSymbol("_nil", _nil);
 
-    InitCellTable();
+    _cellFreeList  = 0;
+    _cellFreeCount = 0;
     _garbageCollectionNeeded = false;
 
     _dot = RegisterReserved(".");
@@ -94,9 +95,11 @@ CELLID Runtime::RegisterReserved(const char* ident)
     return cellIndex;
 }
 
-SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex)
+SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, STRINGHASH hash)
 {
-    THASH hash = HashString(ident);
+    if (!hash)
+        hash = HashString(ident);
+
     SYMBOLIDX symbolIndex = (SYMBOLIDX)_symbol.Alloc();
     _globalScope[hash] = symbolIndex;
 
@@ -113,14 +116,14 @@ SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex)
 
 SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
 {
-    THASH hash = HashString(ident);
+    STRINGHASH hash = HashString(ident);
 
     auto iter = _globalScope.find(hash);
     if (iter != _globalScope.end())
         return iter->second;
 
     CELLID cellIndex = AllocateCell(TYPE_SYMBOL);
-    SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex);
+    SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex, hash);
 
     return symbolIndex;
 }
@@ -132,7 +135,7 @@ CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolF
 
     symbol._type = SYMBOL_PRIMITIVE;
     symbol._flags = flags;
-    symbol._primIndex = (TINDEX)_primitive.size();
+    symbol._primIndex = (PRIMIDX) _primitive.size();
 
     _primitive.emplace_back();
     PrimitiveInfo& primInfo = _primitive.back();
@@ -181,9 +184,9 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
         }
         case AST_NODE_IDENTIFIER:
         {
-            CELLID symbolCell = GetSymbolIndex(node->_identifier.c_str());
+            SYMBOLIDX symbolIndex = GetSymbolIndex(node->_identifier.c_str());
 
-            SymbolInfo& symbol = _symbol[symbolCell];
+            SymbolInfo& symbol = _symbol[symbolIndex];
             return symbol._symbolCell;
         }
         case AST_NODE_LIST:
@@ -218,7 +221,7 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
 
 string Runtime::GetPrintedValue(CELLID index)
 {
-    assert(VALID_INDEX(index));
+    assert(index.IsValid());
 
     std::stringstream ss;
 
@@ -246,18 +249,20 @@ string Runtime::GetPrintedValue(CELLID index)
                 ss << '(';
 
                 CELLID curr = index;
-                while (VALID_CELL(curr))
+                while (curr != _nil)
                 {
                     ss << GetPrintedValue(_cell[curr]._data);
-                    CELLID next = _cell[curr]._next;
 
-                    if (VALID_CELL(next) && (_cell[next]._type != TYPE_CONS))
+                    CELLID next = _cell[curr]._next;
+                    assert(next.IsValid());
+
+                    if ((next != _nil) && (_cell[next]._type != TYPE_CONS))
                     {
                         ss << " . " << GetPrintedValue(next);
                         break;
                     }
 
-                    if (VALID_CELL(next))
+                    if (next != _nil)
                         ss << " ";
 
                     curr = next;

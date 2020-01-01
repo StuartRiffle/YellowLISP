@@ -3,9 +3,21 @@
 #pragma once
 #include "Yellow.h"
 
-typedef uint64_t THASH;
+typedef uint64_t STRINGHASH;
 
-inline uint64_t WangMix(uint64_t n)
+inline uint32_t WangMix32(uint32_t n)
+{
+    n = n + ~(n << 15);
+    n = n ^  (n >> 10);
+    n = n +  (n << 3);
+    n = n ^  (n >> 6);
+    n = n + ~(n << 11);
+    n = n ^  (n >> 16);
+
+    return n;
+}
+
+inline uint64_t WangMix64(uint64_t n)
 {
     n = ~n + (n << 21);
     n =  n ^ (n >> 24);
@@ -27,7 +39,7 @@ inline uint64_t HashString(const char* str)
     while (*str)
         fnv = (fnv * FNV1A_PRIME) ^ *str++;
 
-    return WangMix(fnv);
+    return WangMix64(fnv);
 }
 
 
