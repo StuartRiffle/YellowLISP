@@ -190,19 +190,19 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
     switch (node->_type)
     {
         case AST_NODE_INT_LITERAL: 
-            _console->PrintDebug("[int] %d", node->_int); 
+            _console->PrintDebug("[int] %d\n", node->_int); 
             break;
 
         case AST_NODE_FLOAT_LITERAL:
-            _console->PrintDebug("[float] %f", node->_float);
+            _console->PrintDebug("[float] %f\n", node->_float);
             break;
 
         case AST_NODE_STRING_LITERAL:
-            _console->PrintDebug("[string] ", node->_string.c_str());
+            _console->PrintDebug("[string] %s\n", node->_string.c_str());
             break;
 
         case AST_NODE_IDENTIFIER:
-            _console->PrintDebug("[symbol] ", node->_identifier.c_str());
+            _console->PrintDebug("[symbol] %s\n", node->_identifier.c_str());
             break;
 
         case AST_NODE_LIST:
