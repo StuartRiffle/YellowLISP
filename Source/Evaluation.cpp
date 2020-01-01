@@ -39,8 +39,6 @@ CELLID Runtime::GenerateList(const CELLVEC& elements)
 
 CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
 {
-    //DumpCellGraph(cellIndex, true);
-
     CELLVEC elements;
     ExtractList(index, &elements);
 
@@ -69,7 +67,7 @@ CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
     if (elements[0] == _unquote)
     {
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "unquote");
-        RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
+        //RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
         CELLID unquoted = elements[1];
 
@@ -117,6 +115,8 @@ CELLID Runtime::EvaluateCell(CELLID index)
     static int sDumpDebugGraph = 1;
     static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render
+    if (index == 55)
+        printf("");
     if (sDumpDebugGraph)
         DumpCellGraph(index, sExpandSymbols);
 #endif
@@ -202,7 +202,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
                 return ExpandQuasiquoted(index);
             }
 
-            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
+//            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
             if (_cell[head]._type == TYPE_SYMBOL)
             {
@@ -323,7 +323,12 @@ CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateAr
 
     if (evaluateArgs)
         for (int i = 0; i < args.size(); i++)
+        {
+            CELLID before = args[i];
             args[i] = EvaluateCell(args[i]);
+            if (!args[i].IsValid())
+                printf("");
+        }
 
     CELLID result = (*this.*prim._func)(args);
     return result;

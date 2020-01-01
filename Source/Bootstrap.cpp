@@ -4,16 +4,17 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 ;;;; Copyright (C) 2020 Stuart Riffle
 
 (defmacro if (test then else) `(cond (,test ,then) (t ,else)))
-(defmacro defvar (n v) `(setq n ,v))
+(defmacro defvar (n v) `(setq ,n ,v))
 
 (defun null   (x)   (eq x nil))
-(defun and    (a b) (cond (a (cond (b t)))))
+(defun not    (x)   (if (x) nil t))
 (defun or     (a b) (cond (a t) (b t)))
-(defun not    (x)   (cond (x nil) (t t)))
+(defun and    (a b) (cond (a (cond (b t)))))
+
 (defun >      (a b) (< b a))
-(defun <=     (a b) (cond ((< b a) nil) (t t)))
-(defun >=     (a b) (cond ((< a b) nil) (t t)))
-(defun /=     (a b) (cond ((= a b) nil) (t t)))
+(defun <=     (a b) (if (< b a) nil t))
+(defun >=     (a b) (if (< a b) nil t))
+(defun /=     (a b) (if (= a b) nil t))
 
 (defun caar   (x) (car (car   x)))
 (defun cadr   (x) (car (cdr   x)))

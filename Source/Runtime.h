@@ -260,7 +260,6 @@ class Runtime
     CELLID COND(const CELLVEC& args);
     CELLID CONS(const CELLVEC& args);
     CELLID DEFUN(const CELLVEC& args);
-    CELLID DEFMACRO(const CELLVEC& args);
     CELLID EQ(const CELLVEC& args);
     CELLID EQL(const CELLVEC& args);
     CELLID EQLOP(const CELLVEC& args);

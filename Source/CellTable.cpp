@@ -26,6 +26,15 @@ CELLID Runtime::AllocateCell(CellType type)
         assert(_cellFreeList != _nil);
 
     CELLID index  = _cellFreeList;
+
+
+    if (index == 58)
+        printf("");
+
+
+
+
+
     _cellFreeList = _cell[_cellFreeList]._next;
     _cellFreeCount--;
 
@@ -46,9 +55,12 @@ CELLID Runtime::AllocateCell(CellType type)
 
 void Runtime::FreeCell(CELLID index)
 {
+    if (index == 58)
+        printf("");
+
     _cell[index]._type = TYPE_FREE;
     _cell[index]._tags = 0;
-    _cell[index]._data = 0;
+    _cell[index]._data = 0xFFFFFFF;
     _cell[index]._next = _cellFreeList;
 
     _cellFreeList = index;
@@ -70,7 +82,9 @@ void Runtime::ExpandCellTable()
 
 void Runtime::MarkCellsInUse(CELLID index)
 {
-    index.IsValid();
+    if (!index.IsValid())
+        return;
+
     if (index == _nil)
         return;
 
@@ -150,7 +164,7 @@ size_t Runtime::CollectGarbage()
 
     // Mark everything on the free list too, so it doesn't get clobbered
 
-    CELLID slot = _cellFreeList;
+    uint32_t slot = _cellFreeList;
     int numFree = 0;
 
     while(slot)

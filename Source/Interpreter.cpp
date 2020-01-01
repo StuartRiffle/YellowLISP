@@ -14,7 +14,7 @@ Interpreter::Interpreter(Console* console, const InterpreterSettings* settings) 
     if (settings)
         _settings = *settings;
 
-    RunSourceCode(gBootstrapCode);
+    //RunSourceCode(gBootstrapCode);
 }
 
 vector<CELLID> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)

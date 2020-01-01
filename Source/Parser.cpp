@@ -18,14 +18,17 @@ list<NodeRef> Parser::ParseExpressionList(const string& source)
         if (!element)
             break;
 
-        result.push_back(element);
+        _console->PrintDebug("Before simplify:\n");
+        DumpSyntaxTree(element);
 
-        //DumpSyntaxTree(element);
+        NodeRef simplified = Simplify(element);
+        if (simplified != nullptr)
+        {
+            _console->PrintDebug("After simplify:\n");
+            DumpSyntaxTree(simplified);
 
-        // (quote (unquote X)) -> X
-        // if (match quote)
-        //   if (recursive match subexpr subpattern)
-        // []() ->
+            result.push_back(simplified);
+        }
     }
 
     return result;
@@ -218,52 +221,147 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
     }
 }
 
-NodeRef Parser::Simplify(NodeRef node)
+NodeRef Parser::UntangleQuasiquotes(NodeRef node, int level)
 {
-    /*
-    // How to resolve constants over multiple calls to parse? Implies the
-    // AST needs to hang around?
-
-    switch (node->_type)
+    if (node->_type == AST_NODE_LIST)
     {
-        case AST_NODE_IDENTIFIER:
-            return node;
-
-        case AST_NODE_LIST:
+        if (node->_list.size() == 2)
         {
-            for (auto& elem : node->_list)
-                elem = Simplify(elem);
+            NodeRef& head = node->_list[0];
+            NodeRef& tail = node->_list[1];
 
-            if (node->_list.size() < 1)
-                break;
-
-            if (node->IsIdent("defmacro"))
+            if (head->IsIdent("quote"))
             {
-                // Expand macro and store in macro table
+                if (level == 0)
+                    return Simplify(tail);
+
+                NodeRef expanded = UntangleQuasiquotes(tail, level);
+                return ListNode({ head, expanded });
             }
+            else if (head->IsIdent("unquote"))
             {
-                NodeRef funcNode = Simplify(node->_list[0]);
-                if (funcNode->IsIdent("+")
+                RAISE_ERROR_IF(level < 1, ERROR_PARSER_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
-                if (funcNode->_type == AST_NODE_IDENTIFIER)
-                {
-                    string ident = funcNode->_identifier;
-                    if (ident == '+')
-                }
+                if (level == 1)
+                    return Simplify(tail);
+
+                NodeRef expanded = UntangleQuasiquotes(tail, level - 1);
+                return ListNode({ head, expanded });
             }
-            if (_node->_identifier == "defmacro")
+            else if (head->IsIdent("quasiquote"))
             {
-                string 
+                NodeRef expanded = UntangleQuasiquotes(tail, level + 1);
+
+                if (level > 0)
+                    return ListNode({ head, expanded });
+
+                return expanded;
             }
         }
 
-        case AST_NODE_INT_LITERAL: 
-        case AST_NODE_FLOAT_LITERAL:
-        case AST_NODE_STRING_LITERAL:
-        default:
+        NodeRef untangled(new NodeVariant(AST_NODE_LIST));
+
+        for (int i = 0; i < node->_list.size(); i++)
+            untangled->_list.push_back(UntangleQuasiquotes(node->_list[i], level));
+
+        return untangled;
+    }
+
+    if (level == 0)
+        return Simplify(node);
+
+    return node;
+}
+
+
+NodeRef Parser::ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues)
+{
+    if (node->_type == AST_NODE_IDENTIFIER)
+    {
+        auto iter = argValues.find(node->_identifier);
+        if (iter != argValues.end())
+            return iter->second;
+    }
+
+    NodeRef clone(new NodeVariant(node->_type));
+    switch(node->_type)
+    {
+        case AST_NODE_IDENTIFIER:       clone->_identifier = node->_identifier; break;
+        case AST_NODE_INT_LITERAL:      clone->_int = node->_int; break;
+        case AST_NODE_FLOAT_LITERAL:    clone->_float = node->_float; break;
+        case AST_NODE_STRING_LITERAL:   clone->_string = node->_string; break;
+        case AST_NODE_LIST:
+            for (auto& elem : node->_list)
+                clone->_list.push_back(ExpandMacroBody(elem, argValues));
             break;
     }
 
-    */
+    return clone;
+}
+
+NodeRef Parser::Simplify(NodeRef node)
+{
+    if (node->_type == AST_NODE_LIST)
+    {
+        for (auto& elem : node->_list)
+            elem = Simplify(elem);
+
+        if (node->_list.size() > 0)
+        {
+            NodeRef& head = node->_list[0];
+
+            if (head->IsIdent("quasiquote"))
+            {
+                RAISE_ERROR_IF(node->_list.size() != 2, ERROR_PARSER_SYNTAX, "wrong number of paramters to QUASIQUOTE");
+                return UntangleQuasiquotes(node);
+            }
+            else if (head->IsIdent("defmacro"))
+            {
+                // Store macro definitions
+
+                RAISE_ERROR_IF(node->_list.size() != 4, ERROR_PARSER_SYNTAX, "wrong number of paramters to defmacro");
+
+                NodeRef& name = node->_list[1];
+                NodeRef& args = node->_list[2];
+                NodeRef& body = node->_list[3];
+
+                RAISE_ERROR_IF(name->_type != AST_NODE_IDENTIFIER, ERROR_PARSER_SYNTAX, "expected macro name");
+                RAISE_ERROR_IF(args->_type != AST_NODE_LIST, ERROR_PARSER_SYNTAX, "expected macro argument list");
+
+                MacroDef& macroDef = _macros[name->_identifier];
+                macroDef._macroBody = body;
+
+                for (NodeRef arg : args->_list)
+                {
+                    RAISE_ERROR_IF(arg->_type != AST_NODE_IDENTIFIER, ERROR_PARSER_SYNTAX, "expected macro argument name");
+                    macroDef._argNames.push_back(arg->_identifier);
+                }
+
+                // Macros are expanded by the parser, so nothing to do at runtime
+
+                return NULL;
+            }
+            else if (head->_type == AST_NODE_IDENTIFIER)
+            {
+                // Expand macro invocations
+
+                auto iterMacro = _macros.find(head->_identifier);
+                if (iterMacro != _macros.end())
+                {
+                    MacroDef& macroDef = iterMacro->second;
+                    if (node->_list.size() != (macroDef._argNames.size() + 1))
+                        RAISE_ERROR(ERROR_PARSER_INVALID_MACRO_EXPANSION, "wrong number of macro parameters");
+
+                    map<string, NodeRef> argValues;
+                    for (size_t i = 0; i < macroDef._argNames.size(); i++)
+                        argValues[macroDef._argNames[i]] = Simplify(node->_list[i + 1]);
+
+                    NodeRef expanded = ExpandMacroBody(macroDef._macroBody, argValues);
+                    return Simplify(expanded);
+                }
+            }
+        }
+    }
+
     return node;
 }

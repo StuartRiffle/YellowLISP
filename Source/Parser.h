@@ -27,15 +27,24 @@ struct NodeVariant
     string _string;
     int    _int;
     float  _float;
-    NodeRef _dotted;
 
     bool IsIdent(string id) { return (_type == AST_NODE_IDENTIFIER) && (_identifier == id); }
+    bool IsNumeric() { return (_type == AST_NODE_INT_LITERAL) || (_type == AST_NODE_FLOAT_LITERAL); }
+    double GetNumericValue() { assert(IsNumeric()); return (_type == AST_NODE_INT_LITERAL)? _int : _float; }
+};
+
+struct MacroDef
+{
+    vector<string> _argNames;
+    NodeRef _macroBody;
 };
 
 class Parser
 {
     Console* _console;
     const char* _code;
+
+    map<string, MacroDef> _macros;
 
     inline void SkipWhitespace()
     {
@@ -78,6 +87,9 @@ class Parser
     NodeRef IdentifierNode(const string& ident);
     NodeRef ListNode(const vector<NodeRef>& elems);
 
+    NodeRef UntangleQuasiquotes(NodeRef node, int level = 0);
+    NodeRef ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues);
+    NodeRef ExpandMacro(string macroName, vector<NodeRef>& args);
     NodeRef Simplify(NodeRef node);
 
 public:

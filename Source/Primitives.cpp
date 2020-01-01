@@ -349,53 +349,6 @@ CELLID Runtime::EVAL(const CELLVEC& args)
     return EvaluateCell(cellIndex);
 }
 
-CELLID Runtime::DEFMACRO(const CELLVEC& args)
-{
-    /*
-    RAISE_ERROR_IF(args.size() < 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
-
-    CELLID symbolCell = args[0];
-    RAISE_ERROR_IF(_cell[symbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_TYPE_MISMATCH, "macro name");
-
-    SYMBOLIDX symbolIndex = _cell[symbolCell]._data;
-    SymbolInfo& macroSymbol = _symbol[symbolIndex];
-
-    CELLID bindingListCell = args[1];
-    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "macro arguments");
-    macroSymbol._macroBindings = bindingListCell;
-
-    assert(macroSymbol._symbolCell == symbolCell);
-
-    int onArg = 2;
-
-    CELLID commentCell = args[onArg];
-    if (_cell[commentCell]._type == TYPE_STRING)
-    {
-        macroSymbol._comment = LoadStringLiteral(commentCell);
-        onArg++;
-    }
-
-    RAISE_ERROR_IF(args.size() < onArg, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFMACRO");
-    CELLID bodyCell = args[onArg];
-
-    RAISE_ERROR_IF((bodyCell != _nil) && (_cell[bodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "macro body");
-
-    macroSymbol._type = SYMBOL_MACRO;
-    macroSymbol._valueCell = bodyCell;
-
-    return symbolCell;
-    */
-
-
-    CELLID   symbolCell = DEFUN(args);
-    SYMBOLIDX symbolIndex = _cell[symbolCell]._data;
-    SymbolInfo&  functionSymbol = _symbol[symbolIndex];
-
-    functionSymbol._type = SYMBOL_MACRO;
-
-    return symbolCell;
-}
-
 CELLID Runtime::DEFUN(const CELLVEC& args)
 {
     RAISE_ERROR_IF(args.size() < 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "DEFUN");

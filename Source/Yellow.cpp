@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 
 #if 1//DEBUG_BUILD
     console->EnableDebugOutput(true);
-    SanityCheck(console.get());
+    //SanityCheck(console.get());
 #endif
 
     PrintBanner(console.get());

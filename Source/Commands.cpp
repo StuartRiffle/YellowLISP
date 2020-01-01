@@ -32,11 +32,9 @@ CELLID Runtime::RunGC(const CELLVEC& args)
     size_t numTotal = _cell.size();
     size_t numFree = 0;
 
-    CELLID slot = _cellFreeList;
-    while(slot != _nil)
+    uint32_t slot = _cellFreeList;
+    while(slot)
     {
-        assert(slot.IsValid());
-
         numFree++;
         slot = _cell[slot]._next;
     }

@@ -29,7 +29,6 @@ Runtime::Runtime(Console* console) : _console(console)
 
     RegisterPrimitive("cond",    &Runtime::COND,     SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("cons",    &Runtime::CONS,     SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("defmacro",&Runtime::DEFMACRO, SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("defun",   &Runtime::DEFUN,    SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("list",    &Runtime::LIST,     SYMBOLFLAG_DONT_EVAL_ARGS);
