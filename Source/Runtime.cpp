@@ -5,13 +5,18 @@
 
 Runtime::Runtime(Console* console) : _console(console)
 {
-    _primitive.emplace_back(); // element 0 is invalid
+    // Cell zero is unused
 
-    _nil = 0;
+    _cell.resize(2);
+    _cellFreeList  = 0;
+    _cellFreeCount = 0;
+
+    _nil = NIL_CELL;
+    StoreSymbol("_nil", _nil);
+
     InitCellTable();
     _garbageCollectionNeeded = false;
 
-    _nil = RegisterReserved("nil");
     _dot = RegisterReserved(".");
     _true = RegisterReserved("t");
     _eval = RegisterPrimitive("eval", &Runtime::EVAL);
@@ -80,41 +85,49 @@ Runtime::~Runtime()
 {
 }
 
-CELL_INDEX Runtime::RegisterReserved(const char* ident)
+CELLID Runtime::RegisterReserved(const char* ident)
 {
-    SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
-    CELL_INDEX cellIndex = _symbol[symbolIndex]._symbolCell;
+    SYMBOLIDX symbolIndex = GetSymbolIndex(ident);
+    CELLID cellIndex = _symbol[symbolIndex]._symbolCell;
 
     _symbol[symbolIndex]._type = SYMBOL_RESERVED;
     return cellIndex;
 }
 
-SYMBOL_INDEX Runtime::GetSymbolIndex(const char* ident)
+SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex)
 {
     THASH hash = HashString(ident);
-    SYMBOL_INDEX symbolIndex = _globalScope[hash];
+    SYMBOLIDX symbolIndex = (SYMBOLIDX)_symbol.Alloc();
+    _globalScope[hash] = symbolIndex;
 
-    if (!symbolIndex)
-    {
-        symbolIndex = (SYMBOL_INDEX)_symbol.Alloc();
-        _globalScope[hash] = symbolIndex;
+    _cell[cellIndex]._data = symbolIndex;
 
-        CELL_INDEX cellIndex = AllocateCell(TYPE_SYMBOL);
-        _cell[cellIndex]._data = symbolIndex;
-
-        SymbolInfo& symbol = _symbol[symbolIndex];
-        symbol._type = SYMBOL_INVALID;
-        symbol._ident = ident;
-        symbol._symbolCell = cellIndex;
-        symbol._valueCell = 0;
-    }
+    SymbolInfo& symbol = _symbol[symbolIndex];
+    symbol._type = SYMBOL_INVALID;
+    symbol._ident = ident;
+    symbol._symbolCell = cellIndex;
+    symbol._valueCell = 0;
 
     return symbolIndex;
 }
 
-CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags)
+SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
 {
-    SYMBOL_INDEX symbolIndex = GetSymbolIndex(ident);
+    THASH hash = HashString(ident);
+
+    auto iter = _globalScope.find(hash);
+    if (iter != _globalScope.end())
+        return iter->second;
+
+    CELLID cellIndex = AllocateCell(TYPE_SYMBOL);
+    SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex);
+
+    return symbolIndex;
+}
+
+CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags)
+{
+    SYMBOLIDX symbolIndex = GetSymbolIndex(ident);
     SymbolInfo& symbol = _symbol[symbolIndex];
 
     symbol._type = SYMBOL_PRIMITIVE;
@@ -130,45 +143,45 @@ CELL_INDEX Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, Sym
     return symbol._symbolCell;
 }
 
-CELL_INDEX Runtime::EncodeSyntaxTree(const NodeRef& node)
+CELLID Runtime::EncodeSyntaxTree(const NodeRef& node)
 {
     DebugValidateCells();
 
-    CELL_INDEX result = EncodeTreeNode(node);
+    CELLID result = EncodeTreeNode(node);
     //DumpCellGraph(result, true);
 
     DebugValidateCells();
     return result;
 }
 
-CELL_INDEX Runtime::EncodeTreeNode(const NodeRef& node)
+CELLID Runtime::EncodeTreeNode(const NodeRef& node)
 {
     switch (node->_type)
     {
         case AST_NODE_INT_LITERAL:
         {
-            CELL_INDEX intCell = AllocateCell(TYPE_INT);
+            CELLID intCell = AllocateCell(TYPE_INT);
 
             StoreIntLiteral(intCell, node->_int);
             return intCell;
         }
         case AST_NODE_FLOAT_LITERAL:
         {
-            CELL_INDEX floatCell = AllocateCell(TYPE_FLOAT);
+            CELLID floatCell = AllocateCell(TYPE_FLOAT);
 
             StoreFloatLiteral(floatCell, node->_float);
             return floatCell;
         }
         case AST_NODE_STRING_LITERAL:
         {
-            CELL_INDEX stringCell = AllocateCell(TYPE_STRING);
+            CELLID stringCell = AllocateCell(TYPE_STRING);
 
             StoreStringLiteral(stringCell, node->_string.c_str());
             return stringCell;
         }
         case AST_NODE_IDENTIFIER:
         {
-            CELL_INDEX symbolCell = GetSymbolIndex(node->_identifier.c_str());
+            CELLID symbolCell = GetSymbolIndex(node->_identifier.c_str());
 
             SymbolInfo& symbol = _symbol[symbolCell];
             return symbol._symbolCell;
@@ -178,12 +191,12 @@ CELL_INDEX Runtime::EncodeTreeNode(const NodeRef& node)
             if (node->_list.empty())
                 return _nil;
 
-            CELL_INDEX listHeadCell = 0;
-            CELL_INDEX listPrevCell = 0;
+            CELLID listHeadCell = 0;
+            CELLID listPrevCell = 0;
 
             for (auto& elemNode : node->_list)
             {
-                CELL_INDEX listCell = AllocateCell(TYPE_CONS);
+                CELLID listCell = AllocateCell(TYPE_CONS);
 
                 _cell[listCell]._data = EncodeTreeNode(elemNode);
 
@@ -203,10 +216,9 @@ CELL_INDEX Runtime::EncodeTreeNode(const NodeRef& node)
     return 0;
 }
 
-string Runtime::GetPrintedValue(CELL_INDEX index)
+string Runtime::GetPrintedValue(CELLID index)
 {
-    if (index == 0)
-        return "";
+    assert(VALID_INDEX(index));
 
     std::stringstream ss;
 
@@ -233,11 +245,11 @@ string Runtime::GetPrintedValue(CELL_INDEX index)
             {
                 ss << '(';
 
-                CELL_INDEX curr = index;
+                CELLID curr = index;
                 while (VALID_CELL(curr))
                 {
                     ss << GetPrintedValue(_cell[curr]._data);
-                    CELL_INDEX next = _cell[curr]._next;
+                    CELLID next = _cell[curr]._next;
 
                     if (VALID_CELL(next) && (_cell[next]._type != TYPE_CONS))
                     {

@@ -63,3 +63,6 @@ using std::unordered_map;
 #include <exception>
 #include <algorithm>
 #include <cstdarg>
+
+#undef assert
+#define assert(_COND) if (!(_COND)) throw "";

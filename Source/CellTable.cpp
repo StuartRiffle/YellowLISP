@@ -4,7 +4,7 @@
 #include "Runtime.h"
 #include "Errors.h"
 
-CELL_INDEX Runtime::AllocateCell(Type type)
+CELLID Runtime::AllocateCell(CellType type)
 {
     float pctFree =_cellFreeCount * 1.0f / _cell.size();
     if (pctFree < GARBAGE_COLLECTION_THRESH)
@@ -25,7 +25,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     if (_nil)
         assert(_cellFreeList != _nil);
 
-    CELL_INDEX index = _cellFreeList;
+    CELLID index  = _cellFreeList;
     _cellFreeList = _cell[_cellFreeList]._next;
     _cellFreeCount--;
 
@@ -44,7 +44,7 @@ CELL_INDEX Runtime::AllocateCell(Type type)
     return index;
 }
 
-void Runtime::FreeCell(CELL_INDEX index)
+void Runtime::FreeCell(CELLID index)
 {
     _cell[index]._type = TYPE_FREE;
     _cell[index]._tags = 0;
@@ -58,11 +58,11 @@ void Runtime::FreeCell(CELL_INDEX index)
 void Runtime::InitCellTable(size_t size)
 {
     _cell.resize(size);
-    _cellFreeList = 0;
+    _cellFreeList  = 0;
     _cellFreeCount = 0;
 
     for (size_t i = size - 1; i > 0; i--)
-        FreeCell((CELL_INDEX)i);
+        FreeCell((CELLID)i);
 
     DebugValidateCells();
 }
@@ -76,13 +76,14 @@ void Runtime::ExpandCellTable()
     _cell.resize(newSize);
 
     for (size_t i = newSize - 1; i >= oldSize; i--)
-        FreeCell((CELL_INDEX)i);
+        FreeCell((CELLID)i);
 
     DebugValidateCells();
 }
 
-void Runtime::MarkCellsInUse(CELL_INDEX index)
+void Runtime::MarkCellsInUse(CELLID index)
 {
+    assert(VALID_INDEX(index));
     if (index == _nil)
         return;
 
@@ -101,22 +102,23 @@ void Runtime::MarkCellsInUse(CELL_INDEX index)
 
     if (cell._type == TYPE_LAMBDA)
     {
-        CELL_INDEX args = cell._data;
+        CELLID args = cell._data;
         MarkCellsInUse(args);
 
-        CELL_INDEX body = cell._next;
+        CELLID body = cell._next;
         MarkCellsInUse(body);
     }
 }
 
 void Runtime::DebugValidateCells()
 {
-#if DEBUG_BUILD
-    CELL_INDEX slot = _cellFreeList;
+#if 1//DEBUG_BUILD
+    CELLID slot = _cellFreeList;
     int numInFreeList = 0;
 
     while(slot)
     {
+        assert(_cell[slot]._next);
         assert(_cell[slot]._type == TYPE_FREE);
         numInFreeList++;
 
@@ -145,7 +147,7 @@ size_t Runtime::CollectGarbage()
 
     for (auto iter : _globalScope)
     {
-        SYMBOL_INDEX symbolIndex = iter.second;
+        SYMBOLIDX symbolIndex = iter.second;
         SymbolInfo& symbol = _symbol[symbolIndex];
 
         assert(symbol._symbolCell);
@@ -163,7 +165,7 @@ size_t Runtime::CollectGarbage()
 
     // Mark everything on the free list too, so it doesn't get clobbered
 
-    CELL_INDEX slot = _cellFreeList;
+    CELLID slot = _cellFreeList;
     int numFree = 0;
 
     while(slot)
@@ -198,7 +200,7 @@ size_t Runtime::CollectGarbage()
             {
                 if (_cell[i]._type == TYPE_STRING)
                 {
-                    STRING_INDEX stringIndex = _cell[i]._data;
+                    STRINGIDX stringIndex = _cell[i]._data;
                     StringInfo& info = _string[stringIndex];
 
                     RAISE_ERROR_IF(info._refCount < 1, ERROR_INTERNAL_STRING_TABLE_CORRUPT);

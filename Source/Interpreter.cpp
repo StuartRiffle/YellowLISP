@@ -17,28 +17,28 @@ Interpreter::Interpreter(Console* console, const InterpreterSettings* settings) 
     RunSourceCode(gBootstrapCode);
 }
 
-vector<CELL_INDEX> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
+vector<CELLID> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 {
-    vector<CELL_INDEX> outputs;
+    vector<CELLID> outputs;
     outputs.reserve(exps.size());
 
     for (auto& node : exps)
     {
-        CELL_INDEX exprCell  = _runtime.EncodeSyntaxTree(node);
+        CELLID exprCell  = _runtime.EncodeSyntaxTree(node);
         //_parser.DumpSyntaxTree(node);
 
-        CELL_INDEX valueCell = _runtime.EvaluateCell(exprCell);
+        CELLID valueCell = _runtime.EvaluateCell(exprCell);
         outputs.push_back(valueCell);    
     }
 
     return outputs;
 }
 
-CELL_INDEX Interpreter::RunSourceCode(const string& source)
+CELLID Interpreter::RunSourceCode(const string& source)
 {
     list<NodeRef> exps = _parser.ParseExpressionList(source);
 
-    vector<CELL_INDEX> values = EvaluateExpressions(exps);
+    vector<CELLID> values = EvaluateExpressions(exps);
 
     if (!values.empty())
         return values.back();
@@ -56,7 +56,7 @@ string Interpreter::Evaluate(const string& source)
 
     try
     {
-        CELL_INDEX valueCell = RunSourceCode(source);
+        CELLID valueCell = RunSourceCode(source);
         output = _runtime.GetPrintedValue(valueCell);
     }
     catch (YellowError error)
@@ -93,7 +93,7 @@ string Interpreter::Evaluate(const string& source)
     // it during evaluation, because there will be temporary cells in
     // use that aren't reachable yet. 
 
-    _runtime.HandleGarbage();
+    //_runtime.HandleGarbage();
 
     return output;
 }

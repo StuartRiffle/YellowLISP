@@ -4,7 +4,7 @@
 #include "Runtime.h"
 #include "Errors.h"
 
-int Runtime::LoadIntLiteral(CELL_INDEX index)
+int Runtime::LoadIntLiteral(CELLID index)
 {
     const Cell& cell = _cell[index];
 
@@ -15,7 +15,7 @@ int Runtime::LoadIntLiteral(CELL_INDEX index)
     return value;
 }
 
-void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
+void Runtime::StoreIntLiteral(CELLID index, int value)
 {
     Cell& cell = _cell[index];
 
@@ -26,7 +26,7 @@ void Runtime::StoreIntLiteral(CELL_INDEX index, int value)
     cell._tags = TAG_EMBEDDED;
 }
 
-float Runtime::LoadFloatLiteral(CELL_INDEX index)
+float Runtime::LoadFloatLiteral(CELLID index)
 {
     const Cell& cell = _cell[index];
 
@@ -39,7 +39,7 @@ float Runtime::LoadFloatLiteral(CELL_INDEX index)
     return(pun.value);
 }
 
-void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
+void Runtime::StoreFloatLiteral(CELLID index, float value)
 {
     Cell& cell = _cell[index];
 
@@ -53,7 +53,7 @@ void Runtime::StoreFloatLiteral(CELL_INDEX index, float value)
     cell._tags = TAG_EMBEDDED;
 }
 
-double Runtime::LoadNumericLiteral(CELL_INDEX index)
+double Runtime::LoadNumericLiteral(CELLID index)
 {
     double value = 0;
 
@@ -69,24 +69,24 @@ double Runtime::LoadNumericLiteral(CELL_INDEX index)
     return value;
 }
 
-CELL_INDEX Runtime::CreateNumericLiteral(double value, bool storeAsInt)
+CELLID Runtime::CreateNumericLiteral(double value, bool storeAsInt)
 {
     if (storeAsInt)
     {
         int intValue = (int)value;
         assert(intValue == value);
 
-        CELL_INDEX index = AllocateCell(TYPE_INT);
+        CELLID index = AllocateCell(TYPE_INT);
         StoreIntLiteral(index, intValue);
         return index;
     }
 
-    CELL_INDEX index = AllocateCell(TYPE_FLOAT);
+    CELLID index = AllocateCell(TYPE_FLOAT);
     StoreFloatLiteral(index, (float) value);
     return index;
 }
 
-string Runtime::LoadStringLiteral(CELL_INDEX index)
+string Runtime::LoadStringLiteral(CELLID index)
 {
     const Cell& cell = _cell[index];
 
@@ -101,8 +101,8 @@ string Runtime::LoadStringLiteral(CELL_INDEX index)
         return tiny;
     }
 
-    STRING_INDEX stringIndex = cell._data;
-    RAISE_ERROR_IF((stringIndex == 0) || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    STRINGIDX stringIndex = cell._data;
+    RAISE_ERROR_IF(!VALID_INDEX(stringIndex) || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
 
     const string& value = _string[stringIndex]._str;
     RAISE_ERROR_IF(value.length() <= sizeof(TDATA), ERROR_INTERNAL_STRING_TABLE_CORRUPT);
@@ -110,7 +110,7 @@ string Runtime::LoadStringLiteral(CELL_INDEX index)
     return value;
 }
 
-void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
+void Runtime::StoreStringLiteral(CELLID index, const char* value)
 {
     Cell& cell = _cell[index];
 
@@ -127,19 +127,20 @@ void Runtime::StoreStringLiteral(CELL_INDEX index, const char* value)
     }
     else
     {
-        STRING_INDEX stringIndex = 0;
+        STRINGIDX stringIndex = INVALID_INDEX;
 
         THASH hash = HashString(value);
         auto existing = _stringTable.find(hash);
         if (existing != _stringTable.end())
         {
             stringIndex = existing->second;
+            assert(VALID_INDEX(stringIndex));
 
             RAISE_ERROR_IF(_string[stringIndex]._str != value, ERROR_INTERNAL_HASH_COLLISION);
         }
         else
         {
-            stringIndex = (STRING_INDEX)_string.Alloc();
+            stringIndex = (STRINGIDX)_string.Alloc();
             _string[stringIndex]._str = value;
             _stringTable[hash] = stringIndex;
         }

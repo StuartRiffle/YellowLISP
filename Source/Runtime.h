@@ -7,8 +7,9 @@
 #include "Errors.h"
 #include "Console.h"
 
-enum Type : uint32_t  
+enum CellType : uint32_t  
 {                       // The data stored in the cell is...
+    TYPE_VOID,
     TYPE_FREE,          //   a link to the next free cell
     TYPE_CONS,          //   an index into the cell table
     TYPE_LAMBDA,        //   an index into the cell table for the binding list
@@ -29,29 +30,44 @@ enum Tags
     TAG_BITS = 3
 };
 
-typedef uint32_t THEADER;   // Cell tag/type information and link to next
-typedef uint32_t TDATA;     // Cell value index, or embedded value if TAG_EMBEDDED
-
-const int HEADER_BITS = sizeof(THEADER) * 8;
-const int DATA_BITS = sizeof(TDATA) * 8;
+const int HEADER_BITS   = sizeof(uint32_t) * 8;
+const int DATA_BITS     = sizeof(uint32_t) * 8;
 const int METADATA_BITS = TYPE_BITS + TAG_BITS;
-const int INDEX_BITS = HEADER_BITS - METADATA_BITS;
+const int INDEX_BITS    = HEADER_BITS - METADATA_BITS;
+const int NIL_CELL      = 1;
 
 static_assert(TYPE_COUNT <= (1 << TYPE_BITS), "Not enough type bits");
 static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index");
 
-typedef TDATA  TINDEX;
-typedef TINDEX CELL_INDEX;
-typedef TINDEX SYMBOL_INDEX;
-typedef TINDEX STRING_INDEX;
-
 struct Cell
 {
-    Type     _type : TYPE_BITS;
+    CellType _type : TYPE_BITS;
     uint32_t _tags : TAG_BITS;
     uint32_t _next : INDEX_BITS;
-    uint32_t _data;
+    uint32_t _data;                 
+
+    Cell() : _type(TYPE_VOID), _tags(0), _next(0), _data(0) {}
 };
+
+// Indices are strongly typed to help avoid silly mistakes
+
+template<typename TAG = void*>
+class INDEX
+{
+    enum { INVALID = ~uint32_t(0) };
+    uint32_t _index;
+public:
+    inline INDEX(uint32_t index = INVALID) : _index(index) {}
+    inline bool IsValid() const { return (_index != INVALID); }
+    inline operator uint32_t() { return _index; }
+};
+
+class CELLID   : public INDEX<CELLID>   { public: using INDEX::INDEX; };
+class SYMBOLIDX : public INDEX<SYMBOLIDX> { public: using INDEX::INDEX; };
+class STRINGIDX : public INDEX<STRINGIDX> { public: using INDEX::INDEX; };
+class PRIMIDX   : public INDEX<PRIMIDX>   { public: using INDEX::INDEX; };
+
+// 
 
 enum SymbolType
 {
@@ -71,48 +87,113 @@ enum SymbolFlags
 
 struct SymbolInfo
 {
-    SymbolType _type;
-    SymbolFlags _flags;
+    SymbolType  _type   = SYMBOL_INVALID;
+    SymbolFlags _flags  = SYMBOLFLAG_NONE;
 
-    string _ident;
-    string _comment;
-    TINDEX _primIndex;
-    CELL_INDEX _symbolCell;
-    CELL_INDEX _valueCell;
-    CELL_INDEX _macroBindings;
-
-    SymbolInfo() : _type(SYMBOL_INVALID), _flags(SYMBOLFLAG_NONE), _primIndex(0), _symbolCell(0), _valueCell(0), _macroBindings(0) {}
+    string  _ident;
+    string  _comment;
+    PRIMIDX _primIndex;
+    CELLID _symbolCell;
+    CELLID _valueCell;
+    CELLID _macroBindings;
 };
 
-#define VALID_CELL(_IDX)        (((_IDX) != 0) && ((_IDX) != _nil))
 #define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
 
 
-typedef vector<CELL_INDEX> ArgumentList;
+
+
+template<class T, int ELEMENTS = 16>
+class StaticVector
+{
+    T _embedded[ELEMENTS];
+    std::vector<T> _overflow;
+    int _count = 0;
+
+public:
+    inline T& operator[](size_t idx)             { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
+    inline const T& operator[](size_t idx) const { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
+
+    inline int  size() const  { return _count; }
+    inline bool empty() const { return (_count == 0); }
+
+    inline void push_back(const T& elem)
+    {
+        if (_count < ELEMENTS)
+        {
+            assert(_overflow.empty());
+            _embedded[_count] = elem;
+        }
+        else
+        {
+            assert(_count == ELEMENTS + (int) _overflow.size());
+            if (_overflow.capacity() == 0)
+                _overflow.reserve(ELEMENTS);
+
+            _overflow.push_back(elem);
+        }
+
+        _count++;
+    }
+};
+
+typedef StaticVector<CELLID> CELLVEC; 
+
+class CELLITER
+{
+    Runtime& _runtime;
+    CELLID   _index;
+
+public:
+    CELLITER(Runtime& runtime, CELLID index) : _runtime(runtime), _index(index) {}
+
+    inline Cell& operator*()  { return _runtime._cell[_index]; }
+    inline Cell& operator->() { return _runtime._cell[_index]; }
+
+    inline Cell& GetNext()
+    { 
+        CELLID next = _runtime._cell[_index]._next;
+        assert(next);
+
+        return _runtime._cell[next];
+    }
+
+    inline Cell& operator++(int)
+    {
+        Cell& curr = _runtime._cell[_index];
+
+        assert(_index);
+        assert(_index != NIL_CELL);
+        _index = _runtime._cell[_index]._next;
+        assert(_index);
+
+        return curr;
+    }
+};
+
+
+
 
 class Runtime;
-typedef CELL_INDEX (Runtime::*PrimitiveFunc)(const ArgumentList& args);
+typedef CELLID (Runtime::*PrimitiveFunc)(const CELLVEC& args);
 
 struct PrimitiveInfo
 {
     string _name;
-    int _numArgs;
-    PrimitiveFunc _func;
+    PrimitiveFunc _func = nullptr;
 };
 
 struct StringInfo
 {
     string _str;
-    int _refCount;
-
-    StringInfo() : _refCount(0) {}
+    int _refCount = 0;
 };
 
 #define STUB_UNIMPLEMENTED(_FUNCNAME) \
-    CELL_INDEX Runtime::_FUNCNAME(const ArgumentList& args) \
+    CELLID Runtime::_FUNCNAME(const CELLVEC& args) \
     { \
-        (args); \
-        RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED); \
+        if (args.max_size()) /* prevent unreachable code warning */ \
+            RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED); \
         return 0; \
     }
 
@@ -123,155 +204,158 @@ class Runtime
 {
     Console* _console;
 
-    vector<PrimitiveInfo> _primitive;
-
+    friend class CELLITER;
     vector<Cell> _cell;
-    CELL_INDEX _cellFreeList;
-    int _cellFreeCount;
+    CELLID       _cellFreeList;
+    int          _cellFreeCount;
 
     SlotPool<SymbolInfo> _symbol;
-    std::unordered_map<THASH, SYMBOL_INDEX> _globalScope;
+    std::unordered_map<THASH, SYMBOLIDX> _globalScope;
 
     SlotPool<StringInfo> _string;
-    std::unordered_map<THASH, STRING_INDEX> _stringTable;
+    std::unordered_map<THASH, STRINGIDX> _stringTable;
 
-    typedef unordered_map<SYMBOL_INDEX, CELL_INDEX> Scope;
+    typedef unordered_map<SYMBOLIDX, CELLID> Scope;
     vector<Scope> _environment;
 
-    CELL_INDEX  _nil;
-    CELL_INDEX  _dot;
-    CELL_INDEX  _true;
-    CELL_INDEX  _eval;
-    CELL_INDEX  _quote;
-    CELL_INDEX  _unquote;
-    CELL_INDEX  _quasiquote;
+    vector<PrimitiveInfo> _primitive;
+
+
+    CELLID  _nil;
+    CELLID  _dot;
+    CELLID  _true;
+    CELLID  _eval;
+    CELLID  _quote;
+    CELLID  _unquote;
+    CELLID  _quasiquote;
 
     bool _garbageCollectionNeeded;
 
-    SYMBOL_INDEX GetSymbolIndex(const char* ident);
-    CELL_INDEX   RegisterReserved(const char* ident);
-    CELL_INDEX   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);
-    vector<CELL_INDEX> ExtractList(CELL_INDEX index);
+    SYMBOLIDX StoreSymbol(const char* ident, CELLID cellIndex);
+    SYMBOLIDX GetSymbolIndex(const char* ident);
+    CELLID   RegisterReserved(const char* ident);
+    CELLID   RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags = SYMBOLFLAG_NONE);
+    vector<CELLID> ExtractList(CELLID index);
 
-    bool TestCellsEQL(CELL_INDEX a, CELL_INDEX b, bool strict);
-    bool TestStructureEQUAL(CELL_INDEX a, CELL_INDEX b, bool strict);
+    bool TestCellsEQL(CELLID a, CELLID b, bool strict);
+    bool TestStructureEQUAL(CELLID a, CELLID b, bool strict);
 
-    Scope BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs);
-    CELL_INDEX CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs);
-    CELL_INDEX ExpandQuasiquoted(CELL_INDEX macroBodyCell, int level = 0);
+    Scope BindArguments(CELLID bindingList, CELLID argList, bool evaluateArgs);
+    CELLID CallPrimitive(PRIMIDX primIndex, CELLID argCellIndex, bool evaluateArgs);
+    CELLID ExpandQuasiquoted(CELLID macroBodyCell, int level = 0);
 
     // CellTable.cpp
 
     void InitCellTable(size_t size = 8);
     void ExpandCellTable();
 
-    CELL_INDEX AllocateCell(Type Type);
-    CELL_INDEX GenerateList(const vector<CELL_INDEX>& elements);
-    void FreeCell(CELL_INDEX index);
+    CELLID AllocateCell(CellType Type);
+    CELLID GenerateList(const vector<CELLID>& elements);
+    void FreeCell(CELLID index);
 
     void DebugValidateCells();
-    void MarkCellsInUse(CELL_INDEX index);
+    void MarkCellsInUse(CELLID index);
     size_t CollectGarbage();
 
     // CellGraph.cpp
 
-    void FormatCellLabel(CELL_INDEX cellIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone, bool expandSymbols = false);
-    void FormatSymbolLabel(SYMBOL_INDEX symbolIndex, std::stringstream& ss, set<CELL_INDEX>& cellsDone, set<SYMBOL_INDEX>& symbolsDone);
-    string GenerateCellGraph(CELL_INDEX cellIndex, bool expandSymbols);
-    void DumpCellGraph(CELL_INDEX cellIndex, bool expandSymbols);
+    void FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLID>& cellsDone, set<SYMBOLIDX>& symbolsDone, bool expandSymbols = false);
+    void FormatSymbolLabel(SYMBOLIDX symbolIndex, std::stringstream& ss, set<CELLID>& cellsDone, set<SYMBOLIDX>& symbolsDone);
+    string GenerateCellGraph(CELLID cellIndex, bool expandSymbols);
+    void DumpCellGraph(CELLID cellIndex, bool expandSymbols);
 
     // Literals.cpp
 
-    int LoadIntLiteral(CELL_INDEX index);
-    void StoreIntLiteral(CELL_INDEX index, int value);
+    int LoadIntLiteral(CELLID index);
+    void StoreIntLiteral(CELLID index, int value);
 
-    float LoadFloatLiteral(CELL_INDEX index);
-    void StoreFloatLiteral(CELL_INDEX index, float value);
+    float LoadFloatLiteral(CELLID index);
+    void StoreFloatLiteral(CELLID index, float value);
 
-    double LoadNumericLiteral(CELL_INDEX index);
-    CELL_INDEX CreateNumericLiteral(double value, bool storeAsInt = false);
+    double LoadNumericLiteral(CELLID index);
+    CELLID CreateNumericLiteral(double value, bool storeAsInt = false);
 
-    string LoadStringLiteral(CELL_INDEX index);
-    void StoreStringLiteral(CELL_INDEX index, const char* str);
+    string LoadStringLiteral(CELLID index);
+    void StoreStringLiteral(CELLID index, const char* str);
 
     // Primitives.cpp
 
-    CELL_INDEX ATOM(const ArgumentList& args);
-    CELL_INDEX CAR(const ArgumentList& args);
-    CELL_INDEX CDR(const ArgumentList& args);
-    CELL_INDEX COND(const ArgumentList& args);
-    CELL_INDEX CONS(const ArgumentList& args);
-    CELL_INDEX DEFUN(const ArgumentList& args);
-    CELL_INDEX DEFMACRO(const ArgumentList& args);
-    CELL_INDEX EQ(const ArgumentList& args);
-    CELL_INDEX EQL(const ArgumentList& args);
-    CELL_INDEX EQLOP(const ArgumentList& args);
-    CELL_INDEX EQUAL(const ArgumentList& args);
-    CELL_INDEX EQUALP(const ArgumentList& args);
-    CELL_INDEX EVAL(const ArgumentList& args);
-    CELL_INDEX LAMBDA(const ArgumentList& args);
-    CELL_INDEX LESS(const ArgumentList& args);
-    CELL_INDEX LET(const ArgumentList& args);
-    CELL_INDEX LIST(const ArgumentList& args);
-    CELL_INDEX PROGN(const ArgumentList& args);
-    CELL_INDEX SETQ(const ArgumentList& args);
+    CELLID ATOM(const CELLVEC& args);
+    CELLID CAR(const CELLVEC& args);
+    CELLID CDR(const CELLVEC& args);
+    CELLID COND(const CELLVEC& args);
+    CELLID CONS(const CELLVEC& args);
+    CELLID DEFUN(const CELLVEC& args);
+    CELLID DEFMACRO(const CELLVEC& args);
+    CELLID EQ(const CELLVEC& args);
+    CELLID EQL(const CELLVEC& args);
+    CELLID EQLOP(const CELLVEC& args);
+    CELLID EQUAL(const CELLVEC& args);
+    CELLID EQUALP(const CELLVEC& args);
+    CELLID EVAL(const CELLVEC& args);
+    CELLID LAMBDA(const CELLVEC& args);
+    CELLID LESS(const CELLVEC& args);
+    CELLID LET(const CELLVEC& args);
+    CELLID LIST(const CELLVEC& args);
+    CELLID PROGN(const CELLVEC& args);
+    CELLID SETQ(const CELLVEC& args);
 
     // Math.cpp
 
-    CELL_INDEX ADD(const ArgumentList& args);
-    CELL_INDEX SUB(const ArgumentList& args);
-    CELL_INDEX MUL(const ArgumentList& args);
-    CELL_INDEX DIV(const ArgumentList& args);
-    CELL_INDEX MOD(const ArgumentList& args);
-    CELL_INDEX ROUND(const ArgumentList& args);
-    CELL_INDEX TRUNCATE(const ArgumentList& args);
-    CELL_INDEX FLOOR(const ArgumentList& args);
-    CELL_INDEX CEILING(const ArgumentList& args);
-    CELL_INDEX MIN(const ArgumentList& args);
-    CELL_INDEX MAX(const ArgumentList& args);
-    CELL_INDEX EXP(const ArgumentList& args);
-    CELL_INDEX EXPT(const ArgumentList& args);
-    CELL_INDEX LOG(const ArgumentList& args);
-    CELL_INDEX SQRT(const ArgumentList& args);
-    CELL_INDEX ABS(const ArgumentList& args);
+    CELLID ADD(const CELLVEC& args);
+    CELLID SUB(const CELLVEC& args);
+    CELLID MUL(const CELLVEC& args);
+    CELLID DIV(const CELLVEC& args);
+    CELLID MOD(const CELLVEC& args);
+    CELLID ROUND(const CELLVEC& args);
+    CELLID TRUNCATE(const CELLVEC& args);
+    CELLID FLOOR(const CELLVEC& args);
+    CELLID CEILING(const CELLVEC& args);
+    CELLID MIN(const CELLVEC& args);
+    CELLID MAX(const CELLVEC& args);
+    CELLID EXP(const CELLVEC& args);
+    CELLID EXPT(const CELLVEC& args);
+    CELLID LOG(const CELLVEC& args);
+    CELLID SQRT(const CELLVEC& args);
+    CELLID ABS(const CELLVEC& args);
 
-    CELL_INDEX SIN(const ArgumentList& args);
-    CELL_INDEX SINH(const ArgumentList& args);
-    CELL_INDEX ASIN(const ArgumentList& args);
-    CELL_INDEX ASINH(const ArgumentList& args);
-    CELL_INDEX COS(const ArgumentList& args);
-    CELL_INDEX COSH(const ArgumentList& args);
-    CELL_INDEX ACOS(const ArgumentList& args);
-    CELL_INDEX ACOSH(const ArgumentList& args);
-    CELL_INDEX TAN(const ArgumentList& args);
-    CELL_INDEX TANH(const ArgumentList& args);
-    CELL_INDEX ATAN(const ArgumentList& args);
-    CELL_INDEX ATANH(const ArgumentList& args);
+    CELLID SIN(const CELLVEC& args);
+    CELLID SINH(const CELLVEC& args);
+    CELLID ASIN(const CELLVEC& args);
+    CELLID ASINH(const CELLVEC& args);
+    CELLID COS(const CELLVEC& args);
+    CELLID COSH(const CELLVEC& args);
+    CELLID ACOS(const CELLVEC& args);
+    CELLID ACOSH(const CELLVEC& args);
+    CELLID TAN(const CELLVEC& args);
+    CELLID TANH(const CELLVEC& args);
+    CELLID ATAN(const CELLVEC& args);
+    CELLID ATANH(const CELLVEC& args);
 
-    CELL_INDEX PRINT(const ArgumentList& args);
-    CELL_INDEX RANDOM(const ArgumentList& args);
+    CELLID PRINT(const CELLVEC& args);
+    CELLID RANDOM(const CELLVEC& args);
 
-    CELL_INDEX LISTP(const ArgumentList& args);
-    CELL_INDEX NUMBERP(const ArgumentList& args);
-    CELL_INDEX FLOATP(const ArgumentList& args);
-    CELL_INDEX STRINGP(const ArgumentList& args);
-    CELL_INDEX ENDP(const ArgumentList& args);
+    CELLID LISTP(const CELLVEC& args);
+    CELLID NUMBERP(const CELLVEC& args);
+    CELLID FLOATP(const CELLVEC& args);
+    CELLID STRINGP(const CELLVEC& args);
+    CELLID ENDP(const CELLVEC& args);
 
     // Commands.cpp
 
-    CELL_INDEX Help(const ArgumentList& args);
-    CELL_INDEX Exit(const ArgumentList& args);
-    CELL_INDEX RunGC(const ArgumentList& args);
+    CELLID Help(const CELLVEC& args);
+    CELLID Exit(const CELLVEC& args);
+    CELLID RunGC(const CELLVEC& args);
 
-    CELL_INDEX EncodeTreeNode(const NodeRef& root);
+    CELLID EncodeTreeNode(const NodeRef& root);
 
 public:
     Runtime(Console* console); 
     ~Runtime();
 
-    CELL_INDEX EncodeSyntaxTree(const NodeRef& root);
-    CELL_INDEX EvaluateCell(CELL_INDEX cellIndex);
+    CELLID EncodeSyntaxTree(const NodeRef& root);
+    CELLID EvaluateCell(CELLID cellIndex);
     void HandleGarbage();
 
-    string GetPrintedValue(CELL_INDEX index);
+    string GetPrintedValue(CELLID index);
 };

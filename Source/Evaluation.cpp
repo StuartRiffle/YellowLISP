@@ -4,10 +4,11 @@
 #include "Runtime.h"
 
 
-vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
+vector<CELLID> Runtime::ExtractList(CELLID cellIndex)
 {
-    vector<CELL_INDEX> result;
+    vector<CELLID> result;
 
+    // FIXME: wtf is this
     while (VALID_CELL(cellIndex) && (_cell[cellIndex]._type == TYPE_CONS))
     {
         result.push_back(_cell[cellIndex]._data);
@@ -17,14 +18,14 @@ vector<CELL_INDEX> Runtime::ExtractList(CELL_INDEX cellIndex)
     return result;
 }
 
-CELL_INDEX Runtime::GenerateList(const vector<CELL_INDEX>& elements)
+CELLID Runtime::GenerateList(const vector<CELLID>& elements)
 {
-    CELL_INDEX head = _nil;
+    CELLID head = _nil;
 
     for (auto iter = elements.crbegin(); iter != elements.crend(); ++iter)
     {
-        CELL_INDEX elem = *iter;
-        CELL_INDEX elemLink = AllocateCell(TYPE_CONS);
+        CELLID elem = *iter;
+        CELLID elemLink = AllocateCell(TYPE_CONS);
 
         _cell[elemLink]._data = elem;
         _cell[elemLink]._next = head;
@@ -36,11 +37,11 @@ CELL_INDEX Runtime::GenerateList(const vector<CELL_INDEX>& elements)
 }
 
 
-CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
+CELLID Runtime::ExpandQuasiquoted(CELLID cellIndex, int level)
 {
     //DumpCellGraph(cellIndex, true);
 
-    vector<CELL_INDEX> elements = ExtractList(cellIndex);
+    vector<CELLID> elements = ExtractList(cellIndex);
     if (elements.empty())
     {
         if (level == 0)
@@ -53,13 +54,13 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
     {
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "quote");
 
-        CELL_INDEX quoted = elements[1];
+        CELLID quoted = elements[1];
 
         if (level == 0)
             return EvaluateCell(quoted);
 
-        CELL_INDEX expanded = ExpandQuasiquoted(elements[1], level);
-        CELL_INDEX requoted = GenerateList({ _quote, expanded });
+        CELLID expanded = ExpandQuasiquoted(elements[1], level);
+        CELLID requoted = GenerateList({ _quote, expanded });
         return requoted;
     }
 
@@ -68,13 +69,13 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "unquote");
         RAISE_ERROR_IF(level < 1, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
-        CELL_INDEX unquoted = elements[1];
+        CELLID unquoted = elements[1];
 
         if (level == 1)
             return EvaluateCell(unquoted);
 
-        CELL_INDEX expanded = ExpandQuasiquoted(unquoted, level - 1);
-        CELL_INDEX reunquoted = GenerateList({ _unquote, expanded });
+        CELLID expanded = ExpandQuasiquoted(unquoted, level - 1);
+        CELLID reunquoted = GenerateList({ _unquote, expanded });
         return reunquoted;
     }
 
@@ -85,13 +86,13 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
 
         // (quasiquote foo) => (expand foo) at higher level
 
-        CELL_INDEX quasiquoted = elements[1];
+        CELLID quasiquoted = elements[1];
 
-        CELL_INDEX expanded = ExpandQuasiquoted(quasiquoted, level + 1);
+        CELLID expanded = ExpandQuasiquoted(quasiquoted, level + 1);
 
         if (level > 0)
         {
-            CELL_INDEX requoted = GenerateList({ _quasiquote, expanded });
+            CELLID requoted = GenerateList({ _quasiquote, expanded });
             return requoted;
         }
 
@@ -104,21 +105,22 @@ CELL_INDEX Runtime::ExpandQuasiquoted(CELL_INDEX cellIndex, int level)
     return GenerateList(elements);
 }
 
-CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
+CELLID Runtime::EvaluateCell(CELLID index)
 {
-    if (!VALID_CELL(index))
+    assert(VALID_INDEX(index));
+    if (index == _nil)
         return _nil;
 
-#if DEBUG_BUILD
-    static int sDumpDebugGraph = 0;
+#if 1
+    static int sDumpDebugGraph = 1;
     static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render
     if (sDumpDebugGraph)
         DumpCellGraph(index, sExpandSymbols);
 #endif
 
-    CELL_INDEX lambdaCell = _nil;
-    TINDEX primitiveIndex = 0;
+    CELLID lambdaCell = _nil;
+    TINDEX primitiveIndex = INVALID_INDEX;
     bool evaluateArguments = true;
     bool isMacro = false; // HACK
 
@@ -126,7 +128,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
     {
         case TYPE_SYMBOL:
         {
-            SYMBOL_INDEX symbolIndex = _cell[index]._data;
+            SYMBOLIDX symbolIndex = _cell[index]._data;
 
             // Symbols in the current scope override globals
 
@@ -137,7 +139,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
                 auto iter = scope.find(symbolIndex);
                 if (iter != scope.end())
                 {
-                    CELL_INDEX localValue = iter->second;
+                    CELLID localValue = iter->second;
                     return EvaluateCell(localValue);
                 }
             }
@@ -176,14 +178,14 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
 
         case TYPE_CONS:
         {
-            CELL_INDEX head = _cell[index]._data;
+            CELLID head = _cell[index]._data;
             assert(VALID_CELL(head));
 
             if (head == _quote)
             {
                 // Special form: quote
 
-                CELL_INDEX quoted = _cell[index]._next;
+                CELLID quoted = _cell[index]._next;
                 RAISE_ERROR_IF(!VALID_CELL(quoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
                 RAISE_ERROR_IF(VALID_CELL(_cell[quoted]._next), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
@@ -194,7 +196,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
             {
                 // Special form: quasiquote
 
-                //CELL_INDEX quasiquoted = _cell[index]._next;
+                //CELLID quasiquoted = _cell[index]._next;
                 //RAISE_ERROR_IF(!VALID_CELL(quasiquoted), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
                 //DumpCellGraph(_cell[quasiquoted]._data, sExpandSymbols);
@@ -205,7 +207,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
 
             if (_cell[head]._type == TYPE_SYMBOL)
             {
-                SYMBOL_INDEX headSymbolIndex = _cell[head]._data;
+                SYMBOLIDX headSymbolIndex = _cell[head]._data;
                 const SymbolInfo& headSymbol = _symbol[headSymbolIndex];
 
                 if (headSymbol._type == SYMBOL_PRIMITIVE)
@@ -246,30 +248,30 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
 
     // At this point we [should] have something callable
 
-    if (primitiveIndex)
+    if (VALID_INDEX(primitiveIndex))
     {
-        CELL_INDEX argCellIndex = _cell[index]._next;
-        CELL_INDEX primResult = CallPrimitive(primitiveIndex, argCellIndex, evaluateArguments);
+        CELLID argCellIndex = _cell[index]._next;
+        CELLID primResult = CallPrimitive(primitiveIndex, argCellIndex, evaluateArguments);
         return primResult;
     }
 
-    assert(VALID_CELL(lambdaCell));
+    assert(lambdaCell != _nil);
 
-    CELL_INDEX bindingListIndex = _cell[lambdaCell]._data;
-    CELL_INDEX bodyCellIndex = _cell[lambdaCell]._next;
+    CELLID bindingListIndex = _cell[lambdaCell]._data;
+    CELLID bodyCellIndex = _cell[lambdaCell]._next;
 
     // Bind the arguments
 
     RAISE_ERROR_IF(_cell[bindingListIndex]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
 
-    CELL_INDEX argList = _cell[index]._next;
+    CELLID argList = _cell[index]._next;
     RAISE_ERROR_IF(_cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
 
     Scope callScope = BindArguments(bindingListIndex, argList, evaluateArguments);
 
     // Evaluate the function body
 
-    CELL_INDEX callResult = _nil;
+    CELLID callResult = _nil;
     _environment.push_back(std::move(callScope));
 
     try
@@ -289,7 +291,7 @@ CELL_INDEX Runtime::EvaluateCell(CELL_INDEX index)
     return callResult;
 }
 
-Runtime::Scope Runtime::BindArguments(CELL_INDEX bindingList, CELL_INDEX argList, bool evaluateArgs)
+Runtime::Scope Runtime::BindArguments(CELLID bindingList, CELLID argList, bool evaluateArgs)
 {
     Scope scope;
 
@@ -297,10 +299,10 @@ Runtime::Scope Runtime::BindArguments(CELL_INDEX bindingList, CELL_INDEX argList
     {
         RAISE_ERROR_IF(!VALID_CELL(bindingList), ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
-        CELL_INDEX boundSymbolCell = _cell[bindingList]._data;
-        SYMBOL_INDEX boundSymbolIndex = _cell[boundSymbolCell]._data;
+        CELLID boundSymbolCell = _cell[bindingList]._data;
+        SYMBOLIDX boundSymbolIndex = _cell[boundSymbolCell]._data;
 
-        CELL_INDEX value = _cell[argList]._data;
+        CELLID value = _cell[argList]._data;
         if (evaluateArgs)
             value = EvaluateCell(value);
 
@@ -313,23 +315,23 @@ Runtime::Scope Runtime::BindArguments(CELL_INDEX bindingList, CELL_INDEX argList
     return scope;
 }
 
-CELL_INDEX Runtime::CallPrimitive(TINDEX primIndex, CELL_INDEX argCellIndex, bool evaluateArgs)
+CELLID Runtime::CallPrimitive(TINDEX primIndex, CELLID argCellIndex, bool evaluateArgs)
 {
     PrimitiveInfo& prim = _primitive[primIndex];
-    ArgumentList primArgs = ExtractList(argCellIndex);
+    CELLVEC primArgs = ExtractList(argCellIndex);
 
     if (evaluateArgs)
     {
         for (size_t i = 0; i < primArgs.size(); i++)
         {
-            CELL_INDEX value = primArgs[i];//_cell[primArgs[i]]._data;
+            CELLID value = primArgs[i];//_cell[primArgs[i]]._data;
             value = EvaluateCell(value);
 
             primArgs[i] = value;
         }
     }
 
-    CELL_INDEX primResult = (*this.*prim._func)(primArgs);
+    CELLID primResult = (*this.*prim._func)(primArgs);
     return primResult;
 }
 
