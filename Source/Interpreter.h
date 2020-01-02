@@ -10,7 +10,7 @@ struct InterpreterSettings
 {
     bool _debugMode         = false;
     bool _repl              = false;
-    bool _catchExceptions   = false;
+    bool _catchExceptions   = true;
 };
 
 class Interpreter

@@ -34,11 +34,13 @@ class Console
     bool _debugOutput;
     FILE* _logFile;
 
+#ifdef _MSC_VER
     WORD ColorToWindowsAttrib(int fg, int bg)
     {
         int attr = (bg << 4) | fg;
         return (WORD) attr;
     }
+#endif
 
     string ColorToAnsiEscapeCode(int fg, int bg)
     {
@@ -143,7 +145,7 @@ public:
         WORD attr = ColorToWindowsAttrib(fg, bg);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), attr);
 #else
-        Print(ColorToAnsiEscapeCode(fg, bg));
+        Print(ColorToAnsiEscapeCode(fg, bg).c_str());
 #endif
     }
 

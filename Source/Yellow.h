@@ -6,13 +6,19 @@
     #define _CRT_SECURE_NO_WARNINGS
     #define WIN32_LEAN_AND_MEAN
     #include <Windows.h>
+#else
+    #include <stdio.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <langinfo.h>
+    #include <math.h>
 #endif
 
 #ifndef NDEBUG
 #define DEBUG_BUILD (1)
 #endif
 
-#define RELEASE_BUILD (!DEBUG_BUILD)
+#define RELEASE_BUILD (!DEBUG_BUILD )
 
 #define VERSION_MAJOR           (0)
 #define VERSION_MINOR           (1)

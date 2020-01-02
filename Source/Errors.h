@@ -40,7 +40,7 @@ struct YellowError : std::exception
     YellowError(ErrorCode code, const char* details = "");
     virtual ~YellowError() {}
 
-    virtual const char* what() const 
+    virtual const char* what() const noexcept
     { 
         return _finalMessage.c_str();
     }
