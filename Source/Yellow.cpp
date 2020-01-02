@@ -7,21 +7,65 @@
 #include "CommandLine.h"
 
 
-void PrintBanner(Console* console)
+//       10        20        30        40        50        60        70        
+//  .    |    .    |    .    |    .    |    .    |    .    |    .    |    .
+
+void PrintTitleASCII(Console* console)
 {
-    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, " __  __     ____              __    _________ ____ \n");
-    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, " \\ \\/ /__  / / /___ _      __/ /   /  _/ ___// __ \\\n");
-    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, "  \\  / _ \\/ / / __ \\ | /| / / /    / / \\__ \\/ /_/ /\n");
-    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, "  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ \n");
-    console->PrintColor(COLOR_YELLOW, COLOR_BLACK, " /_/\\___/_/_/\\____/|__/|__/_____/___//____/_/      \n\n");
+    const char* titleASCII = R"TITLE(
+              __  __     ____              __    _________ ____
+      _______ \ \/ /__  / / /___ _      __/ /   /  _/ ___// __ \ _________
+     _________ \  / _ \/ / / __ \ | /| / / /    / / \__ \/ /_/ / ________ 
+    _________  / / ___/ / / /_/ / |/ |/ / /____/ / ___/ / ____/ ________  
+              /_/\___/_/_/\____/|__/|__/_____/___//____/_/
+
+
+)TITLE";
+
+    console->PrintColor(COLOR_YELLOW, 0, titleASCII);
 }
 
-void PrintOptions(Console* console, const char* version)
+void PrintTitleANSI(Console* console)
+{
+    const char* titleANSI = R"TITLE(
+  #|  #|                                     #|     #####|  ###|  ####|  
+  #|  #| #####| #|     #|      ###|  #|   #| #|       #|   #|     #|  #| 
+   ###|  #|     #|     #|     #|  #| #|   #| #|       #|    ###|  #|  #| 
+    #|   ###|   #|     #|     #|  #| #| | #| #|       #|       #| ####|  
+    #|   #|     #|     #|     #|  #| ######| #|       #|       #| #|     
+    #|   #####| #####| #####|  ###|   #| #|  #####| #####|  ###|  #|     
+
+)TITLE";
+    int thickLine = 220;
+
+    for (const char* str = titleANSI; *str; str++)
+    {
+        if(*str == '#')
+            console->PrintColor(COLOR_YELLOW,  0, "%c", thickLine);
+        else if(*str == '|')
+            console->PrintColor(COLOR_BROWN,   0, "%c", thickLine);
+        else
+            console->Print("%c", *str);
+    }
+}
+void PrintBanner(Console* console)
+{
+    if (console->IsExtendedCharSet())
+        PrintTitleANSI(console);
+    else
+        PrintTitleASCII(console);
+
+    console->PrintColor(COLOR_WHITE, 0, "    An open source interpreter for something not entirely unlike LISP\n");
+    console->PrintColor(COLOR_BLUE,  0, "    https://github.com/StuartRiffle/YellowLISP ");
+    console->PrintColor(COLOR_WHITE, 0, "(c) 2020 Stuart Riffle\n\n");
+}
+
+void PrintOptions(Console* console)
 {
     console->Print("Usage: YellowLISP [options] [lisp files]\n\n");
 
-    console->Print("This is an interpreter for a [very] small subset of LISP. It is a work in\n");
-    console->Print("progress, and should not be used for production.\n\n");
+    console->Print("This is an interpreter for a limited but tastefully chosen subset of LISP. It is\n");
+    console->Print("a work in progress, and should not be used for production.\n\n");
 
     console->Print("LISP files have the extension \".lisp\". If any are specified, they will\n"); 
     console->Print("be loaded and evaluated in the order given. YellowLISP will exit after that.\n\n");
@@ -34,10 +78,7 @@ void PrintOptions(Console* console, const char* version)
     console->Print("  --no-color   Disable colored console output\n");
     console->Print("  --log <file> Mirror output to <file>\n");
     console->Print("  --version    Print just the version and exit\n");
-    console->Print("  --help       Display this message and exit\n\n");
-
-    console->Print("%s (c) 2020 Stuart Riffle\n", version);
-    console->Print("Open source and free, released under the MIT license\n");
+    console->Print("  --help       Display this message and exit\n");
 }
 
 int main(int argc, char** argv)
@@ -61,17 +102,17 @@ int main(int argc, char** argv)
         return RETURN_SUCCESS;
     }
 
+    if (commandLine.HasFlag("--help"))
+    {
+        PrintBanner(console.get());
+        PrintOptions(console.get());
+        return RETURN_SUCCESS;
+    }
+
 #if DEBUG_BUILD
     console->EnableDebugOutput(true);
     SanityCheck(console.get());
 #endif
-
-    if (commandLine.HasFlag("--help"))
-    {
-        PrintBanner(console.get());
-        PrintOptions(console.get(), versionStr);
-        return RETURN_SUCCESS;
-    }
 
     if (commandLine.HasFlag("--repl"))
         settings._repl = true;

@@ -30,6 +30,7 @@ enum
 class Console
 {
     bool _enableColor;
+    bool _extendedCharSet;
     bool _debugOutput;
     FILE* _logFile;
 
@@ -72,7 +73,9 @@ class Console
             str = &buf[0];
     
             int written = vsnprintf(str, len, format, args);
-            assert(written < len);
+            (written);
+
+            assert(written <= len);
         }
 
         if (_logFile)
@@ -98,6 +101,7 @@ public:
     Console()
     {
         _enableColor = false;
+        _extendedCharSet = false;
         _debugOutput = false;
         _logFile = NULL;
 
@@ -105,17 +109,29 @@ public:
 
         std::cout.setf(std::ios::unitbuf);
 
-        // Enable color by default if we're running in a console
+        // Detect color and extended character set
 
-#ifdef _MSC_VER
-        //DWORD processId = 0;
-        //GetWindowThreadProcessId(GetConsoleWindow(), &processId);
-        //if (processId == GetCurrentProcessId())
-            _enableColor = true;
-#else
+    #ifdef _MSC_VER
+        _enableColor = true;
+
+        HANDLE stdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (stdOutput != INVALID_HANDLE_VALUE)
+        {
+            DWORD mode = 0;
+            if (GetConsoleMode(stdOutput, &mode))
+            {
+                mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                if (SetConsoleMode(stdOutput, mode))
+                    _extendedCharSet = true;
+            }
+        }
+    #else
         if (isatty(STDOUT_FILENO))
             _enableColor = true;
-#endif
+
+        if(strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
+            _extendedCharSet = true;
+    #endif
     }
 
     void SetTextColor(int fg, int bg = COLOR_BLACK)
@@ -152,6 +168,11 @@ public:
     bool IsColor()
     {
         return _enableColor;
+    }
+
+    bool IsExtendedCharSet()
+    {
+        return _extendedCharSet;
     }
 
     void EnableDebugOutput(bool enabled)

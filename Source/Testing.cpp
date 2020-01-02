@@ -4,15 +4,15 @@
 #include "Console.h"
 #include "Interpreter.h"
 
-void CheckOutput(Console* console, Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
+bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
 {
     ErrorCode caughtError = ERROR_NONE;
     string output;
 
     if (expectedOutput)
-        console->PrintDebug("Checking %s  ==>  %s\n", source, expectedOutput);
+        console->PrintDebug("%-40s =>  %s\n", source, expectedOutput);
     else
-        console->PrintDebug("Checking %s  ==>  %s\n", source, YellowError::GetDesc(expectedError));
+        console->PrintDebug("%-40s =>  %s\n", source, YellowError::GetDesc(expectedError));
 
     try
     {
@@ -37,14 +37,14 @@ void CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
     if (expectedOutput)
     {
         if (output == expectedOutput)
-            return;
+            return true;
 
         ss << " should output \"" << expectedOutput << "\", ";
     }
     else if (expectedError)
     {
         if (caughtError == expectedError)
-            return;
+            return true;
 
         ss << " should raise error " << expectedError << " (" << YellowError::GetDesc(expectedError) << "), ";
     }
@@ -62,6 +62,8 @@ void CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
     static int sRetryOnError = 0;
     if (sRetryOnError)
         CheckOutput(console, lisp, source, expectedOutput, expectedError);
+
+    return false;
 }
 
 void CheckOutput(Console* console, Interpreter& lisp, const char* source, ErrorCode expectedError)
@@ -80,7 +82,6 @@ void SanityCheck(Console* console)
     Interpreter lisp(console, &settings);
     
     // (progn (defmacro foo (x) `(+ ,x 1)) (defmacro bar (x) `(* ,x (foo ,x))) (bar 123)) => 15252
-
 
     VERIFY("(setq x 123)", "123");
     VERIFY("`(x x)", "(x x)");
@@ -307,6 +308,8 @@ void SanityCheck(Console* console)
     VERIFY("(quote 1 2)", ERROR_RUNTIME_WRONG_NUM_PARAMS);
     VERIFY("(atom unbound)", ERROR_RUNTIME_VARIABLE_UNBOUND);
     VERIFY("(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
+
+
 }
 
 

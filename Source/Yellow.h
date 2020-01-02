@@ -8,8 +8,11 @@
     #include <Windows.h>
 #endif
 
-#define DEBUG_BUILD     (defined(_DEBUG))
-#define RELEASE_BUILD   (!DEBUG_BUILD)
+#ifndef NDEBUG
+#define DEBUG_BUILD (1)
+#endif
+
+#define RELEASE_BUILD (!DEBUG_BUILD)
 
 #define VERSION_MAJOR           (0)
 #define VERSION_MINOR           (1)
@@ -63,3 +66,4 @@ using std::unordered_map;
 #include <exception>
 #include <algorithm>
 #include <cstdarg>
+
