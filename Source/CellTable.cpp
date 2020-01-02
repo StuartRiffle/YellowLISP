@@ -27,14 +27,6 @@ CELLID Runtime::AllocateCell(CellType type)
 
     CELLID index  = _cellFreeList;
 
-
-    if (index == 58)
-        printf("");
-
-
-
-
-
     _cellFreeList = _cell[_cellFreeList]._next;
     _cellFreeCount--;
 
@@ -55,9 +47,6 @@ CELLID Runtime::AllocateCell(CellType type)
 
 void Runtime::FreeCell(CELLID index)
 {
-    if (index == 58)
-        printf("");
-
     _cell[index]._type = TYPE_FREE;
     _cell[index]._tags = 0;
     _cell[index]._data = 0xFFFFFFF;
@@ -113,7 +102,7 @@ void Runtime::MarkCellsInUse(CELLID index)
 
 void Runtime::DebugValidateCells()
 {
-#if 1//DEBUG_BUILD
+#if DEBUG_BUILD
     uint32_t slot = _cellFreeList;
     int numInFreeList = 0;
 

@@ -61,9 +61,9 @@ int main(int argc, char** argv)
         return RETURN_SUCCESS;
     }
 
-#if 1//DEBUG_BUILD
+#if DEBUG_BUILD
     console->EnableDebugOutput(true);
-    //SanityCheck(console.get());
+    SanityCheck(console.get());
 #endif
 
     PrintBanner(console.get());

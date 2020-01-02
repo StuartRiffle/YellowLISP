@@ -18,17 +18,9 @@ list<NodeRef> Parser::ParseExpressionList(const string& source)
         if (!element)
             break;
 
-        _console->PrintDebug("Before simplify:\n");
-        DumpSyntaxTree(element);
-
         NodeRef simplified = Simplify(element);
         if (simplified != nullptr)
-        {
-            _console->PrintDebug("After simplify:\n");
-            DumpSyntaxTree(simplified);
-
             result.push_back(simplified);
-        }
     }
 
     return result;

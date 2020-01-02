@@ -8,8 +8,8 @@
     #include <Windows.h>
 #endif
 
-#define RELEASE_BUILD   (defined(NDEBUG))
-#define DEBUG_BUILD     (!RELEASE_BUILD)
+#define DEBUG_BUILD     (defined(_DEBUG))
+#define RELEASE_BUILD   (!DEBUG_BUILD)
 
 #define VERSION_MAJOR           (0)
 #define VERSION_MINOR           (1)
@@ -63,6 +63,3 @@ using std::unordered_map;
 #include <exception>
 #include <algorithm>
 #include <cstdarg>
-
-#undef assert
-#define assert(_COND) if (!(_COND)) throw "";

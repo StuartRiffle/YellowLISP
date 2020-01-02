@@ -2,6 +2,7 @@
 
 #pragma once
 #include "SlotPool.h"
+#include "StaticVector.h"
 #include "Hash.h"
 #include "Parser.h"
 #include "Errors.h"
@@ -104,47 +105,6 @@ struct SymbolInfo
 
 #define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
 
-
-template<class T, int ELEMENTS = 16>
-class StaticVector
-{
-    T _embedded[ELEMENTS];
-    std::vector<T> _overflow;
-    int _count = 0;
-
-public:
-    StaticVector() {}
-    StaticVector(const std::initializer_list<T>& elems) 
-    { 
-        for (auto elem : elems) 
-            this->push_back(elem); 
-    }
-
-    inline T& operator[](size_t idx)             { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
-    inline const T& operator[](size_t idx) const { return (idx < ELEMENTS)? _embedded[idx] : _overflow[idx - ELEMENTS]; }
-
-    inline int  size() const  { return _count; }
-    inline bool empty() const { return (_count == 0); }
-
-    inline void push_back(const T& elem)
-    {
-        if (_count < ELEMENTS)
-        {
-            assert(_overflow.empty());
-            _embedded[_count] = elem;
-        }
-        else
-        {
-            assert(_count == ELEMENTS + (int) _overflow.size());
-            if (_overflow.capacity() == 0)
-                _overflow.reserve(ELEMENTS);
-
-            _overflow.push_back(elem);
-        }
-
-        _count++;
-    }
-};
 
 typedef StaticVector<CELLID> CELLVEC; 
 

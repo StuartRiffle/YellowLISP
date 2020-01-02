@@ -111,12 +111,10 @@ CELLID Runtime::EvaluateCell(CELLID index)
     if (index == _nil)
         return _nil;
 
-#if 1
-    static int sDumpDebugGraph = 1;
+#if DEBUG_BUILD
+    static int sDumpDebugGraph = 0;
     static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render
-    if (index == 55)
-        printf("");
     if (sDumpDebugGraph)
         DumpCellGraph(index, sExpandSymbols);
 #endif
@@ -323,12 +321,7 @@ CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateAr
 
     if (evaluateArgs)
         for (int i = 0; i < args.size(); i++)
-        {
-            CELLID before = args[i];
             args[i] = EvaluateCell(args[i]);
-            if (!args[i].IsValid())
-                printf("");
-        }
 
     CELLID result = (*this.*prim._func)(args);
     return result;
