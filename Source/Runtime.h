@@ -276,9 +276,9 @@ class Runtime
 
     // Commands.cpp
 
-    CELLID Help(const CELLVEC& args);
+    CELLID Help(const CELLVEC&);
     CELLID Exit(const CELLVEC& args);
-    CELLID RunGC(const CELLVEC& args);
+    CELLID RunGC(const CELLVEC&);
 
     CELLID EncodeTreeNode(const NodeRef& root);
 

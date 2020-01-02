@@ -74,15 +74,12 @@ class Console
             buf.resize(len + 1);
             str = &buf[0];
     
-            int written = vsnprintf(str, len, format, args);
-            (written);
-
-            assert(written <= len);
+            vsnprintf(str, len, format, args);
         }
 
         if (_logFile)
         {
-            fprintf(_logFile, str);
+            fprintf(_logFile, "%s", str);
 
             if (_debugOutput)
                 fflush(_logFile);

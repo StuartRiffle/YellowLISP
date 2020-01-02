@@ -45,7 +45,4 @@ const char* gBootstrapCode = R"LISP_BOOTSTRAP(
 (defun cdddar (x) (cdr (cddar x)))
 (defun cddddr (x) (cdr (cdddr x)))
 
-
-(defun sum (x) (cond ((< x 1) 0) (t (+ x (sum (- x 1))))))
-
 )LISP_BOOTSTRAP";

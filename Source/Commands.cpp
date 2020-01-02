@@ -3,9 +3,8 @@
 #include "Yellow.h"
 #include "Runtime.h"
 
-CELLID Runtime::Help(const CELLVEC& args)
+CELLID Runtime::Help(const CELLVEC&)
 {
-    (args);
     _console->Print("TODO\n");
     return 0;
 }
@@ -24,10 +23,8 @@ CELLID Runtime::Exit(const CELLVEC& args)
     exit(returnValue);
 }
 
-CELLID Runtime::RunGC(const CELLVEC& args)
+CELLID Runtime::RunGC(const CELLVEC&)
 {
-    (args);
-
     size_t numReclaimed = CollectGarbage();
     size_t numTotal = _cell.size();
     size_t numFree = 0;
