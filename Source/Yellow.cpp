@@ -66,10 +66,9 @@ int main(int argc, char** argv)
     SanityCheck(console.get());
 #endif
 
-    PrintBanner(console.get());
-
     if (commandLine.HasFlag("--help"))
     {
+        PrintBanner(console.get());
         PrintOptions(console.get(), versionStr);
         return RETURN_SUCCESS;
     }
@@ -120,6 +119,8 @@ int main(int argc, char** argv)
     }
 
     // Otherwise, drop into the REPL
+
+    PrintBanner(console.get());
 
     const char* pad = console->IsColor()? " " : "";
     console->PrintColor(COLOR_BLACK, COLOR_YELLOW, "%s%s%s\n", pad, versionStr, pad);
