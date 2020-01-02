@@ -212,6 +212,8 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
 
             return listHeadCell;
         }
+        default:
+            break;
     }
 
     RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);

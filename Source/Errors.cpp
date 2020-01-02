@@ -29,6 +29,9 @@ const char* YellowError::GetDesc(ErrorCode code)
         case ERROR_INTERNAL_AST_CORRUPT:            return "[INTERNAL] AST is corrupt";
         case ERROR_INTERNAL_CELL_TABLE_CORRUPT:     return "[INTERNAL] CONS cell is corrupt";
         case ERROR_INTERNAL_STRING_TABLE_CORRUPT:   return "[INTERNAL] string table is corrupt";
+
+        default: 
+            break;
     }
 
     return "UNKNOWN ERROR";

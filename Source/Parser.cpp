@@ -303,6 +303,9 @@ NodeRef Parser::ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues)
             for (auto& elem : node->_list)
                 clone->_list.push_back(ExpandMacroBody(elem, argValues));
             break;
+
+        default:
+            break;
     }
 
     return clone;

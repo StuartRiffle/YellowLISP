@@ -28,6 +28,7 @@ void Runtime::FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLI
         case TYPE_STRING: cellTypeName = "STRING"; ssValue << LoadStringLiteral(cellIndex);  break;
         case TYPE_SYMBOL: cellTypeName = "SYMBOL"; ssValue << "symbol " << _cell[cellIndex]._data; fillColor = "lightcyan";  break;
         case TYPE_LAMBDA: cellTypeName = "LAMBDA"; ssValue << "cell " << _cell[cellIndex]._data; fillColor = "lightpink";  break;
+        default: break;
     }
 
     ss << "cell" << cellIndex << " [shape=record,style=filled,fillcolor=" << fillColor << ",label=\"<header>CELL " << cellIndex << " (";
