@@ -323,7 +323,9 @@ void SanityCheck(Console* console)
     static volatile int never = 0;
     RAISE_ERROR_IF(never, ERROR_RUNTIME_TYPE_MISMATCH, "");
 
+#if DEBUG_BUILD
     gCoverageTracker.RefreshCoverage();
+#endif
 }
 
 
