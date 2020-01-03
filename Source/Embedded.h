@@ -1,14 +1,20 @@
 // YellowLISP (c) 2020 Stuart Riffle (MIT license)
 
-#pragma once
-
 #include "Yellow.h"
-// FIXME - move usings etc out of here
 
 namespace YellowLISP
 {
-    #include "Parser.cpp"
+    #include "Bootstrap.cpp"
+    #include "CellGraph.cpp"
+    #include "CellTable.cpp"
+    #include "Commands.cpp"
+    #include "Errors.cpp"
+    #include "Evaluation.cpp"
     #include "Interpreter.cpp"
-    #include "Runtime.cpp"
+    #include "Literals.cpp"
+    #include "Math.cpp"
+    #include "Parser.cpp"
     #include "Primitives.cpp"
-};
+    #include "Runtime.cpp"
+    #include "Testing.cpp"
+}

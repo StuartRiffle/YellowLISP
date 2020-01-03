@@ -6,7 +6,9 @@ Well, I got you fam.
 
 # YellowLISP
 
-This is a LISP interpreter, written in C++11 for 64-bit machines. I started the project as a way to learn the language. Of all the toy LISP implementations out there, it is easily the most yellow.
+This is a LISP interpreter written in C++14. It is intended to be used as an embedded interpreter for scripting.
+
+Of all the pet LISP implementations out there, it is easily the most yellow.
 
 ## Status
 
@@ -19,9 +21,11 @@ Working so far are:
 - Mark-and-sweep garbage collection
 - REPL with pretty error messages
 
-In progress:
+Planned or in progress:
 - Tail call recursion 
 - Foreign function interface
+- Generational GC
+- Debugging from the REPL
 
 ## Building
 
@@ -34,10 +38,26 @@ On **Windows**, you can also use CMake, but it's probably easier to build from t
 
 Either way, you will find the executable in the `Build` folder.
 
+## Embedding
+
+You can embed YellowLISP into a larger program by including one header file. There is nothing to link.
+
+```
+#include "YellowLISP/Embedded.h"
+
+void HelloYellow()
+{
+    YellowLISP::Interpreter lisp;
+    std::string result = lisp.Evaluate("(* 123 456)");
+    printf("%s\n", result.c_str());
+}
+```
+
 ## Running
 
 Launching the executable with no parameters will give you an interactive prompt (the REPL).
 
-If any parameters are LISP files, with the extension `.lisp`, they will be loaded and evaluated in the order given. The executable will exit after that.
+Files with the extension `.lisp` will be loaded and evaluated in the order given, after which the executable will exit.
 
 Run `YellowLISP --help` for a complete list of options.
+

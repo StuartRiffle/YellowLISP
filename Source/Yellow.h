@@ -1,6 +1,8 @@
 // YellowLISP (c) 2020 Stuart Riffle (MIT license)
 
 #pragma once
+#ifndef __YELLOWLISP_H
+#define __YELLOWLISP_H
 
 #ifdef _MSC_VER
     #define _CRT_SECURE_NO_WARNINGS
@@ -73,3 +75,4 @@ using std::unordered_map;
 #include <algorithm>
 #include <cstdarg>
 
+#endif // __YELLOWLISP_H

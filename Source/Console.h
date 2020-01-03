@@ -264,3 +264,9 @@ public:
     }
 };
 
+class DummyConsole : public Console
+{
+    virtual void WriteOutput() {}
+};
+
+

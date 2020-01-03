@@ -9,7 +9,9 @@ Interpreter::Interpreter(Console* console, const InterpreterSettings* settings) 
     _parser(console),
     _runtime(console)
 {
-    _console = console;
+    static DummyConsole dummyConsole;
+
+    _console = console? console : &dummyConsole;
 
     if (settings)
         _settings = *settings;

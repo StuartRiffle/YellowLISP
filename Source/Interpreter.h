@@ -29,7 +29,7 @@ class Interpreter
     CELLID RunSourceCode(const string& source);
 
 public:
-    Interpreter(Console* console, const InterpreterSettings* settings = NULL);
+    Interpreter(Console* console = NULL, const InterpreterSettings* settings = NULL);
 
     string Evaluate(const string& source);
     void RunREPL();
