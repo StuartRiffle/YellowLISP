@@ -81,7 +81,6 @@ enum SymbolType
     SYMBOL_PRIMITIVE,
     SYMBOL_VARIABLE,
     SYMBOL_FUNCTION,
-    SYMBOL_MACRO
 };
 
 enum SymbolFlags
@@ -104,6 +103,15 @@ struct SymbolInfo
 };
 
 #define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
+
+struct CallTarget
+{
+    PRIMIDX _primitiveIndex;
+    CELLID _lambdaCell;
+    bool _evaluateArgs = true;
+
+    inline bool IsValid() const { return _primitiveIndex.IsValid() || _lambdaCell.IsValid(); }
+};
 
 
 typedef StaticVector<CELLID> CELLVEC; 
@@ -136,6 +144,23 @@ struct StringInfo
 #define GARBAGE_COLLECTION_THRESH (0.10f)   // GC is triggered when the cell table has this much free space left
 #define CELL_TABLE_EXPAND_THRESH  (0.25f)   // If the GC doesn't free up at least this much space, expand the table 
 
+typedef unordered_map<SYMBOLIDX, CELLID, SYMBOLIDX::Hash> Scope;
+typedef vector<Scope*> ScopeStack;
+
+struct ScopeGuard
+{
+    ScopeStack& _scopeStack;
+
+    ScopeGuard(ScopeStack& scopeStack, Scope* scope) : _scopeStack(scopeStack)
+    {
+        _scopeStack.push_back(scope);
+    }
+    ~ScopeGuard()
+    {
+        _scopeStack.pop_back();
+    }
+};
+
 class Runtime
 {
     Console* _console;
@@ -151,8 +176,7 @@ class Runtime
     std::unordered_map<STRINGHASH, SYMBOLIDX> _globalScope;
     std::unordered_map<STRINGHASH, STRINGIDX> _stringTable;
 
-    typedef unordered_map<SYMBOLIDX, CELLID, SYMBOLIDX::Hash> Scope;
-    vector<Scope> _environment;
+    ScopeStack _environment;
 
     vector<PrimitiveInfo> _primitive;
 
@@ -175,7 +199,9 @@ class Runtime
     bool TestCellsEQL(CELLID a, CELLID b, bool strict);
     bool TestStructureEQUAL(CELLID a, CELLID b, bool strict);
 
-    Scope BindArguments(CELLID bindingList, CELLID argList, bool evaluateArgs);
+    CELLID GetScopeOverride(SYMBOLIDX symbolIndex);
+    CELLID ApplyFunction(const CallTarget& callTarget, CELLID argList);
+    void   BindScopeMappings(CELLID bindingList, CELLID valueList, bool evaluate, Scope* destScope);
     CELLID CallPrimitive(PRIMIDX primIndex, CELLID argCellIndex, bool evaluateArgs);
     CELLID ExpandQuasiquoted(CELLID macroBodyCell, int level = 0);
 

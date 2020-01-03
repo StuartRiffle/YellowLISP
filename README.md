@@ -24,8 +24,6 @@ Working so far are:
 Planned or in progress:
 - Tail call recursion 
 - Foreign function interface
-- Generational GC
-- Debugging from the REPL
 
 ## Building
 
@@ -37,6 +35,14 @@ make
 On **Windows**, you can also use CMake, but it's probably easier to build from the [Visual Studio](https://visualstudio.microsoft.com/vs/community/) solution in the root of the repository.
 
 Either way, you will find the executable in the `Build` folder.
+
+## Running
+
+Launching the executable with no parameters will give you an interactive prompt (the REPL).
+
+Files with the extension `.lisp` will be loaded and evaluated in the order given, after which the executable will exit.
+
+Run `YellowLISP --help` for a complete list of options.
 
 ## Embedding
 
@@ -52,12 +58,4 @@ void HelloYellow()
     printf("%s\n", result.c_str());
 }
 ```
-
-## Running
-
-Launching the executable with no parameters will give you an interactive prompt (the REPL).
-
-Files with the extension `.lisp` will be loaded and evaluated in the order given, after which the executable will exit.
-
-Run `YellowLISP --help` for a complete list of options.
 

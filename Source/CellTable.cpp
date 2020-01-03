@@ -147,8 +147,8 @@ size_t Runtime::CollectGarbage()
 
     // Mark cells with references on the callstack that got us here
 
-    for (auto& scope : _environment)
-        for (auto& binding : scope)
+    for (Scope* scope : _environment)
+        for (auto& binding : *scope)
             MarkCellsInUse(binding.second);
 
     // Mark everything on the free list too, so it doesn't get clobbered

@@ -112,38 +112,22 @@ CELLID Runtime::EvaluateCell(CELLID index)
         return _nil;
 
 #if DEBUG_BUILD
-    static int sDumpDebugGraph = 0;
-    static int sExpandSymbols = 1;
     // For debugging, this generates a graph of cell connections for GraphViz to render
+    static int sDumpDebugGraph = 1;
+    static int sExpandSymbols = 1;
     if (sDumpDebugGraph)
         DumpCellGraph(index, sExpandSymbols);
 #endif
-
-    CELLID lambdaCell = _nil;
-    PRIMIDX primitiveIndex;
-
-    bool evaluateArguments = true;
-    bool isMacro = false; // HACK
 
     switch (_cell[index]._type)
     {
         case TYPE_SYMBOL:
         {
             SYMBOLIDX symbolIndex = _cell[index]._data;
+            CELLID scopeOverride = GetScopeOverride(symbolIndex);
 
-            // Symbols in the current scope override globals
-
-            if (!_environment.empty())
-            {
-                Scope& scope = _environment.back();
-
-                auto iter = scope.find(symbolIndex);
-                if (iter != scope.end())
-                {
-                    CELLID localValue = iter->second;
-                    return EvaluateCell(localValue);
-                }
-            }
+            if (scopeOverride.IsValid())
+                return scopeOverride;
 
             const SymbolInfo& symbol = _symbol[symbolIndex];
             assert(symbol._symbolCell == index);
@@ -153,21 +137,12 @@ CELLID Runtime::EvaluateCell(CELLID index)
             switch (symbol._type)
             {
                 case SYMBOL_RESERVED:
-                    return index;
-
                 case SYMBOL_PRIMITIVE:
                     return index;
 
                 case SYMBOL_VARIABLE:
-                    return symbol._valueCell;
-
                 case SYMBOL_FUNCTION:
-                    lambdaCell = symbol._valueCell;
-                    break;
-
-                case SYMBOL_MACRO:
-                    // FIXME: macros should be expanded at compile time
-                    lambdaCell = symbol._valueCell;
+                    return symbol._valueCell;
                     break;
 
                 default:
@@ -200,7 +175,9 @@ CELLID Runtime::EvaluateCell(CELLID index)
                 return ExpandQuasiquoted(index);
             }
 
-//            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
+            RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_ARGUMENT, "you can't unquote what isn't quoted");
+
+            CallTarget callTarget;
 
             if (_cell[head]._type == TYPE_SYMBOL)
             {
@@ -209,28 +186,30 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
                 if (headSymbol._type == SYMBOL_PRIMITIVE)
                 {
-                    primitiveIndex = headSymbol._primIndex;
+                    callTarget._primitiveIndex = headSymbol._primIndex;
 
                     if (headSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
-                        evaluateArguments = false;
+                        callTarget._evaluateArgs = false;
                 }
                 else if (headSymbol._type == SYMBOL_FUNCTION)
                 {
-                    lambdaCell = headSymbol._valueCell;
-                }
-                else if (headSymbol._type == SYMBOL_MACRO)
-                {
-                    lambdaCell = headSymbol._valueCell;
-                    isMacro = true;
+                    callTarget._lambdaCell = headSymbol._valueCell;
                 }
             }
             else if (_cell[head]._type == TYPE_CONS)
             {
-                lambdaCell = EvaluateCell(head);
+                callTarget._lambdaCell = EvaluateCell(head);
             }
 
-            RAISE_ERROR_IF((lambdaCell == _nil) && !primitiveIndex.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
-            break;
+            RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
+
+            CELLID argList = _cell[index]._next;
+            RAISE_ERROR_IF((argList != _nil) && _cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
+
+            // Down the rabbit hole we go
+
+            CELLID callResult = ApplyFunction(callTarget, argList);
+            return callResult;
         }
 
         case TYPE_INT:
@@ -243,74 +222,99 @@ CELLID Runtime::EvaluateCell(CELLID index)
             assert(!"Invalid cell type");
     }
 
-    // At this point we [should] have something callable
-
-    if (primitiveIndex.IsValid())
-    {
-        CELLID argCell    = _cell[index]._next;
-        CELLID primResult = CallPrimitive(primitiveIndex, argCell, evaluateArguments);
-        return primResult;
-    }
-
-    assert(lambdaCell != _nil);
-
-    CELLID bindingListIndex = _cell[lambdaCell]._data;
-    CELLID bodyCell = _cell[lambdaCell]._next;
-
-    // Bind the arguments
-
-    RAISE_ERROR_IF(_cell[bindingListIndex]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
-
-    CELLID argList = _cell[index]._next;
-    RAISE_ERROR_IF(_cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
-
-    Scope callScope = BindArguments(bindingListIndex, argList, evaluateArguments);
-
-    // Evaluate the function body
-
-    CELLID callResult = _nil;
-    _environment.push_back(std::move(callScope));
-
-    try
-    {
-        callResult = EvaluateCell(bodyCell);
-
-        if (isMacro)
-            callResult = EvaluateCell(callResult);
-    }
-    catch (...)
-    {
-        _environment.pop_back();
-        throw;
-    }
-
-    _environment.pop_back();
-    return callResult;
+    RAISE_ERROR(ERROR_INTERNAL_RUNTIME_FAILURE, "EvaluateCell failed to do so");
+    return CELLID(); // prevent compiler warning
 }
 
-Runtime::Scope Runtime::BindArguments(CELLID bindingList, CELLID argList, bool evaluateArgs)
+void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evaluate, Scope* destScope)
 {
-    Scope scope;
-
-    while (argList != _nil)
+    while (valueList != _nil)
     {
         RAISE_ERROR_IF(bindingList == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
+        CELLID value = _cell[valueList]._data;
         CELLID boundSymbolCell = _cell[bindingList]._data;
         SYMBOLIDX boundSymbolIndex = _cell[boundSymbolCell]._data;
 
-        CELLID value = _cell[argList]._data;
-        if (evaluateArgs)
+        RAISE_ERROR_IF(_cell[boundSymbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+
+        if (evaluate)
             value = EvaluateCell(value);
 
-        scope[boundSymbolIndex] = value;
+        if (value != _symbol[boundSymbolIndex]._symbolCell)
+            destScope->insert_or_assign(boundSymbolIndex, value);
 
-        argList = _cell[argList]._next;
+        valueList   = _cell[valueList]._next;
         bindingList = _cell[bindingList]._next;
     }
 
-    return scope;
+    RAISE_ERROR_IF(bindingList != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 }
+
+CELLID Runtime::GetScopeOverride(SYMBOLIDX symbolIndex)
+{
+    CELLID result;
+
+    for (auto iterScope = _environment.rbegin(); iterScope != _environment.rend(); ++iterScope)
+    {
+        Scope* scope = *iterScope;
+        assert(scope);
+
+        if (!scope->empty())
+        {
+            auto iterSymbol = scope->find(symbolIndex);
+            if (iterSymbol != scope->end())
+            {
+                CELLID localValue = iterSymbol->second;
+                result = localValue;
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
+{
+    if (callTarget._primitiveIndex.IsValid())
+    {
+        CELLID primResult = CallPrimitive(callTarget._primitiveIndex, argList, callTarget._evaluateArgs);
+        return primResult;
+    }
+
+    CELLID lambdaCell = callTarget._lambdaCell;
+    RAISE_ERROR_IF((lambdaCell == _nil) || (_cell[lambdaCell]._type != TYPE_LAMBDA), ERROR_RUNTIME_UNDEFINED_FUNCTION, "not a function");
+
+    CELLID bindingList = _cell[lambdaCell]._data;
+    CELLID bodyCell = _cell[lambdaCell]._next;
+
+    RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
+    RAISE_ERROR_IF(_cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
+
+    Scope callScope;
+    BindScopeMappings(bindingList, argList, callTarget._evaluateArgs, &callScope);
+
+    ScopeGuard scopeGuard(_environment, &callScope);
+    CELLID result = EvaluateCell(bodyCell);
+
+    return result;
+}
+
+/*
+digraph G {
+    graph[rankdir = "LR"];
+    node [fontname = "segoe ui semibold";shape=rectangle];
+    EvaluateCell -> EvaluateCell;
+    EvaluateCell -> ApplyFunction;
+    ApplyFunction -> EvaluateCell;
+    ApplyFunction -> CallPrimitive;
+    CallPrimitive -> EvaluateCell;
+    CallPrimitive -> "(primitive...)";
+    "(primitive...)" -> EvaluateCell;
+    "(primitive...)" -> ApplyFunction;
+}
+*/
 
 CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateArgs)
 {
