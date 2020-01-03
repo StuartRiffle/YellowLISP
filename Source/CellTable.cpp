@@ -13,9 +13,9 @@ CELLID Runtime::AllocateCell(CellType type)
 
     if (_cellFreeList == 0)
     {
-        TEST_COVERAGE;
         assert(_cellFreeCount == 0);
         ExpandCellTable();
+        TEST_COVERAGE;
     }
 
     if (_cellFreeList == 0)
@@ -76,15 +76,15 @@ void Runtime::ExpandCellTable()
 void Runtime::MarkCellsInUse(CELLID index)
 {
     if (!index.IsValid())
-        return;
+        VOID_RETURN_WITH_COVERAGE;;
 
     if (index == _nil)
-        return;
+        VOID_RETURN_WITH_COVERAGE;
 
     Cell& cell = _cell[index];
 
     if (cell._tags & TAG_GC_MARK)
-        return;
+        VOID_RETURN_WITH_COVERAGE;
 
     cell._tags |= TAG_GC_MARK;
 
@@ -92,6 +92,7 @@ void Runtime::MarkCellsInUse(CELLID index)
     {
         MarkCellsInUse(cell._data);
         MarkCellsInUse(cell._next);
+        TEST_COVERAGE;
     }
 
     if (cell._type == TYPE_LAMBDA)
@@ -101,7 +102,11 @@ void Runtime::MarkCellsInUse(CELLID index)
 
         CELLID body = cell._next;
         MarkCellsInUse(body);
+
+        TEST_COVERAGE;
     }
+
+    VOID_RETURN_WITH_COVERAGE;
 }
 
 void Runtime::DebugValidateCells()
@@ -187,7 +192,10 @@ size_t Runtime::CollectGarbage()
     for (CELLID i = 1; i < _cell.size(); i = i + 1)
     {
         if (i == _nil)
+        {
+            TEST_COVERAGE;
             continue;
+        }
 
         if (_cell[i]._tags & TAG_GC_MARK)
         {
@@ -230,7 +238,7 @@ size_t Runtime::CollectGarbage()
     DebugValidateCells();
 
     _console->PrintDebug("[GC freed %d of %d cells]\n", (int) numCellsFreed, (int) _cell.size());
-    return numCellsFreed;
+    RETURN_WITH_COVERAGE(numCellsFreed);
 }
 
 
@@ -248,6 +256,9 @@ void Runtime::HandleGarbage()
 
 
             ExpandCellTable();
+            VOID_RETURN_WITH_COVERAGE;
         }
     }
+
+    VOID_RETURN_WITH_COVERAGE;
 }

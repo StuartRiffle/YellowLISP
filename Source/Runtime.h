@@ -7,6 +7,7 @@
 #include "Parser.h"
 #include "Errors.h"
 #include "Console.h"
+#include "Testing.h"
 
 enum CellType : uint32_t  
 {                       // The data stored in the cell is...

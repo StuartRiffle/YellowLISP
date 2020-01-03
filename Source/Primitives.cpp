@@ -15,36 +15,35 @@ CELLID Runtime::APPLY(const CELLVEC& args)
 
     if (_cell[funcref]._type == TYPE_SYMBOL)
     {
-        TEST_COVERAGE; 
         SYMBOLIDX funcSymbolIndex = _cell[funcref]._data;
         const SymbolInfo& funcSymbol = _symbol[funcSymbolIndex];
 
         if (funcSymbol._type == SYMBOL_PRIMITIVE)
         {
-            TEST_COVERAGE; 
             callTarget._primitiveIndex = funcSymbol._primIndex;
 
             if (funcSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
             {
-                TEST_COVERAGE; 
                 callTarget._evaluateArgs = false;
+                TEST_COVERAGE; 
             }
+            TEST_COVERAGE; 
         }
         else if (funcSymbol._type == SYMBOL_FUNCTION)
         {
-            TEST_COVERAGE; 
             callTarget._lambdaCell = funcSymbol._valueCell;
+            TEST_COVERAGE; 
         }
     }
     else if (_cell[funcref]._type == TYPE_CONS)
     {
-        TEST_COVERAGE; 
         callTarget._lambdaCell = EvaluateCell(funcref);
+        TEST_COVERAGE; 
     }
     else if (_cell[funcref]._type == TYPE_LAMBDA)
     {
-        TEST_COVERAGE; 
         callTarget._lambdaCell = funcref;
+        TEST_COVERAGE; 
     }
 
     RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
@@ -60,18 +59,19 @@ CELLID Runtime::APPLY(const CELLVEC& args)
             // Special case: if the last argument is a list, append its
             // elements to the argument list
 
-            TEST_COVERAGE;
             while (arg != _nil)
             {
                 callArgs.push_back(_cell[arg]._data);
                 arg = _cell[arg]._next;
+                TEST_COVERAGE;
             }
         }
         else
         {
-            TEST_COVERAGE;
             callArgs.push_back(args[i]);
+            TEST_COVERAGE;
         }
+        TEST_COVERAGE;
     }
 
     CELLID callArgList = GenerateList(callArgs);
@@ -135,7 +135,6 @@ CELLID Runtime::COND(const CELLVEC& args)
         CELLID testResult = EvaluateCell(elements[0]);
         if (testResult != _nil)
             RETURN_WITH_COVERAGE(EvaluateCell(elements[1]));
-
     }
 
     RETURN_WITH_COVERAGE(_nil);
@@ -159,13 +158,14 @@ CELLID Runtime::CONS(const CELLVEC& args)
             RAISE_ERROR_IF(_cell[tail]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "a list must follow the dot");
 
         tail = _cell[tail]._data;
+        TEST_COVERAGE;
     }
 
     CELLID index = AllocateCell(TYPE_CONS);
     _cell[index]._data = head;
     _cell[index]._next = tail;
 
-    return index;
+    RETURN_WITH_COVERAGE(index);
 }
 
 CELLID Runtime::EQLOP(const CELLVEC& args)
@@ -180,9 +180,9 @@ CELLID Runtime::EQLOP(const CELLVEC& args)
     double first = LoadNumericLiteral(args[0]);
     for (int i = 1; i < args.size(); i++)
         if (LoadNumericLiteral(args[i]) != first)
-            return _nil;
+            RETURN_WITH_COVERAGE(_nil);
 
-    return _true;
+    RETURN_WITH_COVERAGE(_true);
 }
 
 CELLID Runtime::EQ(const CELLVEC& args)
@@ -193,9 +193,9 @@ CELLID Runtime::EQ(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (args[i] != args[0])
-            return _nil;
+            RETURN_WITH_COVERAGE(_nil);
 
-    return _true;
+    RETURN_WITH_COVERAGE(_true);
 }
 
 bool Runtime::TestCellsEQL(CELLID a, CELLID b, bool strict)
@@ -203,19 +203,19 @@ bool Runtime::TestCellsEQL(CELLID a, CELLID b, bool strict)
     // EQL is like EQ, but also allows numbers (of the same type) and identical strings
 
     if (a == b)
-        return true;
+        RETURN_WITH_COVERAGE(true);
 
     if (!strict)
         if (IS_NUMERIC_TYPE(a) && (IS_NUMERIC_TYPE(b)))
             if (LoadNumericLiteral(a) == LoadNumericLiteral(b))
-                return true;
+                RETURN_WITH_COVERAGE(true);
 
     if (_cell[a]._type != _cell[b]._type)
-        return false;
+        RETURN_WITH_COVERAGE(false);
 
     if (IS_NUMERIC_TYPE(a))
         if (_cell[a]._data == _cell[b]._data)
-            return true;
+            RETURN_WITH_COVERAGE(true);
 
     if (_cell[a]._type == TYPE_STRING)
     {
@@ -229,10 +229,10 @@ bool Runtime::TestCellsEQL(CELLID a, CELLID b, bool strict)
         }
 
         if (astr == bstr)
-            return true;
+            RETURN_WITH_COVERAGE(true);
     }
 
-    return false;
+    RETURN_WITH_COVERAGE(false);
 }
 
 bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
@@ -240,18 +240,18 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
     // EQUAL is like EQL, but defined recursively for lists
 
     if (a == b)
-        return true;
+        RETURN_WITH_COVERAGE(true);
 
     if (strict)
         if (_cell[a]._type != _cell[b]._type)
-            return false;
+            RETURN_WITH_COVERAGE(false);
 
     if ((_cell[a]._type == TYPE_CONS) && (_cell[b]._type == TYPE_CONS))
     {
         while ((a != _nil) && (b != _nil))
         {
             if (!TestStructureEQUAL(_cell[a]._data, _cell[b]._data, strict))
-                return false;
+                RETURN_WITH_COVERAGE(false);
 
             a = _cell[a]._next;
             b = _cell[b]._next;
@@ -260,15 +260,15 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
         }
 
         if ((a != _nil) || (b != _nil))
-            return false;
+            RETURN_WITH_COVERAGE(false);
 
-        return true;
+        RETURN_WITH_COVERAGE(true);
     }
 
     if (!TestCellsEQL(a, b, strict))
-        return false;
+        RETURN_WITH_COVERAGE(false);
 
-    return true;
+    RETURN_WITH_COVERAGE(true);
 }
 
 
@@ -278,9 +278,9 @@ CELLID Runtime::EQL(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestCellsEQL(args[0], args[i], true))
-            return _nil;
+            RETURN_WITH_COVERAGE(_nil);
 
-    return _true;
+    RETURN_WITH_COVERAGE(_true);
 }
 
 CELLID Runtime::EQUAL(const CELLVEC& args)
@@ -289,9 +289,9 @@ CELLID Runtime::EQUAL(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], true))
-            return _nil;
+            RETURN_WITH_COVERAGE(_nil);
 
-    return _true;
+    RETURN_WITH_COVERAGE(_true);
 }
 
 CELLID Runtime::EQUALP(const CELLVEC& args)
@@ -303,9 +303,9 @@ CELLID Runtime::EQUALP(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], false))
-            return _nil;
+            RETURN_WITH_COVERAGE(_nil);
 
-    return _true;
+    RETURN_WITH_COVERAGE(_true);
 }
 
 CELLID Runtime::LESS(const CELLVEC& args)
@@ -316,16 +316,16 @@ CELLID Runtime::LESS(const CELLVEC& args)
     double b = LoadNumericLiteral(args[1]);
 
     if (a < b)
-        return _true;
+        RETURN_WITH_COVERAGE(_true);
 
-    return _nil;
+    RETURN_WITH_COVERAGE(_nil);
 }
 
 CELLID Runtime::LET(const CELLVEC& args)
 {
     RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LET");
     if (args.size() < 2)
-        return _nil;
+        RETURN_WITH_COVERAGE(_nil);
 
     CELLID bindingList = args[0];
     RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the first argument to LET must be a list of symbol/value pairs");
@@ -354,15 +354,20 @@ CELLID Runtime::LET(const CELLVEC& args)
 
         CELLID valueCell = pair[1];
         blockScope[symbolIndex] = valueCell;
+
+        TEST_COVERAGE;
     }
 
     ScopeGuard scopeGuard(_environment, &blockScope);
     CELLID result = _nil;
 
     for (int i = 1; i < args.size(); i++)
+    {
         result = EvaluateCell(args[i]);
+        TEST_COVERAGE;
+    }
 
-    return result;
+    RETURN_WITH_COVERAGE(result);
 }
 
 
@@ -370,7 +375,7 @@ CELLID Runtime::LET(const CELLVEC& args)
 CELLID Runtime::LIST(const CELLVEC& args)
 {
     if (args.empty())
-        return _nil;
+        RETURN_WITH_COVERAGE(_nil);
 
     vector<CELLID> listCells;
     listCells.reserve(args.size());
@@ -395,7 +400,7 @@ CELLID Runtime::LIST(const CELLVEC& args)
 
             elem = args[i];
             if (elem == _nil)
-                break;
+                BREAK_WITH_COVERAGE;
 
             RAISE_ERROR_IF(_cell[elem]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the dot must be followed by a list");
 
@@ -406,21 +411,26 @@ CELLID Runtime::LIST(const CELLVEC& args)
             ExtractList(elem, &tailList);
 
             elemCell = LIST(tailList);
+            TEST_COVERAGE;
         }
         else
         {
             elemCell = AllocateCell(TYPE_CONS);
             CELLID value = EvaluateCell(elem);
             _cell[elemCell]._data = value;
+            TEST_COVERAGE;
         }
 
         if (!listCells.empty())
+        {
             _cell[listCells.back()]._next = elemCell;
+            TEST_COVERAGE;
+        }
 
         listCells.push_back(elemCell);
     }
 
-    return listCells[0];
+    RETURN_WITH_COVERAGE(listCells[0]);
 }
 
 CELLID Runtime::SETQ(const CELLVEC& args)
@@ -447,10 +457,12 @@ CELLID Runtime::SETQ(const CELLVEC& args)
 
         symbol._type = SYMBOL_VARIABLE;
         symbol._valueCell = valueCell;
+
+        TEST_COVERAGE;
     }
 
 
-    return valueCell;
+    RETURN_WITH_COVERAGE(valueCell);
 }
 
 CELLID Runtime::PROGN(const CELLVEC& args)
@@ -458,9 +470,12 @@ CELLID Runtime::PROGN(const CELLVEC& args)
     CELLID result = _nil;
 
     for (int i = 0; i < args.size(); i++)
+    {
         result = EvaluateCell(args[i]);
+        TEST_COVERAGE;
+    }
 
-    return result;
+    RETURN_WITH_COVERAGE(result);
 }
 
 CELLID Runtime::EVAL(const CELLVEC& args)
@@ -468,7 +483,7 @@ CELLID Runtime::EVAL(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "EVAL");
 
     CELLID cellIndex = args[0];
-    return EvaluateCell(cellIndex);
+    RETURN_WITH_COVERAGE(EvaluateCell(cellIndex));
 }
 
 CELLID Runtime::DEFUN(const CELLVEC& args)
@@ -493,7 +508,7 @@ CELLID Runtime::DEFUN(const CELLVEC& args)
     functionSymbol._type = SYMBOL_FUNCTION;
     functionSymbol._valueCell = lambdaCell;
 
-    return symbolCell;
+    RETURN_WITH_COVERAGE(symbolCell;
 }
 
 CELLID Runtime::LAMBDA(const CELLVEC& args)
@@ -510,6 +525,6 @@ CELLID Runtime::LAMBDA(const CELLVEC& args)
     _cell[lambdaCell]._data = bindingListCell;
     _cell[lambdaCell]._next = functionBodyCell;
 
-    return lambdaCell;
+    RETURN_WITH_COVERAGE(lambdaCell;
 }
 

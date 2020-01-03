@@ -4,6 +4,7 @@
 #include "Bootstrap.h"
 #include "Interpreter.h"
 #include "Console.h"
+#include "Testing.h"
 
 Interpreter::Interpreter(Console* console, const InterpreterSettings* settings) :
     _parser(console),
@@ -31,6 +32,7 @@ vector<CELLID> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 
         CELLID valueCell = _runtime.EvaluateCell(exprCell);
         outputs.push_back(valueCell);    
+        TEST_COVERAGE;
     }
 
     return outputs;
@@ -44,7 +46,10 @@ CELLID Interpreter::RunSourceCode(const string& source)
     vector<CELLID> values = EvaluateExpressions(exps);
 
     if (!values.empty())
+    {
         result = values.back();
+        TEST_COVERAGE;
+    }
 
     return result;
 }
@@ -65,6 +70,8 @@ string Interpreter::Evaluate(const string& source)
     }
     catch (YellowError error)
     {
+        TEST_COVERAGE;
+
     #if !YELLOW_CATCH_EXCEPTIONS
         throw;
     #endif
@@ -77,6 +84,8 @@ string Interpreter::Evaluate(const string& source)
     }
     catch (std::exception error)
     {
+        TEST_COVERAGE;
+
     #if !YELLOW_CATCH_EXCEPTIONS
         throw;
     #endif
@@ -89,6 +98,8 @@ string Interpreter::Evaluate(const string& source)
     }
     catch (...)
     {
+        TEST_COVERAGE;
+
         _console->PrintErrorPrefix("INTERNAL ERROR");
         _console->Print("unhandled exception\n");
     }
@@ -99,7 +110,7 @@ string Interpreter::Evaluate(const string& source)
 
     //_runtime.HandleGarbage();
 
-    return output;
+    RETURN_WITH_COVERAGE(output);
 }
 
 void Interpreter::RunREPL()
@@ -115,6 +126,8 @@ void Interpreter::RunREPL()
 
         if (output.length() > 0)
             _console->Print("%s\n", output.c_str());
+
+        TEST_COVERAGE;
     }
 }
 

@@ -37,7 +37,7 @@ CELLID Runtime::RunGC(const CELLVEC&)
     }
 
     _console->PrintDebug("%d cells reclaimed, %d/%d now available\n", (int) numReclaimed, (int) numFree, (int) numTotal);
-    return 0;
+    RETURN_WITH_COVERAGE(0);
 }
 
 

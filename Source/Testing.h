@@ -31,10 +31,12 @@ struct CoverageMarker
     void NotifyTouched() { _timesTouched++; }
 };
 
-#define CONCATENATE(_PREFIX, _SUFFIX)                   _PREFIX ## _SUFFIX
-#define UNIQUE_COVERAGE_MARKER_NAME(_COUNTER)           CONCATENATE(sCoverageMarker, _COUNTER)
-#define DECLARE_COVERAGE_MARKER(_MARKER_NAME, _DESC)    { static CoverageMarker _MARKER_NAME(__FILE__, __FUNCTION__, __LINE__); _MARKER_NAME.NotifyTouched(); }
+#define CONCATENATE(_PREFIX, _SUFFIX)           _PREFIX ## _SUFFIX
+#define UNIQUE_COVERAGE_MARKER_NAME(_COUNTER)   CONCATENATE(sCoverageMarker, _COUNTER)
+#define DECLARE_COVERAGE_MARKER(_MARKER_NAME)   { static CoverageMarker _MARKER_NAME(__FILE__, __FUNCTION__, __LINE__); _MARKER_NAME.NotifyTouched(); }
 
+// When placing these markers, put them at the *end* of basic blocks, because
+// exceptions could cause an early exit, and we need to test all the way to the end.
 
 #if DEBUG_BUILD
     #define TEST_COVERAGE DECLARE_COVERAGE_MARKER(UNIQUE_COVERAGE_MARKER_NAME(__COUNTER__))
@@ -44,5 +46,6 @@ struct CoverageMarker
 
 
 #define RETURN_WITH_COVERAGE(_RESULT) { TEST_COVERAGE; return _RESULT; }
-
+#define VOID_RETURN_WITH_COVERAGE     { TEST_COVERAGE; return; }
+#define BREAK_WITH_COVERAGE           { TEST_COVERAGE; break; }
 
