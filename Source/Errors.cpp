@@ -24,6 +24,7 @@ const char* YellowError::GetDesc(ErrorCode code)
 
         case ERROR_INTERNAL_OUT_OF_MEMORY:          return "[INTERNAL] out of memory";
         case ERROR_INTERNAL_PARSER_FAILURE:         return "[INTERNAL] parsing failure";
+        case ERROR_INTERNAL_RUNTIME_FAILURE:        return "[INTERNAL] runtime failure";
         case ERROR_INTERNAL_HASH_COLLISION:         return "[INTERNAL] hash collision";
         case ERROR_INTERNAL_SLOT_POOL_RANGE:        return "[INTERNAL] slot pool access out of range";
         case ERROR_INTERNAL_AST_CORRUPT:            return "[INTERNAL] AST is corrupt";

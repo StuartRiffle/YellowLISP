@@ -20,28 +20,28 @@ Runtime::Runtime(Console* console) : _console(console)
 
     _dot = RegisterReserved(".");
     _true = RegisterReserved("t");
-    _eval = RegisterPrimitive("eval", &Runtime::EVAL);
     _quote = RegisterPrimitive("quote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
     _unquote = RegisterPrimitive("unquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
     _quasiquote = RegisterPrimitive("quasiquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
 
     // Language primitives
 
-    RegisterPrimitive("cond",    &Runtime::COND,     SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("cons",    &Runtime::CONS,     SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("defun",   &Runtime::DEFUN,    SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("lambda",  &Runtime::LAMBDA,   SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("list",    &Runtime::LIST,     SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("progn",   &Runtime::PROGN,    SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("setq",    &Runtime::SETQ,     SYMBOLFLAG_DONT_EVAL_ARGS);
-
+    RegisterPrimitive("apply",   &Runtime::APPLY);
     RegisterPrimitive("atom",    &Runtime::ATOM);
     RegisterPrimitive("car",     &Runtime::CAR);
     RegisterPrimitive("cdr",     &Runtime::CDR);
+    RegisterPrimitive("cond",    &Runtime::COND,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("cons",    &Runtime::CONS,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("defun",   &Runtime::DEFUN,   SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("eq",      &Runtime::EQ);
     RegisterPrimitive("eql",     &Runtime::EQL);
     RegisterPrimitive("equal",   &Runtime::EQUAL);
     RegisterPrimitive("equalp",  &Runtime::EQUALP);
+    RegisterPrimitive("eval",    &Runtime::EVAL);
+    RegisterPrimitive("lambda",  &Runtime::LAMBDA,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("list",    &Runtime::LIST,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("progn",   &Runtime::PROGN,   SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("setq",    &Runtime::SETQ,    SYMBOLFLAG_DONT_EVAL_ARGS);
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);

@@ -240,6 +240,7 @@ class Runtime
 
     // Primitives.cpp
 
+    CELLID APPLY(const CELLVEC& args);
     CELLID ATOM(const CELLVEC& args);
     CELLID CAR(const CELLVEC& args);
     CELLID CDR(const CELLVEC& args);

@@ -9,10 +9,12 @@ bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
     ErrorCode caughtError = ERROR_NONE;
     string output;
 
+    /*
     if (expectedOutput)
         console->PrintDebug("%-40s =>  %s\n", source, expectedOutput);
     else
         console->PrintDebug("%-40s =>  %s\n", source, YellowError::GetDesc(expectedError));
+    */
 
     try
     {
@@ -59,7 +61,7 @@ bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
     console->PrintErrorPrefix("INTERNAL TEST FAILED");
     console->Print("% s\n", ss.str().c_str());
 
-    static int sRetryOnError = 0;
+    static int sRetryOnError = 1;
     if (sRetryOnError)
         CheckOutput(console, lisp, source, expectedOutput, expectedError);
 
@@ -82,6 +84,9 @@ void SanityCheck(Console* console)
     Interpreter lisp(console, &settings);
     
     // (progn (defmacro foo (x) `(+ ,x 1)) (defmacro bar (x) `(* ,x (foo ,x))) (bar 123)) => 15252
+
+    VERIFY("(setq x '(4 5 6))", "(4 5 6)");
+    VERIFY("(atom x)", "nil");
 
     VERIFY("(setq x 123)", "123");
     VERIFY("`(x x)", "(x x)");

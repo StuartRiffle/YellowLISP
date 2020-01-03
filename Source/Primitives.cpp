@@ -5,6 +5,70 @@
 #include "Errors.h"
 #include "Utility.h"
 
+CELLID Runtime::APPLY(const CELLVEC& args)
+{
+    RAISE_ERROR_IF(args.size() < 1,  ERROR_RUNTIME_WRONG_NUM_PARAMS, "APPLY");
+
+    CELLID funcref = args[0];
+    CallTarget callTarget;
+
+    if (_cell[funcref]._type == TYPE_SYMBOL)
+    {
+        SYMBOLIDX funcSymbolIndex = _cell[funcref]._data;
+        const SymbolInfo& funcSymbol = _symbol[funcSymbolIndex];
+
+        if (funcSymbol._type == SYMBOL_PRIMITIVE)
+        {
+            callTarget._primitiveIndex = funcSymbol._primIndex;
+
+            if (funcSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
+                callTarget._evaluateArgs = false;
+        }
+        else if (funcSymbol._type == SYMBOL_FUNCTION)
+        {
+            callTarget._lambdaCell = funcSymbol._valueCell;
+        }
+    }
+    else if (_cell[funcref]._type == TYPE_CONS)
+    {
+        callTarget._lambdaCell = EvaluateCell(funcref);
+    }
+    else if (_cell[funcref]._type == TYPE_LAMBDA)
+    {
+        callTarget._lambdaCell = funcref;
+    }
+
+    RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
+
+    CELLVEC callArgs;
+    size_t last = (args.size() - 1);
+    for (int i = 1; i < args.size(); i++)
+    {
+        CELLID arg = args[i];
+
+        if ((i == last) && (_cell[arg]._type == TYPE_CONS))
+        {
+            // Special case: if the last argument is a list, append its
+            // elements to the argument list
+
+            while (arg != _nil)
+            {
+                callArgs.push_back(_cell[arg]._data);
+                arg = _cell[arg]._next;
+            }
+        }
+        else
+        {
+            callArgs.push_back(args[i]);
+        }
+    }
+
+    CELLID callArgList = GenerateList(callArgs);
+    CELLID callResult  = ApplyFunction(callTarget, callArgList);
+
+    return callResult;
+}
+
 CELLID Runtime::ATOM(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "ATOM");
