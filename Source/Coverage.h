@@ -1,9 +1,15 @@
 // YellowLISP (c) 2020 Stuart Riffle (MIT license)
 
-#include "Yellow.h"
-
 #pragma once
 
+// This is hacky and fragile! It's just to use as reference while debugging,
+// and has only been tested in MSVC so far. It can not generate a list of
+// missed coverage markers, and it only works in DEBUG_BUILD.
+//
+// To figure out what coverage is missing, look at gCoverageMarker in the
+// debugger, and see what functions are being hit around the gaps. I told you
+// it was hacky.
+//
 // For this to work, the compiler macro __COUNTER__ has to be unique over the
 // entire codebase, but by default it resets for every compilation unit. So
 // the code has to be built as one bulk/unity/jumbo build!
