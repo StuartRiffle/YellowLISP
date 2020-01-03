@@ -107,7 +107,7 @@ NodeRef Parser::ParseNumber()
 {
     RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
 
-    char* end = NULL;
+    char* end = nullptr;
     float val = strtof(_code, &end);
 
     RAISE_ERROR_IF(end == _code, ERROR_PARSER_SYNTAX, "invalid number");
@@ -346,7 +346,7 @@ NodeRef Parser::Simplify(NodeRef node)
 
                 // Macros will be expanded here in the parser, so there's nothing to evaluate now
 
-                return NULL;
+                return nullptr;
             }
 
 

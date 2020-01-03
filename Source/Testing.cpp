@@ -70,7 +70,7 @@ bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const 
 
 void CheckOutput(Console* console, Interpreter& lisp, const char* source, ErrorCode expectedError)
 {
-    CheckOutput(console, lisp, source, NULL, expectedError);
+    CheckOutput(console, lisp, source, nullptr, expectedError);
 }
 
 #define VERIFY(_IN, _OUT) CheckOutput(console, lisp, _IN, _OUT)

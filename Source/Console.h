@@ -102,7 +102,7 @@ public:
         _enableColor = false;
         _extendedCharSet = false;
         _debugOutput = false;
-        _logFile = NULL;
+        _logFile = nullptr;
 
         // Disable output buffering
 
@@ -179,7 +179,7 @@ public:
         _debugOutput = enabled;
     }
 
-    void LogToFile(const char* filename = NULL)
+    void LogToFile(const char* filename = nullptr)
     {
         if (_logFile)
             fclose(_logFile);

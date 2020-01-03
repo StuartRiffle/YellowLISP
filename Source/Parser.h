@@ -97,7 +97,7 @@ class Parser
     NodeRef Simplify(NodeRef node);
 
 public:
-    Parser(Console* console) : _console(console), _code(NULL) {}
+    Parser(Console* console) : _console(console), _code(nullptr) {}
 
     list<NodeRef> ParseExpressionList(const string& source);
     void DumpSyntaxTree(NodeRef node, int indent = 0);

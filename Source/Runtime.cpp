@@ -20,9 +20,9 @@ Runtime::Runtime(Console* console) : _console(console)
 
     _dot = RegisterReserved(".");
     _true = RegisterReserved("t");
-    _quote = RegisterPrimitive("quote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
-    _unquote = RegisterPrimitive("unquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
-    _quasiquote = RegisterPrimitive("quasiquote", NULL, SYMBOLFLAG_DONT_EVAL_ARGS);
+    _quote = RegisterPrimitive("quote", nullptr, SYMBOLFLAG_DONT_EVAL_ARGS);
+    _unquote = RegisterPrimitive("unquote", nullptr, SYMBOLFLAG_DONT_EVAL_ARGS);
+    _quasiquote = RegisterPrimitive("quasiquote", nullptr, SYMBOLFLAG_DONT_EVAL_ARGS);
 
     // Language primitives
 
