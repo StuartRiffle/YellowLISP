@@ -309,6 +309,52 @@ CELLID Runtime::LESS(const CELLVEC& args)
     return _nil;
 }
 
+CELLID Runtime::LET(const CELLVEC& args)
+{
+    RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LET");
+    if (args.size() < 2)
+        return _nil;
+
+    CELLID bindingList = args[0];
+    RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the first argument to LET must be a list of symbol/value pairs");
+
+    CELLVEC bindings;
+    ExtractList(bindingList, &bindings);
+
+    Scope blockScope;
+    for (int i = 0; i < bindings.size(); i++)
+    {
+        const char* wrongFormatMessage = "LET bindings must be lists of symbol/value pairs";
+
+        CELLID pairList = bindings[i];
+        RAISE_ERROR_IF(_cell[pairList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, wrongFormatMessage);
+
+        CELLVEC pair;
+        ExtractList(pairList, &pair);
+        RAISE_ERROR_IF(pair.size() != 2, ERROR_RUNTIME_INVALID_ARGUMENT, wrongFormatMessage);
+
+        CELLID symbolCell = pair[0];
+        RAISE_ERROR_IF(_cell[symbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_INVALID_ARGUMENT, wrongFormatMessage);
+
+        SYMBOLIDX symbolIndex = _cell[symbolCell]._data;
+        RAISE_ERROR_IF(_symbol[symbolIndex]._type == SYMBOL_RESERVED,  ERROR_RUNTIME_INVALID_ARGUMENT, "LET can't bind a reserved symbol");
+        RAISE_ERROR_IF(_symbol[symbolIndex]._type == SYMBOL_PRIMITIVE, ERROR_RUNTIME_INVALID_ARGUMENT, "LET can't bind a primitive symbol");
+
+        CELLID valueCell = pair[1];
+        blockScope[symbolIndex] = valueCell;
+    }
+
+    ScopeGuard scopeGuard(_environment, &blockScope);
+    CELLID result = _nil;
+
+    for (int i = 1; i < args.size(); i++)
+        result = EvaluateCell(args[i]);
+
+    return result;
+}
+
+
+
 CELLID Runtime::LIST(const CELLVEC& args)
 {
     if (args.empty())

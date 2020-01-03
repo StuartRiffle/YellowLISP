@@ -39,6 +39,7 @@ Runtime::Runtime(Console* console) : _console(console)
     RegisterPrimitive("equalp",  &Runtime::EQUALP);
     RegisterPrimitive("eval",    &Runtime::EVAL);
     RegisterPrimitive("lambda",  &Runtime::LAMBDA,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("let",     &Runtime::LET,     SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("list",    &Runtime::LIST,    SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("progn",   &Runtime::PROGN,   SYMBOLFLAG_DONT_EVAL_ARGS);
     RegisterPrimitive("setq",    &Runtime::SETQ,    SYMBOLFLAG_DONT_EVAL_ARGS);
