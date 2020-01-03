@@ -14,7 +14,7 @@ public:
 
     inline T& operator[](TINDEX index) 
     {
-        RAISE_ERROR_IF(!index.IsValid() || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
+        RAISE_ERROR_IF(!index.IsValid() || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE, "attempt to index out of bounds");
         return _elems[index];
     }
 
@@ -36,7 +36,7 @@ public:
 
     inline void Free(TINDEX index)
     {
-        RAISE_ERROR_IF(!index.IsValid() || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE);
+        RAISE_ERROR_IF(!index.IsValid() || (index >= _elems.size()), ERROR_INTERNAL_SLOT_POOL_RANGE, "attempt to index out of bounds");
         _freeSlots.push_back(index);
     }
 

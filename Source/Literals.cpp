@@ -9,8 +9,8 @@ int Runtime::LoadIntLiteral(CELLID index)
     assert(index.IsValid());
     const Cell& cell = _cell[index];
 
-    RAISE_ERROR_IF(cell._type != TYPE_INT,           ERROR_INTERNAL_CELL_TABLE_CORRUPT);
-    RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF(cell._type != TYPE_INT,           ERROR_INTERNAL_CELL_TABLE_CORRUPT, "LoadIntLiteral called on something not an int");
+    RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT, "LoadIntLiteral expects embedded data");
 
     int value = (int)cell._data;
     RETURN_ASSERT_COVERAGE(value);
@@ -34,8 +34,8 @@ float Runtime::LoadFloatLiteral(CELLID index)
     assert(index.IsValid());
     const Cell& cell = _cell[index];
 
-    RAISE_ERROR_IF(cell._type != TYPE_FLOAT,         ERROR_INTERNAL_CELL_TABLE_CORRUPT);
-    RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF(cell._type != TYPE_FLOAT,         ERROR_INTERNAL_CELL_TABLE_CORRUPT, "LoadFloatLiteral called on something not an int");
+    RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT, "LoadFloatLiteral expects embedded data");
 
     union { uint32_t raw; float value; } pun;
     pun.raw = cell._data;
@@ -95,7 +95,7 @@ string Runtime::LoadStringLiteral(CELLID index)
     assert(index.IsValid());
     const Cell& cell = _cell[index];
 
-    RAISE_ERROR_IF(cell._type != TYPE_STRING, ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF(cell._type != TYPE_STRING, ERROR_INTERNAL_CELL_TABLE_CORRUPT, "LoadStringLiteral called on something not a string");
 
     if (cell._tags & TAG_EMBEDDED)
     {
@@ -107,7 +107,7 @@ string Runtime::LoadStringLiteral(CELLID index)
     }
 
     STRINGIDX stringIndex = cell._data;
-    RAISE_ERROR_IF(!stringIndex.IsValid() || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT);
+    RAISE_ERROR_IF(!stringIndex.IsValid() || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT, "string index out of range");
 
     const string& value = _string[stringIndex]._str;
     RETURN_ASSERT_COVERAGE(value);
@@ -140,7 +140,7 @@ void Runtime::StoreStringLiteral(CELLID index, const char* value)
             stringIndex = existing->second;
             assert(stringIndex.IsValid());
 
-            RAISE_ERROR_IF(_string[stringIndex]._str != value, ERROR_INTERNAL_HASH_COLLISION);
+            RAISE_ERROR_IF(_string[stringIndex]._str != value, ERROR_INTERNAL_HASH_COLLISION, "64-bit hash collision... how did you do that?");
             ASSERT_COVERAGE;
         }
         else

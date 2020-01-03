@@ -67,6 +67,8 @@ string Interpreter::Evaluate(const string& source)
         CELLID valueCell = RunSourceCode(source);
         if (valueCell.IsValid())
             output = _runtime.GetPrintedValue(valueCell);
+
+        ASSERT_COVERAGE;
     }
     catch (YellowError error)
     {

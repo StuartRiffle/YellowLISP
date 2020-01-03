@@ -20,7 +20,7 @@ CELLID Runtime::AllocateCell(CellType type)
 
     if (_cellFreeList == 0)
     {
-        RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY);
+        RAISE_ERROR(ERROR_INTERNAL_OUT_OF_MEMORY, "cannot expand cell table");
         return 0;
     }
 
@@ -211,7 +211,7 @@ size_t Runtime::CollectGarbage()
                     STRINGIDX stringIndex = _cell[i]._data;
                     StringInfo& info = _string[stringIndex];
 
-                    RAISE_ERROR_IF(info._refCount < 1, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
+                    RAISE_ERROR_IF(info._refCount < 1, ERROR_INTERNAL_STRING_TABLE_CORRUPT, "reference count is zero");
                     info._refCount--;
 
                     if (info._refCount == 0)
@@ -219,7 +219,7 @@ size_t Runtime::CollectGarbage()
                         _string.Free(stringIndex);
 
                         STRINGHASH hash = HashString(info._str.c_str());
-                        RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
+                        RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT, "hashes didn't match");
 
                         _stringTable.erase(hash);
                         ASSERT_COVERAGE;

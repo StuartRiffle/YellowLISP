@@ -57,7 +57,6 @@ Runtime::Runtime(Console* console) : _console(console)
     RegisterPrimitive("floor",   &Runtime::FLOOR);
     RegisterPrimitive("ceiling", &Runtime::CEILING);
     RegisterPrimitive("exp",     &Runtime::EXP);
-    RegisterPrimitive("expt",    &Runtime::EXPT);
     RegisterPrimitive("log",     &Runtime::LOG);
     RegisterPrimitive("sqrt",    &Runtime::SQRT);
     RegisterPrimitive("abs",     &Runtime::ABS );
@@ -218,7 +217,7 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
             break;
     }
 
-    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED);
+    RAISE_ERROR(ERROR_RUNTIME_NOT_IMPLEMENTED, "unknown AST node type");
     return 0;
 }
 
@@ -290,7 +289,7 @@ string Runtime::GetPrintedValue(CELLID index)
         case TYPE_SYMBOL: ss <<  _symbol[_cell[index]._data]._ident;        BREAK_ASSERT_COVERAGE;
         case TYPE_LAMBDA: ss <<  "<lambda " << index << ">";                BREAK_ASSERT_COVERAGE;
         default:          
-            RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT); break;
+            RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT, "unrecognized cell type"); break;
     }
 
     RETURN_ASSERT_COVERAGE(ss.str());

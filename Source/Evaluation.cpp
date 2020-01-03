@@ -159,8 +159,8 @@ CELLID Runtime::EvaluateCell(CELLID index)
                 // Special form: quote
 
                 CELLID quoted = _cell[index]._next;
-                RAISE_ERROR_IF(quoted == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
-                RAISE_ERROR_IF(_cell[quoted]._next != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+                RAISE_ERROR_IF(quoted == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "not enough parameters to QUOTE");
+                RAISE_ERROR_IF(_cell[quoted]._next != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "too many parameters to QUOTE");
 
                 RETURN_ASSERT_COVERAGE(_cell[quoted]._data);
             }
@@ -207,7 +207,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
             RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
 
             CELLID argList = _cell[index]._next;
-            RAISE_ERROR_IF((argList != _nil) && _cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
+            RAISE_ERROR_IF((argList != _nil) && _cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "argument list is not a list");
 
             // Down the rabbit hole we go
 
@@ -235,13 +235,13 @@ void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evalu
 {
     while (valueList != _nil)
     {
-        RAISE_ERROR_IF(bindingList == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+        RAISE_ERROR_IF(bindingList == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "binding list is empty");
 
         CELLID value = _cell[valueList]._data;
         CELLID boundSymbolCell = _cell[bindingList]._data;
         SYMBOLIDX boundSymbolIndex = _cell[boundSymbolCell]._data;
 
-        RAISE_ERROR_IF(_cell[boundSymbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+        RAISE_ERROR_IF(_cell[boundSymbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_INVALID_ARGUMENT, "first element of binding list must be a symbol");
 
         if (evaluate)
         {
@@ -251,7 +251,7 @@ void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evalu
 
         if (value != _symbol[boundSymbolIndex]._symbolCell)
         {
-            destScope[boundSymbolIndex] = value;
+            destScope->insert_or_assign(boundSymbolIndex, value);
             ASSERT_COVERAGE;
         }
 
@@ -260,7 +260,7 @@ void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evalu
         ASSERT_COVERAGE;
     }
 
-    RAISE_ERROR_IF(bindingList != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
+    RAISE_ERROR_IF(bindingList != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "more bindings than parameters");
 }
 
 CELLID Runtime::GetScopeOverride(SYMBOLIDX symbolIndex)
@@ -303,8 +303,8 @@ CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
     CELLID bindingList = _cell[lambdaCell]._data;
     CELLID bodyCell = _cell[lambdaCell]._next;
 
-    RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
-    RAISE_ERROR_IF(_cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT);
+    RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "binding list is not a list");
+    RAISE_ERROR_IF(_cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "argument list is not a list");
 
     Scope callScope;
     BindScopeMappings(bindingList, argList, callTarget._evaluateArgs, &callScope);

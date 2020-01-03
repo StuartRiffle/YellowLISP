@@ -82,7 +82,7 @@ NodeRef Parser::ParseList()
     }
 
     if (!Consume(')'))
-        RAISE_ERROR(ERROR_PARSER_LIST_UNTERMINATED);
+        RAISE_ERROR(ERROR_PARSER_LIST_UNTERMINATED, "')' expected");
     
     RETURN_ASSERT_COVERAGE(listNode);
 }
@@ -104,7 +104,7 @@ NodeRef Parser::ParseString()
 
     const char* end = strchr(_code, '\"');
     if (!end)
-        RAISE_ERROR(ERROR_PARSER_STRING_UNTERMINATED);
+        RAISE_ERROR(ERROR_PARSER_STRING_UNTERMINATED, "ending quotation mark expected");
 
     string str(_code, end - _code);
     _code = end + 1;
@@ -116,7 +116,7 @@ NodeRef Parser::ParseString()
 
 NodeRef Parser::ParseNumber()
 {
-    RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
+    RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE, "whitespace should have been skipped");
 
     char* end = nullptr;
     float val = strtof(_code, &end);
@@ -147,7 +147,7 @@ NodeRef Parser::ParseNumber()
 
 NodeRef Parser::ParseIdentifier()
 {
-    RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE);
+    RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE, "whitespace should have been skipped");
 
     const char* end = _code;
 
@@ -163,7 +163,7 @@ NodeRef Parser::ParseIdentifier()
     }
 
     if (end == _code)
-        RAISE_ERROR(ERROR_PARSER_INVALID_IDENTIFIER);
+        RAISE_ERROR(ERROR_PARSER_INVALID_IDENTIFIER, "first character is invalid for an identifier");
 
     string ident(_code, end - _code);
     _code = end;
@@ -236,7 +236,7 @@ void Parser::DumpSyntaxTree(NodeRef node, int indent)
 
         case AST_NODE_INVALID:
         default:
-            RAISE_ERROR(ERROR_INTERNAL_AST_CORRUPT);
+            RAISE_ERROR(ERROR_INTERNAL_AST_CORRUPT, "unknown node type");
             break;
     }
 }

@@ -5,7 +5,12 @@
 #include "Interpreter.h"
 #include "Coverage.h"
 
-CoverageMarker* gCoverageMarkerList = NULL;
+#if DEBUG_BUILD
+    CoverageTracker<CoverageMarker> gCoverageTracker;
+
+    const int MAX_MARKERS = 1000;
+    CoverageMarker gCoverageMarker[MAX_MARKERS];
+#endif
 
 bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
 {
@@ -317,7 +322,10 @@ void SanityCheck(Console* console)
     VERIFY("(atom unbound)", ERROR_RUNTIME_VARIABLE_UNBOUND);
     VERIFY("(< 1 nil)",   ERROR_RUNTIME_TYPE_MISMATCH);
 
+    static volatile int never = 0;
+    RAISE_ERROR_IF(never, ERROR_RUNTIME_TYPE_MISMATCH, "");
 
+    gCoverageTracker.RefreshCoverage();
 }
 
 
