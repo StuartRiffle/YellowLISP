@@ -45,7 +45,32 @@
 (defun sum (x) (cond ((< x 1) 0) (t (+ x (sum (- x 1))))))
 
 
+(define (mymap func elems) 
+    (cond 
+        ((null? elems) '())
+        (else (cons (func (car elems)) (mymap func (cdr elems))))))
+        
+        
 
+(define (mymap func elems) (cond  ((null? elems) '())   (else (cons (func (car elems)) (mymap func (cdr elems))))))
+
+(defun mymap (func elems) (cond  ((nullp elems) '())   (t (cons (func (car elems)) (mymap func (cdr elems))))))
+
+
+(defun mymap (func elems) (apply func (car elems)))
+
+        
+                
+(define (mymap func elems) (cond  ((null? elems) '())   (#t (mymap func (cdr elems)))))
+
+
+
+        
+
+(define (my-last f L)
+  (cond ((null? L) #f)
+        ((null? (cdr L)) (f (car L)))
+        (else (my-last f (cdr L)))))
 
 
 

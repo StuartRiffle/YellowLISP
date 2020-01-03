@@ -14,8 +14,8 @@ struct CoverageMarker
     {
         // This will happen as part of static object initialization on startup,
         // building a linked list of all the coverage markers in the executable.
-        // Every time the marker comes into scope, _timesTouched gets incremented.
-        // We can walk the list after running tests to see if we hit all of them.
+        // Every time the marker comes into scope, _timesTouched is incremented.
+        // We can walk the list after testing to see if we hit all of them.
 
         _nextMarker = gCoverageMarkerList;
         gCoverageMarkerList = this;

@@ -3,7 +3,7 @@
 #include "Yellow.h"
 #include "Console.h"
 #include "Interpreter.h"
-#include "Testing.h"
+#include "Coverage.h"
 
 CoverageMarker* gCoverageMarkerList = NULL;
 

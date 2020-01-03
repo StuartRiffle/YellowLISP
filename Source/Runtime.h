@@ -7,7 +7,7 @@
 #include "Parser.h"
 #include "Errors.h"
 #include "Console.h"
-#include "Testing.h"
+#include "Coverage.h"
 
 enum CellType : uint32_t  
 {                       // The data stored in the cell is...
@@ -155,10 +155,12 @@ struct ScopeGuard
     ScopeGuard(ScopeStack& scopeStack, Scope* scope) : _scopeStack(scopeStack)
     {
         _scopeStack.push_back(scope);
+        ASSERT_COVERAGE;
     }
     ~ScopeGuard()
     {
         _scopeStack.pop_back();
+        ASSERT_COVERAGE;
     }
 };
 

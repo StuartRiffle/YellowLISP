@@ -2,7 +2,7 @@
 
 #include "Yellow.h"
 #include "Runtime.h"
-#include "Testing.h"
+#include "Coverage.h"
 
 size_t Runtime::ExtractList(CELLID index, CELLVEC* dest)
 {
@@ -45,9 +45,9 @@ CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
     if (elements.empty())
     {
         if (level == 0)
-            RETURN_WITH_COVERAGE(EvaluateCell(index));
+            RETURN_ASSERT_COVERAGE(EvaluateCell(index));
 
-        RETURN_WITH_COVERAGE(index);
+        RETURN_ASSERT_COVERAGE(index);
     }
 
     if (elements[0] == _quote)
@@ -57,12 +57,12 @@ CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
         CELLID quoted = elements[1];
 
         if (level == 0)
-            RETURN_WITH_COVERAGE(EvaluateCell(quoted));
+            RETURN_ASSERT_COVERAGE(EvaluateCell(quoted));
 
         CELLID expanded = ExpandQuasiquoted(elements[1], level);
         CELLID requoted = GenerateList({ _quote, expanded });
 
-        RETURN_WITH_COVERAGE(requoted);
+        RETURN_ASSERT_COVERAGE(requoted);
     }
 
     if (elements[0] == _unquote)
@@ -73,12 +73,12 @@ CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
         CELLID unquoted = elements[1];
 
         if (level == 1)
-            RETURN_WITH_COVERAGE(EvaluateCell(unquoted));
+            RETURN_ASSERT_COVERAGE(EvaluateCell(unquoted));
 
         CELLID expanded = ExpandQuasiquoted(unquoted, level - 1);
         CELLID reunquoted = GenerateList({ _unquote, expanded });
 
-        RETURN_WITH_COVERAGE(reunquoted);
+        RETURN_ASSERT_COVERAGE(reunquoted);
     }
 
     if (elements[0] == _quasiquote)
@@ -94,16 +94,16 @@ CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
         if (level > 0)
         {
             CELLID requoted = GenerateList({ _quasiquote, expanded });
-            RETURN_WITH_COVERAGE(requoted);
+            RETURN_ASSERT_COVERAGE(requoted);
         }
 
-        RETURN_WITH_COVERAGE(expanded);
+        RETURN_ASSERT_COVERAGE(expanded);
     }
 
     for (int i = 0; i < elements.size(); i++)
         elements[i] = ExpandQuasiquoted(elements[i], level);
 
-    RETURN_WITH_COVERAGE(GenerateList(elements));
+    RETURN_ASSERT_COVERAGE(GenerateList(elements));
 }
 
 CELLID Runtime::EvaluateCell(CELLID index)
@@ -128,7 +128,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
             CELLID scopeOverride = GetScopeOverride(symbolIndex);
 
             if (scopeOverride.IsValid())
-                RETURN_WITH_COVERAGE(scopeOverride);
+                RETURN_ASSERT_COVERAGE(scopeOverride);
 
             const SymbolInfo& symbol = _symbol[symbolIndex];
             assert(symbol._symbolCell == index);
@@ -137,10 +137,10 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
             switch (symbol._type)
             {
-                case SYMBOL_RESERVED:   RETURN_WITH_COVERAGE(index);
-                case SYMBOL_PRIMITIVE:  RETURN_WITH_COVERAGE(index);
-                case SYMBOL_VARIABLE:   RETURN_WITH_COVERAGE(symbol._valueCell);
-                case SYMBOL_FUNCTION:   RETURN_WITH_COVERAGE(symbol._valueCell);
+                case SYMBOL_RESERVED:   RETURN_ASSERT_COVERAGE(index);
+                case SYMBOL_PRIMITIVE:  RETURN_ASSERT_COVERAGE(index);
+                case SYMBOL_VARIABLE:   RETURN_ASSERT_COVERAGE(symbol._valueCell);
+                case SYMBOL_FUNCTION:   RETURN_ASSERT_COVERAGE(symbol._valueCell);
 
                 default:
                     assert(!"Invalid symbol type");
@@ -162,14 +162,14 @@ CELLID Runtime::EvaluateCell(CELLID index)
                 RAISE_ERROR_IF(quoted == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
                 RAISE_ERROR_IF(_cell[quoted]._next != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
-                RETURN_WITH_COVERAGE(_cell[quoted]._data);
+                RETURN_ASSERT_COVERAGE(_cell[quoted]._data);
             }
 
             if (head == _quasiquote)
             {
                 // Special form: quasiquote
 
-                RETURN_WITH_COVERAGE(ExpandQuasiquoted(index));
+                RETURN_ASSERT_COVERAGE(ExpandQuasiquoted(index));
             }
 
             RAISE_ERROR_IF(head == _unquote, ERROR_RUNTIME_INVALID_ARGUMENT, "you can't unquote what isn't quoted");
@@ -178,31 +178,30 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
             if (_cell[head]._type == TYPE_SYMBOL)
             {
-                TEST_COVERAGE;
                 SYMBOLIDX headSymbolIndex = _cell[head]._data;
                 const SymbolInfo& headSymbol = _symbol[headSymbolIndex];
 
                 if (headSymbol._type == SYMBOL_PRIMITIVE)
                 {
-                    TEST_COVERAGE;
                     callTarget._primitiveIndex = headSymbol._primIndex;
 
                     if (headSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
                     {
-                        TEST_COVERAGE;
                         callTarget._evaluateArgs = false;
+                        ASSERT_COVERAGE;
                     }
                 }
                 else if (headSymbol._type == SYMBOL_FUNCTION)
                 {
-                    TEST_COVERAGE;
                     callTarget._lambdaCell = headSymbol._valueCell;
+                    ASSERT_COVERAGE;
                 }
+                ASSERT_COVERAGE;
             }
             else if (_cell[head]._type == TYPE_CONS)
             {
-                TEST_COVERAGE;
                 callTarget._lambdaCell = EvaluateCell(head);
+                ASSERT_COVERAGE;
             }
 
             RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
@@ -214,13 +213,13 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
             CELLID callResult = ApplyFunction(callTarget, argList);
 
-            RETURN_WITH_COVERAGE(callResult);
+            RETURN_ASSERT_COVERAGE(callResult);
         }
 
-        case TYPE_INT:      RETURN_WITH_COVERAGE(index);
-        case TYPE_FLOAT:    RETURN_WITH_COVERAGE(index);
-        case TYPE_STRING:   RETURN_WITH_COVERAGE(index);
-        case TYPE_LAMBDA:   RETURN_WITH_COVERAGE(index);
+        case TYPE_INT:      RETURN_ASSERT_COVERAGE(index);
+        case TYPE_FLOAT:    RETURN_ASSERT_COVERAGE(index);
+        case TYPE_STRING:   RETURN_ASSERT_COVERAGE(index);
+        case TYPE_LAMBDA:   RETURN_ASSERT_COVERAGE(index);
 
         default:
             assert(!"Invalid cell type");
@@ -236,7 +235,6 @@ void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evalu
 {
     while (valueList != _nil)
     {
-        TEST_COVERAGE;
         RAISE_ERROR_IF(bindingList == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
 
         CELLID value = _cell[valueList]._data;
@@ -247,15 +245,19 @@ void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evalu
 
         if (evaluate)
         {
-            TEST_COVERAGE;
             value = EvaluateCell(value);
+            ASSERT_COVERAGE;
         }
 
         if (value != _symbol[boundSymbolIndex]._symbolCell)
-            destScope->insert_or_assign(boundSymbolIndex, value);
+        {
+            destScope[boundSymbolIndex] = value;
+            ASSERT_COVERAGE;
+        }
 
         valueList   = _cell[valueList]._next;
         bindingList = _cell[bindingList]._next;
+        ASSERT_COVERAGE;
     }
 
     RAISE_ERROR_IF(bindingList != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS);
@@ -272,19 +274,19 @@ CELLID Runtime::GetScopeOverride(SYMBOLIDX symbolIndex)
 
         if (!scope->empty())
         {
-            TEST_COVERAGE;
             auto iterSymbol = scope->find(symbolIndex);
             if (iterSymbol != scope->end())
             {
-                TEST_COVERAGE;
                 CELLID localValue = iterSymbol->second;
                 result = localValue;
-                break;
+
+                BREAK_ASSERT_COVERAGE;
             }
+            ASSERT_COVERAGE;
         }
     }
 
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
@@ -292,7 +294,7 @@ CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
     if (callTarget._primitiveIndex.IsValid())
     {
         CELLID primResult = CallPrimitive(callTarget._primitiveIndex, argList, callTarget._evaluateArgs);
-        RETURN_WITH_COVERAGE(primResult);
+        RETURN_ASSERT_COVERAGE(primResult);
     }
 
     CELLID lambdaCell = callTarget._lambdaCell;
@@ -310,7 +312,7 @@ CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
     ScopeGuard scopeGuard(_environment, &callScope);
     CELLID result = EvaluateCell(bodyCell);
 
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 /*
@@ -337,13 +339,15 @@ CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateAr
 
     if (evaluateArgs)
     {
-        TEST_COVERAGE; 
         for (int i = 0; i < args.size(); i++)
+        {
             args[i] = EvaluateCell(args[i]);
+            ASSERT_COVERAGE;
+        }
     }
 
     CELLID result = (*this.*prim._func)(args);
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 

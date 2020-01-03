@@ -2,7 +2,7 @@
 
 #include "Yellow.h"
 #include "Interpreter.h"
-#include "Testing.h"
+#include "Coverage.h"
 #include "Console.h"
 #include "CommandLine.h"
 
@@ -107,6 +107,8 @@ int main(int argc, char** argv)
 
 #if DEBUG_BUILD
     console->EnableDebugOutput(true);
+
+    extern void SanityCheck(Console*);
     SanityCheck(console.get());
 #endif
 

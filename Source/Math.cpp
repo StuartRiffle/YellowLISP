@@ -12,7 +12,7 @@ CELLID Runtime::_OPNAME(const CELLVEC& args) \
     double b = LoadNumericLiteral(args[1]); \
     double value = (_EXPR); \
     bool isInt = ((_cell[args[0]]._type == TYPE_INT) && (_cell[args[1]]._type == TYPE_INT)); \
-    RETURN_WITH_COVERAGE(CreateNumericLiteral(value, isInt)); \
+    RETURN_ASSERT_COVERAGE(CreateNumericLiteral(value, isInt)); \
 }
 
 IMPLEMENT_BINARY_OP(ADD, (a + b))
@@ -27,7 +27,7 @@ CELLID Runtime::MOD(const CELLVEC& args)
     double b = LoadNumericLiteral(args[1]);
 
     if ((_cell[args[0]]._type == TYPE_INT) && (_cell[args[1]]._type == TYPE_INT))
-        RETURN_WITH_COVERAGE(CreateNumericLiteral((int)a % (int)b, true));
+        RETURN_ASSERT_COVERAGE(CreateNumericLiteral((int)a % (int)b, true));
 
     return CreateNumericLiteral(fmod(a, b));
 }
@@ -38,7 +38,7 @@ CELLID Runtime::_FUNCNAME(const CELLVEC& args) \
     VERIFY_NUM_PARAMETERS(args.size(), 1, #_FUNCNAME); \
     double a = LoadNumericLiteral(args[1]); \
     double value = (_EXPR); \
-    RETURN_WITH_COVERAGE(CreateNumericLiteral(value)); \
+    RETURN_ASSERT_COVERAGE(CreateNumericLiteral(value)); \
 }
 
 

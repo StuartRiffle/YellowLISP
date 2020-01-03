@@ -4,7 +4,7 @@
 #include "Runtime.h"
 #include "Errors.h"
 #include "Utility.h"
-#include "Testing.h"
+#include "Coverage.h"
 
 CELLID Runtime::APPLY(const CELLVEC& args)
 {
@@ -25,25 +25,25 @@ CELLID Runtime::APPLY(const CELLVEC& args)
             if (funcSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
             {
                 callTarget._evaluateArgs = false;
-                TEST_COVERAGE; 
+                ASSERT_COVERAGE; 
             }
-            TEST_COVERAGE; 
+            ASSERT_COVERAGE; 
         }
         else if (funcSymbol._type == SYMBOL_FUNCTION)
         {
             callTarget._lambdaCell = funcSymbol._valueCell;
-            TEST_COVERAGE; 
+            ASSERT_COVERAGE; 
         }
     }
     else if (_cell[funcref]._type == TYPE_CONS)
     {
         callTarget._lambdaCell = EvaluateCell(funcref);
-        TEST_COVERAGE; 
+        ASSERT_COVERAGE; 
     }
     else if (_cell[funcref]._type == TYPE_LAMBDA)
     {
         callTarget._lambdaCell = funcref;
-        TEST_COVERAGE; 
+        ASSERT_COVERAGE; 
     }
 
     RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
@@ -63,21 +63,21 @@ CELLID Runtime::APPLY(const CELLVEC& args)
             {
                 callArgs.push_back(_cell[arg]._data);
                 arg = _cell[arg]._next;
-                TEST_COVERAGE;
+                ASSERT_COVERAGE;
             }
         }
         else
         {
             callArgs.push_back(args[i]);
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     CELLID callArgList = GenerateList(callArgs);
     CELLID callResult  = ApplyFunction(callTarget, callArgList);
 
-    RETURN_WITH_COVERAGE(callResult);
+    RETURN_ASSERT_COVERAGE(callResult);
 }
 
 CELLID Runtime::ATOM(const CELLVEC& args)
@@ -86,13 +86,13 @@ CELLID Runtime::ATOM(const CELLVEC& args)
 
     CELLID index = args[0];
     if (index == _nil)
-        RETURN_WITH_COVERAGE(_true);
+        RETURN_ASSERT_COVERAGE(_true);
 
     const Cell& cell = _cell[index];
     if (cell._type == TYPE_CONS)
-        RETURN_WITH_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(_true);
+    RETURN_ASSERT_COVERAGE(_true);
 }
 
 CELLID Runtime::CAR(const CELLVEC& args)
@@ -100,13 +100,13 @@ CELLID Runtime::CAR(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CAR");
 
     if (args[0] == _nil)
-        RETURN_WITH_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_nil);
     
     const Cell& cell = _cell[args[0]];
     if (cell._type != TYPE_CONS)
-        RETURN_WITH_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(cell._data);
+    RETURN_ASSERT_COVERAGE(cell._data);
 }
 
 CELLID Runtime::CDR(const CELLVEC& args)
@@ -114,13 +114,13 @@ CELLID Runtime::CDR(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CDR");
 
     if (args[0] == _nil)
-        RETURN_WITH_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_nil);
 
     const Cell& cell = _cell[args[0]];
     if (cell._next != _nil)
-        RETURN_WITH_COVERAGE(cell._next);
+        RETURN_ASSERT_COVERAGE(cell._next);
 
-    RETURN_WITH_COVERAGE(_nil);
+    RETURN_ASSERT_COVERAGE(_nil);
 }
 
 CELLID Runtime::COND(const CELLVEC& args)
@@ -134,10 +134,10 @@ CELLID Runtime::COND(const CELLVEC& args)
 
         CELLID testResult = EvaluateCell(elements[0]);
         if (testResult != _nil)
-            RETURN_WITH_COVERAGE(EvaluateCell(elements[1]));
+            RETURN_ASSERT_COVERAGE(EvaluateCell(elements[1]));
     }
 
-    RETURN_WITH_COVERAGE(_nil);
+    RETURN_ASSERT_COVERAGE(_nil);
 }
 
 CELLID Runtime::CONS(const CELLVEC& args)
@@ -158,14 +158,14 @@ CELLID Runtime::CONS(const CELLVEC& args)
             RAISE_ERROR_IF(_cell[tail]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "a list must follow the dot");
 
         tail = _cell[tail]._data;
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     CELLID index = AllocateCell(TYPE_CONS);
     _cell[index]._data = head;
     _cell[index]._next = tail;
 
-    RETURN_WITH_COVERAGE(index);
+    RETURN_ASSERT_COVERAGE(index);
 }
 
 CELLID Runtime::EQLOP(const CELLVEC& args)
@@ -180,9 +180,9 @@ CELLID Runtime::EQLOP(const CELLVEC& args)
     double first = LoadNumericLiteral(args[0]);
     for (int i = 1; i < args.size(); i++)
         if (LoadNumericLiteral(args[i]) != first)
-            RETURN_WITH_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(_true);
+    RETURN_ASSERT_COVERAGE(_true);
 }
 
 CELLID Runtime::EQ(const CELLVEC& args)
@@ -193,9 +193,9 @@ CELLID Runtime::EQ(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (args[i] != args[0])
-            RETURN_WITH_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(_true);
+    RETURN_ASSERT_COVERAGE(_true);
 }
 
 bool Runtime::TestCellsEQL(CELLID a, CELLID b, bool strict)
@@ -203,19 +203,19 @@ bool Runtime::TestCellsEQL(CELLID a, CELLID b, bool strict)
     // EQL is like EQ, but also allows numbers (of the same type) and identical strings
 
     if (a == b)
-        RETURN_WITH_COVERAGE(true);
+        RETURN_ASSERT_COVERAGE(true);
 
     if (!strict)
         if (IS_NUMERIC_TYPE(a) && (IS_NUMERIC_TYPE(b)))
             if (LoadNumericLiteral(a) == LoadNumericLiteral(b))
-                RETURN_WITH_COVERAGE(true);
+                RETURN_ASSERT_COVERAGE(true);
 
     if (_cell[a]._type != _cell[b]._type)
-        RETURN_WITH_COVERAGE(false);
+        RETURN_ASSERT_COVERAGE(false);
 
     if (IS_NUMERIC_TYPE(a))
         if (_cell[a]._data == _cell[b]._data)
-            RETURN_WITH_COVERAGE(true);
+            RETURN_ASSERT_COVERAGE(true);
 
     if (_cell[a]._type == TYPE_STRING)
     {
@@ -229,10 +229,10 @@ bool Runtime::TestCellsEQL(CELLID a, CELLID b, bool strict)
         }
 
         if (astr == bstr)
-            RETURN_WITH_COVERAGE(true);
+            RETURN_ASSERT_COVERAGE(true);
     }
 
-    RETURN_WITH_COVERAGE(false);
+    RETURN_ASSERT_COVERAGE(false);
 }
 
 bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
@@ -240,18 +240,18 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
     // EQUAL is like EQL, but defined recursively for lists
 
     if (a == b)
-        RETURN_WITH_COVERAGE(true);
+        RETURN_ASSERT_COVERAGE(true);
 
     if (strict)
         if (_cell[a]._type != _cell[b]._type)
-            RETURN_WITH_COVERAGE(false);
+            RETURN_ASSERT_COVERAGE(false);
 
     if ((_cell[a]._type == TYPE_CONS) && (_cell[b]._type == TYPE_CONS))
     {
         while ((a != _nil) && (b != _nil))
         {
             if (!TestStructureEQUAL(_cell[a]._data, _cell[b]._data, strict))
-                RETURN_WITH_COVERAGE(false);
+                RETURN_ASSERT_COVERAGE(false);
 
             a = _cell[a]._next;
             b = _cell[b]._next;
@@ -260,15 +260,15 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
         }
 
         if ((a != _nil) || (b != _nil))
-            RETURN_WITH_COVERAGE(false);
+            RETURN_ASSERT_COVERAGE(false);
 
-        RETURN_WITH_COVERAGE(true);
+        RETURN_ASSERT_COVERAGE(true);
     }
 
     if (!TestCellsEQL(a, b, strict))
-        RETURN_WITH_COVERAGE(false);
+        RETURN_ASSERT_COVERAGE(false);
 
-    RETURN_WITH_COVERAGE(true);
+    RETURN_ASSERT_COVERAGE(true);
 }
 
 
@@ -278,9 +278,9 @@ CELLID Runtime::EQL(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestCellsEQL(args[0], args[i], true))
-            RETURN_WITH_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(_true);
+    RETURN_ASSERT_COVERAGE(_true);
 }
 
 CELLID Runtime::EQUAL(const CELLVEC& args)
@@ -289,9 +289,9 @@ CELLID Runtime::EQUAL(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], true))
-            RETURN_WITH_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(_true);
+    RETURN_ASSERT_COVERAGE(_true);
 }
 
 CELLID Runtime::EQUALP(const CELLVEC& args)
@@ -303,9 +303,9 @@ CELLID Runtime::EQUALP(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], false))
-            RETURN_WITH_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_nil);
 
-    RETURN_WITH_COVERAGE(_true);
+    RETURN_ASSERT_COVERAGE(_true);
 }
 
 CELLID Runtime::LESS(const CELLVEC& args)
@@ -316,16 +316,16 @@ CELLID Runtime::LESS(const CELLVEC& args)
     double b = LoadNumericLiteral(args[1]);
 
     if (a < b)
-        RETURN_WITH_COVERAGE(_true);
+        RETURN_ASSERT_COVERAGE(_true);
 
-    RETURN_WITH_COVERAGE(_nil);
+    RETURN_ASSERT_COVERAGE(_nil);
 }
 
 CELLID Runtime::LET(const CELLVEC& args)
 {
     RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LET");
     if (args.size() < 2)
-        RETURN_WITH_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_nil);
 
     CELLID bindingList = args[0];
     RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the first argument to LET must be a list of symbol/value pairs");
@@ -355,7 +355,7 @@ CELLID Runtime::LET(const CELLVEC& args)
         CELLID valueCell = pair[1];
         blockScope[symbolIndex] = valueCell;
 
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     ScopeGuard scopeGuard(_environment, &blockScope);
@@ -364,10 +364,10 @@ CELLID Runtime::LET(const CELLVEC& args)
     for (int i = 1; i < args.size(); i++)
     {
         result = EvaluateCell(args[i]);
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 
@@ -375,7 +375,7 @@ CELLID Runtime::LET(const CELLVEC& args)
 CELLID Runtime::LIST(const CELLVEC& args)
 {
     if (args.empty())
-        RETURN_WITH_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_nil);
 
     vector<CELLID> listCells;
     listCells.reserve(args.size());
@@ -400,7 +400,7 @@ CELLID Runtime::LIST(const CELLVEC& args)
 
             elem = args[i];
             if (elem == _nil)
-                BREAK_WITH_COVERAGE;
+                BREAK_ASSERT_COVERAGE;
 
             RAISE_ERROR_IF(_cell[elem]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the dot must be followed by a list");
 
@@ -411,26 +411,26 @@ CELLID Runtime::LIST(const CELLVEC& args)
             ExtractList(elem, &tailList);
 
             elemCell = LIST(tailList);
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
         else
         {
             elemCell = AllocateCell(TYPE_CONS);
             CELLID value = EvaluateCell(elem);
             _cell[elemCell]._data = value;
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
 
         if (!listCells.empty())
         {
             _cell[listCells.back()]._next = elemCell;
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
 
         listCells.push_back(elemCell);
     }
 
-    RETURN_WITH_COVERAGE(listCells[0]);
+    RETURN_ASSERT_COVERAGE(listCells[0]);
 }
 
 CELLID Runtime::SETQ(const CELLVEC& args)
@@ -458,11 +458,11 @@ CELLID Runtime::SETQ(const CELLVEC& args)
         symbol._type = SYMBOL_VARIABLE;
         symbol._valueCell = valueCell;
 
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
 
-    RETURN_WITH_COVERAGE(valueCell);
+    RETURN_ASSERT_COVERAGE(valueCell);
 }
 
 CELLID Runtime::PROGN(const CELLVEC& args)
@@ -472,10 +472,10 @@ CELLID Runtime::PROGN(const CELLVEC& args)
     for (int i = 0; i < args.size(); i++)
     {
         result = EvaluateCell(args[i]);
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 CELLID Runtime::EVAL(const CELLVEC& args)
@@ -483,7 +483,7 @@ CELLID Runtime::EVAL(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "EVAL");
 
     CELLID cellIndex = args[0];
-    RETURN_WITH_COVERAGE(EvaluateCell(cellIndex));
+    RETURN_ASSERT_COVERAGE(EvaluateCell(cellIndex));
 }
 
 CELLID Runtime::DEFUN(const CELLVEC& args)
@@ -508,7 +508,7 @@ CELLID Runtime::DEFUN(const CELLVEC& args)
     functionSymbol._type = SYMBOL_FUNCTION;
     functionSymbol._valueCell = lambdaCell;
 
-    RETURN_WITH_COVERAGE(symbolCell;
+    RETURN_ASSERT_COVERAGE(symbolCell);
 }
 
 CELLID Runtime::LAMBDA(const CELLVEC& args)
@@ -525,6 +525,6 @@ CELLID Runtime::LAMBDA(const CELLVEC& args)
     _cell[lambdaCell]._data = bindingListCell;
     _cell[lambdaCell]._next = functionBodyCell;
 
-    RETURN_WITH_COVERAGE(lambdaCell;
+    RETURN_ASSERT_COVERAGE(lambdaCell);
 }
 

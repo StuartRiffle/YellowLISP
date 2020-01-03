@@ -3,7 +3,7 @@
 #include "Yellow.h"
 #include "Runtime.h"
 #include "Errors.h"
-#include "Testing.h"
+#include "Coverage.h"
 
 CELLID Runtime::AllocateCell(CellType type)
 {
@@ -15,7 +15,7 @@ CELLID Runtime::AllocateCell(CellType type)
     {
         assert(_cellFreeCount == 0);
         ExpandCellTable();
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     if (_cellFreeList == 0)
@@ -44,7 +44,7 @@ CELLID Runtime::AllocateCell(CellType type)
     _cell[index]._next = _nil;
     _cell[index]._tags = 0;
 
-    RETURN_WITH_COVERAGE(index);
+    RETURN_ASSERT_COVERAGE(index);
 }
 
 void Runtime::FreeCell(CELLID index)
@@ -56,7 +56,7 @@ void Runtime::FreeCell(CELLID index)
 
     _cellFreeList = index;
     _cellFreeCount++;
-    TEST_COVERAGE;
+    ASSERT_COVERAGE;
 }
 
 void Runtime::ExpandCellTable()
@@ -70,21 +70,21 @@ void Runtime::ExpandCellTable()
         FreeCell(i);
 
     DebugValidateCells();
-    TEST_COVERAGE;
+    ASSERT_COVERAGE;
 }
 
 void Runtime::MarkCellsInUse(CELLID index)
 {
     if (!index.IsValid())
-        VOID_RETURN_WITH_COVERAGE;;
+        VOID_RETURN_ASSERT_COVERAGE;;
 
     if (index == _nil)
-        VOID_RETURN_WITH_COVERAGE;
+        VOID_RETURN_ASSERT_COVERAGE;
 
     Cell& cell = _cell[index];
 
     if (cell._tags & TAG_GC_MARK)
-        VOID_RETURN_WITH_COVERAGE;
+        VOID_RETURN_ASSERT_COVERAGE;
 
     cell._tags |= TAG_GC_MARK;
 
@@ -92,7 +92,7 @@ void Runtime::MarkCellsInUse(CELLID index)
     {
         MarkCellsInUse(cell._data);
         MarkCellsInUse(cell._next);
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     if (cell._type == TYPE_LAMBDA)
@@ -103,10 +103,10 @@ void Runtime::MarkCellsInUse(CELLID index)
         CELLID body = cell._next;
         MarkCellsInUse(body);
 
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
-    VOID_RETURN_WITH_COVERAGE;
+    VOID_RETURN_ASSERT_COVERAGE;
 }
 
 void Runtime::DebugValidateCells()
@@ -152,7 +152,7 @@ size_t Runtime::CollectGarbage()
         MarkCellsInUse(symbol._symbolCell);
         MarkCellsInUse(symbol._valueCell);
         MarkCellsInUse(symbol._macroBindings);
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     // Mark cells with references on the callstack that got us here
@@ -162,7 +162,7 @@ size_t Runtime::CollectGarbage()
         for (auto& binding : *scope)
         {
             MarkCellsInUse(binding.second);
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
     }
 
@@ -178,7 +178,7 @@ size_t Runtime::CollectGarbage()
         _cell[slot]._tags |= TAG_GC_MARK;
         slot = _cell[slot]._next;
         numFree++;
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     DebugValidateCells();
@@ -193,14 +193,14 @@ size_t Runtime::CollectGarbage()
     {
         if (i == _nil)
         {
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
             continue;
         }
 
         if (_cell[i]._tags & TAG_GC_MARK)
         {
             _cell[i]._tags &= ~TAG_GC_MARK;
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
         else
         {
@@ -222,23 +222,23 @@ size_t Runtime::CollectGarbage()
                         RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
 
                         _stringTable.erase(hash);
-                        TEST_COVERAGE;
+                        ASSERT_COVERAGE;
                     }
-                    TEST_COVERAGE;
+                    ASSERT_COVERAGE;
                 }
-                TEST_COVERAGE;
+                ASSERT_COVERAGE;
             }
 
             FreeCell(i);
             numCellsFreed++;
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
     }
 
     DebugValidateCells();
 
     _console->PrintDebug("[GC freed %d of %d cells]\n", (int) numCellsFreed, (int) _cell.size());
-    RETURN_WITH_COVERAGE(numCellsFreed);
+    RETURN_ASSERT_COVERAGE(numCellsFreed);
 }
 
 
@@ -256,9 +256,9 @@ void Runtime::HandleGarbage()
 
 
             ExpandCellTable();
-            VOID_RETURN_WITH_COVERAGE;
+            VOID_RETURN_ASSERT_COVERAGE;
         }
     }
 
-    VOID_RETURN_WITH_COVERAGE;
+    VOID_RETURN_ASSERT_COVERAGE;
 }

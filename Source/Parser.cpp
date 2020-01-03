@@ -2,7 +2,7 @@
 
 #include "Parser.h"
 #include "Errors.h"
-#include "Testing.h"
+#include "Coverage.h"
 
 const char* SYMBOL_CHARS = "!$%&*+-./:<=>?@^_~";
 
@@ -23,11 +23,11 @@ list<NodeRef> Parser::ParseExpressionList(const string& source)
         if (simplified != nullptr)
         {
             result.push_back(simplified);
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
     }
 
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 NodeRef Parser::ParseElement()
@@ -44,7 +44,7 @@ NodeRef Parser::ParseElement()
 
         NodeRef quote = MakeIdentifierNode("quote");
         result = MakeListNode({ quote, ParseElement() });
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
     else if (Consume('`'))
     {
@@ -52,7 +52,7 @@ NodeRef Parser::ParseElement()
 
         NodeRef quasiquote = MakeIdentifierNode("quasiquote");
         result = MakeListNode({ quasiquote, ParseElement() });
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
     else if (Consume(','))
     {
@@ -60,15 +60,15 @@ NodeRef Parser::ParseElement()
 
         NodeRef unquote = MakeIdentifierNode("unquote");
         result = MakeListNode({ unquote, ParseElement() });
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
     else if (*_code)
     {
         result = ParseAtom();
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
-    RETURN_WITH_COVERAGE(result);
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 NodeRef Parser::ParseList()
@@ -78,24 +78,24 @@ NodeRef Parser::ParseList()
     while (*_code && !Peek(')'))
     {
         listNode->_list.push_back(ParseElement());
-        TEST_COVERAGE;
+        ASSERT_COVERAGE;
     }
 
     if (!Consume(')'))
         RAISE_ERROR(ERROR_PARSER_LIST_UNTERMINATED);
     
-    RETURN_WITH_COVERAGE(listNode);
+    RETURN_ASSERT_COVERAGE(listNode);
 }
 
 NodeRef Parser::ParseAtom()
 {
     if (Consume('\"'))
-        RETURN_WITH_COVERAGE(ParseString());
+        RETURN_ASSERT_COVERAGE(ParseString());
 
     if (isdigit(*_code) || ((_code[0] == '-') && isdigit(_code[1])))
-        RETURN_WITH_COVERAGE(ParseNumber());
+        RETURN_ASSERT_COVERAGE(ParseNumber());
 
-    RETURN_WITH_COVERAGE(ParseIdentifier());
+    RETURN_ASSERT_COVERAGE(ParseIdentifier());
 }
 
 NodeRef Parser::ParseString()
@@ -111,7 +111,7 @@ NodeRef Parser::ParseString()
 
     NodeRef stringNode(new NodeVariant(AST_NODE_STRING_LITERAL));
     stringNode->_string = str;
-    RETURN_WITH_COVERAGE(stringNode);
+    RETURN_ASSERT_COVERAGE(stringNode);
 }
 
 NodeRef Parser::ParseNumber()
@@ -137,12 +137,12 @@ NodeRef Parser::ParseNumber()
     {
         NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));
         floatNode->_float = val;
-        RETURN_WITH_COVERAGE(floatNode);
+        RETURN_ASSERT_COVERAGE(floatNode);
     }
 
     NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
     intNode->_int = (int) val;
-    RETURN_WITH_COVERAGE(intNode);
+    RETURN_ASSERT_COVERAGE(intNode);
 }
 
 NodeRef Parser::ParseIdentifier()
@@ -169,40 +169,40 @@ NodeRef Parser::ParseIdentifier()
     _code = end;
 
     NodeRef identNode = MakeIdentifierNode(ident);
-    RETURN_WITH_COVERAGE(identNode);
+    RETURN_ASSERT_COVERAGE(identNode);
 }
 
 NodeRef Parser::MakeIdentifierNode(const string& ident)
 {
     NodeRef node(new NodeVariant(AST_NODE_IDENTIFIER));
     node->_identifier = ident;
-    RETURN_WITH_COVERAGE(node);
+    RETURN_ASSERT_COVERAGE(node);
 }
 
 NodeRef Parser::MakeListNode(const vector<NodeRef>& elems)
 {
     NodeRef listNode(new NodeVariant(AST_NODE_LIST));
     listNode->_list = elems;
-    RETURN_WITH_COVERAGE(listNode);
+    RETURN_ASSERT_COVERAGE(listNode);
 }
 
 NodeRef Parser::MakeIntNode(int value)
 {
     NodeRef intNode(new NodeVariant(AST_NODE_INT_LITERAL));
     intNode->_int = value;
-    RETURN_WITH_COVERAGE(intNode);
+    RETURN_ASSERT_COVERAGE(intNode);
 }
 
 NodeRef Parser::MakeFloatNode(float value)
 {
     NodeRef floatNode(new NodeVariant(AST_NODE_FLOAT_LITERAL));
     floatNode->_float = value;
-    RETURN_WITH_COVERAGE(floatNode);
+    RETURN_ASSERT_COVERAGE(floatNode);
 }
 
 NodeRef Parser::MakeNumericNode(bool isInteger, double value)
 {
-    RETURN_WITH_COVERAGE(isInteger? MakeIntNode((int) value) : MakeFloatNode((float) value));
+    RETURN_ASSERT_COVERAGE(isInteger? MakeIntNode((int) value) : MakeFloatNode((float) value));
 }
 
 void Parser::DumpSyntaxTree(NodeRef node, int indent)
@@ -253,29 +253,29 @@ NodeRef Parser::UntangleQuasiquotes(NodeRef node, int level)
             if (head->IsIdent("quote"))
             {
                 if (level == 0)
-                    RETURN_WITH_COVERAGE(Simplify(tail));
+                    RETURN_ASSERT_COVERAGE(Simplify(tail));
 
                 NodeRef expanded = UntangleQuasiquotes(tail, level);
-                RETURN_WITH_COVERAGE(MakeListNode({ head, expanded }));
+                RETURN_ASSERT_COVERAGE(MakeListNode({ head, expanded }));
             }
             else if (head->IsIdent("unquote"))
             {
                 RAISE_ERROR_IF(level < 1, ERROR_PARSER_INVALID_MACRO_EXPANSION, "you can't unquote what isn't quoted");
 
                 if (level == 1)
-                    RETURN_WITH_COVERAGE(Simplify(tail));
+                    RETURN_ASSERT_COVERAGE(Simplify(tail));
 
                 NodeRef expanded = UntangleQuasiquotes(tail, level - 1);
-                RETURN_WITH_COVERAGE(MakeListNode({ head, expanded }));
+                RETURN_ASSERT_COVERAGE(MakeListNode({ head, expanded }));
             }
             else if (head->IsIdent("quasiquote"))
             {
                 NodeRef expanded = UntangleQuasiquotes(tail, level + 1);
 
                 if (level > 0)
-                    RETURN_WITH_COVERAGE(MakeListNode({ head, expanded }));
+                    RETURN_ASSERT_COVERAGE(MakeListNode({ head, expanded }));
 
-                RETURN_WITH_COVERAGE(expanded);
+                RETURN_ASSERT_COVERAGE(expanded);
             }
         }
 
@@ -284,16 +284,16 @@ NodeRef Parser::UntangleQuasiquotes(NodeRef node, int level)
         for (int i = 0; i < node->_list.size(); i++)
         {
             untangled->_list.push_back(UntangleQuasiquotes(node->_list[i], level));
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
 
-        RETURN_WITH_COVERAGE(untangled);
+        RETURN_ASSERT_COVERAGE(untangled);
     }
 
     if (level == 0)
-        RETURN_WITH_COVERAGE(Simplify(node));
+        RETURN_ASSERT_COVERAGE(Simplify(node));
 
-    RETURN_WITH_COVERAGE(node);
+    RETURN_ASSERT_COVERAGE(node);
 }
 
 
@@ -303,21 +303,21 @@ NodeRef Parser::ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues)
     {
         auto iter = argValues.find(node->_identifier);
         if (iter != argValues.end())
-            RETURN_WITH_COVERAGE(iter->second);
+            RETURN_ASSERT_COVERAGE(iter->second);
     }
 
     NodeRef clone(new NodeVariant(node->_type));
     switch(node->_type)
     {
-        case AST_NODE_IDENTIFIER:       TEST_COVERAGE; clone->_identifier = node->_identifier; break;
-        case AST_NODE_INT_LITERAL:      TEST_COVERAGE; clone->_int = node->_int; break;
-        case AST_NODE_FLOAT_LITERAL:    TEST_COVERAGE; clone->_float = node->_float; break;
-        case AST_NODE_STRING_LITERAL:   TEST_COVERAGE; clone->_string = node->_string; break;
+        case AST_NODE_IDENTIFIER:       ASSERT_COVERAGE; clone->_identifier = node->_identifier; break;
+        case AST_NODE_INT_LITERAL:      ASSERT_COVERAGE; clone->_int = node->_int; break;
+        case AST_NODE_FLOAT_LITERAL:    ASSERT_COVERAGE; clone->_float = node->_float; break;
+        case AST_NODE_STRING_LITERAL:   ASSERT_COVERAGE; clone->_string = node->_string; break;
         case AST_NODE_LIST:
             for (auto& elem : node->_list)
             {
                 clone->_list.push_back(ExpandMacroBody(elem, argValues));
-                TEST_COVERAGE;
+                ASSERT_COVERAGE;
             }
             break;
 
@@ -325,7 +325,7 @@ NodeRef Parser::ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues)
             break;
     }
 
-    RETURN_WITH_COVERAGE(clone);
+    RETURN_ASSERT_COVERAGE(clone);
 }
 
 NodeRef Parser::Simplify(NodeRef node)
@@ -335,7 +335,7 @@ NodeRef Parser::Simplify(NodeRef node)
         for (auto& elem : node->_list)
         {
             elem = Simplify(elem);
-            TEST_COVERAGE;
+            ASSERT_COVERAGE;
         }
 
         if (node->_list.size() > 0)
@@ -362,12 +362,12 @@ NodeRef Parser::Simplify(NodeRef node)
                 {
                     RAISE_ERROR_IF(arg->_type != AST_NODE_IDENTIFIER, ERROR_PARSER_SYNTAX, "expected macro argument name");
                     macroDef._argNames.push_back(arg->_identifier);
-                    TEST_COVERAGE;
+                    ASSERT_COVERAGE;
                 }
 
                 // Macros will be expanded here in the parser, so there's nothing to evaluate now
 
-                RETURN_WITH_COVERAGE(nullptr);
+                RETURN_ASSERT_COVERAGE(nullptr);
             }
 
 
@@ -386,15 +386,15 @@ NodeRef Parser::Simplify(NodeRef node)
                     for (size_t i = 0; i < macroDef._argNames.size(); i++)
                     {
                         argValues[macroDef._argNames[i]] = Simplify(node->_list[i + 1]);
-                        TEST_COVERAGE;
+                        ASSERT_COVERAGE;
                     }
 
                     NodeRef expanded = ExpandMacroBody(macroDef._macroBody, argValues);
                     NodeRef simplified = Simplify(expanded);
 
-                    RETURN_WITH_COVERAGE(simplified);
+                    RETURN_ASSERT_COVERAGE(simplified);
                 }
-                TEST_COVERAGE;
+                ASSERT_COVERAGE;
             }
 
             // Fold constant expressions
@@ -408,13 +408,13 @@ NodeRef Parser::Simplify(NodeRef node)
                     RAISE_ERROR_IF(pair->_list.size() != 2, ERROR_PARSER_SYNTAX, "parameters to COND must be lists of two elements");
 
                     if (pair->_list[0]->IsIdent("t"))
-                        RETURN_WITH_COVERAGE(pair->_list[1]);
+                        RETURN_ASSERT_COVERAGE(pair->_list[1]);
 
                     if (!pair->_list[0]->IsIdent("nil"))
-                        RETURN_WITH_COVERAGE(node);
+                        RETURN_ASSERT_COVERAGE(node);
                 }
 
-                RETURN_WITH_COVERAGE(MakeIdentifierNode("nil"));
+                RETURN_ASSERT_COVERAGE(MakeIdentifierNode("nil"));
             }
 
             if (node->_list.size() == 3)
@@ -430,38 +430,38 @@ NodeRef Parser::Simplify(NodeRef node)
                     bool isInteger = ((a->_type == AST_NODE_INT_LITERAL) && (b->_type == AST_NODE_INT_LITERAL));
 
                     if (head->IsIdent("+"))
-                        RETURN_WITH_COVERAGE(MakeNumericNode(isInteger, lhs + rhs));
+                        RETURN_ASSERT_COVERAGE(MakeNumericNode(isInteger, lhs + rhs));
 
                     if (head->IsIdent("-"))
-                        RETURN_WITH_COVERAGE(MakeNumericNode(isInteger, lhs - rhs));
+                        RETURN_ASSERT_COVERAGE(MakeNumericNode(isInteger, lhs - rhs));
 
                     if (head->IsIdent("*"))
-                        RETURN_WITH_COVERAGE(MakeNumericNode(isInteger, lhs * rhs));
+                        RETURN_ASSERT_COVERAGE(MakeNumericNode(isInteger, lhs * rhs));
 
                     if (head->IsIdent("/"))
-                        RETURN_WITH_COVERAGE(MakeNumericNode(isInteger, lhs / rhs));
+                        RETURN_ASSERT_COVERAGE(MakeNumericNode(isInteger, lhs / rhs));
 
                     if (head->IsIdent("="))
-                        RETURN_WITH_COVERAGE(MakeIdentifierNode((lhs == rhs)? "t" : "nil"));
+                        RETURN_ASSERT_COVERAGE(MakeIdentifierNode((lhs == rhs)? "t" : "nil"));
 
                     if (head->IsIdent("/="))
-                        RETURN_WITH_COVERAGE(MakeIdentifierNode((lhs != rhs)? "t" : "nil"));
+                        RETURN_ASSERT_COVERAGE(MakeIdentifierNode((lhs != rhs)? "t" : "nil"));
 
                     if (head->IsIdent("<"))
-                        RETURN_WITH_COVERAGE(MakeIdentifierNode((lhs < rhs)?  "t" : "nil"));
+                        RETURN_ASSERT_COVERAGE(MakeIdentifierNode((lhs < rhs)?  "t" : "nil"));
 
                     if (head->IsIdent("<="))
-                        RETURN_WITH_COVERAGE(MakeIdentifierNode((lhs <= rhs)? "t" : "nil"));
+                        RETURN_ASSERT_COVERAGE(MakeIdentifierNode((lhs <= rhs)? "t" : "nil"));
 
                     if (head->IsIdent(">"))
-                        RETURN_WITH_COVERAGE(MakeIdentifierNode((lhs > rhs)?  "t" : "nil"));
+                        RETURN_ASSERT_COVERAGE(MakeIdentifierNode((lhs > rhs)?  "t" : "nil"));
 
                     if (head->IsIdent(">="))
-                        RETURN_WITH_COVERAGE(MakeIdentifierNode((lhs >= rhs)? "t" : "nil"));
+                        RETURN_ASSERT_COVERAGE(MakeIdentifierNode((lhs >= rhs)? "t" : "nil"));
                 }
             }
         }
     }
 
-    RETURN_WITH_COVERAGE(node);
+    RETURN_ASSERT_COVERAGE(node);
 }

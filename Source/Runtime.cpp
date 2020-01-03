@@ -92,7 +92,7 @@ CELLID Runtime::RegisterReserved(const char* ident)
     CELLID cellIndex = _symbol[symbolIndex]._symbolCell;
 
     _symbol[symbolIndex]._type = SYMBOL_RESERVED;
-    return cellIndex;
+    RETURN_ASSERT_COVERAGE(cellIndex);
 }
 
 SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, SymbolType symbolType, STRINGHASH hash)
@@ -111,7 +111,7 @@ SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, SymbolType s
     symbol._symbolCell = cellIndex;
     symbol._valueCell.SetInvalid();
 
-    return symbolIndex;
+    RETURN_ASSERT_COVERAGE(symbolIndex);
 }
 
 SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
@@ -120,12 +120,12 @@ SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
 
     auto iter = _globalScope.find(hash);
     if (iter != _globalScope.end())
-        return iter->second;
+        RETURN_ASSERT_COVERAGE(iter->second);
 
     CELLID cellIndex = AllocateCell(TYPE_SYMBOL);
     SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex, SYMBOL_INVALID, hash);
 
-    return symbolIndex;
+    RETURN_ASSERT_COVERAGE(symbolIndex);
 }
 
 CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags)
@@ -143,7 +143,7 @@ CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolF
     primInfo._name = ident;
     primInfo._func = func;
 
-    return symbol._symbolCell;
+    RETURN_ASSERT_COVERAGE(symbol._symbolCell);
 }
 
 CELLID Runtime::EncodeSyntaxTree(const NodeRef& node)
@@ -154,7 +154,7 @@ CELLID Runtime::EncodeSyntaxTree(const NodeRef& node)
     //DumpCellGraph(result, true);
 
     DebugValidateCells();
-    return result;
+    RETURN_ASSERT_COVERAGE(result);
 }
 
 CELLID Runtime::EncodeTreeNode(const NodeRef& node)
@@ -166,33 +166,33 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
             CELLID intCell = AllocateCell(TYPE_INT);
 
             StoreIntLiteral(intCell, node->_int);
-            return intCell;
+            RETURN_ASSERT_COVERAGE(intCell);
         }
         case AST_NODE_FLOAT_LITERAL:
         {
             CELLID floatCell = AllocateCell(TYPE_FLOAT);
 
             StoreFloatLiteral(floatCell, node->_float);
-            return floatCell;
+            RETURN_ASSERT_COVERAGE(floatCell);
         }
         case AST_NODE_STRING_LITERAL:
         {
             CELLID stringCell = AllocateCell(TYPE_STRING);
 
             StoreStringLiteral(stringCell, node->_string.c_str());
-            return stringCell;
+            RETURN_ASSERT_COVERAGE(stringCell);
         }
         case AST_NODE_IDENTIFIER:
         {
             SYMBOLIDX symbolIndex = GetSymbolIndex(node->_identifier.c_str());
 
             SymbolInfo& symbol = _symbol[symbolIndex];
-            return symbol._symbolCell;
+            RETURN_ASSERT_COVERAGE(symbol._symbolCell);
         }
         case AST_NODE_LIST:
         {
             if (node->_list.empty())
-                return _nil;
+                RETURN_ASSERT_COVERAGE(_nil);
 
             CELLID listHeadCell;
             CELLID listPrevCell;
@@ -209,9 +209,10 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
                     listHeadCell = listCell;
 
                 listPrevCell = listCell;
+                ASSERT_COVERAGE;
             }
 
-            return listHeadCell;
+            RETURN_ASSERT_COVERAGE(listHeadCell);
         }
         default:
             break;
@@ -225,7 +226,7 @@ string Runtime::GetPrintedValue(CELLID index)
 {
     assert(index.IsValid());
     if (index == _nil)
-        return "nil";
+        RETURN_ASSERT_COVERAGE("nil");
 
     std::stringstream ss;
 
@@ -237,16 +238,19 @@ string Runtime::GetPrintedValue(CELLID index)
             {
                 ss << "'";
                 ss << GetPrintedValue(_cell[_cell[index]._next]._data);
+                ASSERT_COVERAGE;
             }
             else if (_cell[index]._data == _unquote)
             {
                 ss << ",";
                 ss << GetPrintedValue(_cell[_cell[index]._next]._data);
+                ASSERT_COVERAGE;
             }
             else if (_cell[index]._data == _quasiquote)
             {
                 ss << "`";
                 ss << GetPrintedValue(_cell[_cell[index]._next]._data);
+                ASSERT_COVERAGE;
             }
             else
             {
@@ -263,6 +267,7 @@ string Runtime::GetPrintedValue(CELLID index)
                     if ((next != _nil) && (_cell[next]._type != TYPE_CONS))
                     {
                         ss << " . " << GetPrintedValue(next);
+                        ASSERT_COVERAGE;
                         break;
                     }
 
@@ -270,23 +275,25 @@ string Runtime::GetPrintedValue(CELLID index)
                         ss << " ";
 
                     curr = next;
+                    ASSERT_COVERAGE;
                 }
 
                 ss << ')';
+                ASSERT_COVERAGE;
             }
             break;
         }
 
-        case TYPE_INT:    ss << LoadIntLiteral(index); break;
-        case TYPE_FLOAT:  ss << LoadFloatLiteral(index); break;
-        case TYPE_STRING: ss << '\"' << LoadStringLiteral(index) << '\"'; break;
-        case TYPE_SYMBOL: ss << _symbol[_cell[index]._data]._ident; break;
-        case TYPE_LAMBDA: ss << "<lambda " << index << ">"; break;
-
-        default:          RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT); break;
+        case TYPE_INT:    ss <<  LoadIntLiteral(index);                     BREAK_ASSERT_COVERAGE;
+        case TYPE_FLOAT:  ss <<  LoadFloatLiteral(index);                   BREAK_ASSERT_COVERAGE;
+        case TYPE_STRING: ss <<  '\"' << LoadStringLiteral(index) << '\"';  BREAK_ASSERT_COVERAGE;
+        case TYPE_SYMBOL: ss <<  _symbol[_cell[index]._data]._ident;        BREAK_ASSERT_COVERAGE;
+        case TYPE_LAMBDA: ss <<  "<lambda " << index << ">";                BREAK_ASSERT_COVERAGE;
+        default:          
+            RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT); break;
     }
 
-    return ss.str();
+    RETURN_ASSERT_COVERAGE(ss.str());
 }
 
 
