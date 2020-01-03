@@ -4,6 +4,7 @@
 #include "Runtime.h"
 #include "Errors.h"
 #include "Utility.h"
+#include "Testing.h"
 
 CELLID Runtime::APPLY(const CELLVEC& args)
 {
@@ -14,27 +15,35 @@ CELLID Runtime::APPLY(const CELLVEC& args)
 
     if (_cell[funcref]._type == TYPE_SYMBOL)
     {
+        TEST_COVERAGE; 
         SYMBOLIDX funcSymbolIndex = _cell[funcref]._data;
         const SymbolInfo& funcSymbol = _symbol[funcSymbolIndex];
 
         if (funcSymbol._type == SYMBOL_PRIMITIVE)
         {
+            TEST_COVERAGE; 
             callTarget._primitiveIndex = funcSymbol._primIndex;
 
             if (funcSymbol._flags & SYMBOLFLAG_DONT_EVAL_ARGS)
+            {
+                TEST_COVERAGE; 
                 callTarget._evaluateArgs = false;
+            }
         }
         else if (funcSymbol._type == SYMBOL_FUNCTION)
         {
+            TEST_COVERAGE; 
             callTarget._lambdaCell = funcSymbol._valueCell;
         }
     }
     else if (_cell[funcref]._type == TYPE_CONS)
     {
+        TEST_COVERAGE; 
         callTarget._lambdaCell = EvaluateCell(funcref);
     }
     else if (_cell[funcref]._type == TYPE_LAMBDA)
     {
+        TEST_COVERAGE; 
         callTarget._lambdaCell = funcref;
     }
 
@@ -51,6 +60,7 @@ CELLID Runtime::APPLY(const CELLVEC& args)
             // Special case: if the last argument is a list, append its
             // elements to the argument list
 
+            TEST_COVERAGE;
             while (arg != _nil)
             {
                 callArgs.push_back(_cell[arg]._data);
@@ -59,6 +69,7 @@ CELLID Runtime::APPLY(const CELLVEC& args)
         }
         else
         {
+            TEST_COVERAGE;
             callArgs.push_back(args[i]);
         }
     }
@@ -66,7 +77,7 @@ CELLID Runtime::APPLY(const CELLVEC& args)
     CELLID callArgList = GenerateList(callArgs);
     CELLID callResult  = ApplyFunction(callTarget, callArgList);
 
-    return callResult;
+    RETURN_WITH_COVERAGE(callResult);
 }
 
 CELLID Runtime::ATOM(const CELLVEC& args)
@@ -75,13 +86,13 @@ CELLID Runtime::ATOM(const CELLVEC& args)
 
     CELLID index = args[0];
     if (index == _nil)
-        return _true;
+        RETURN_WITH_COVERAGE(_true);
 
     const Cell& cell = _cell[index];
     if (cell._type == TYPE_CONS)
-        return _nil;
+        RETURN_WITH_COVERAGE(_nil);
 
-    return _true;
+    RETURN_WITH_COVERAGE(_true);
 }
 
 CELLID Runtime::CAR(const CELLVEC& args)
@@ -89,13 +100,13 @@ CELLID Runtime::CAR(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CAR");
 
     if (args[0] == _nil)
-        return _nil;
-
+        RETURN_WITH_COVERAGE(_nil);
+    
     const Cell& cell = _cell[args[0]];
     if (cell._type != TYPE_CONS)
-        return _nil;
+        RETURN_WITH_COVERAGE(_nil);
 
-    return cell._data;
+    RETURN_WITH_COVERAGE(cell._data);
 }
 
 CELLID Runtime::CDR(const CELLVEC& args)
@@ -103,13 +114,13 @@ CELLID Runtime::CDR(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CDR");
 
     if (args[0] == _nil)
-        return _nil;
+        RETURN_WITH_COVERAGE(_nil);
 
     const Cell& cell = _cell[args[0]];
     if (cell._next != _nil)
-        return cell._next;
+        RETURN_WITH_COVERAGE(cell._next);
 
-    return _nil;
+    RETURN_WITH_COVERAGE(_nil);
 }
 
 CELLID Runtime::COND(const CELLVEC& args)
@@ -123,10 +134,11 @@ CELLID Runtime::COND(const CELLVEC& args)
 
         CELLID testResult = EvaluateCell(elements[0]);
         if (testResult != _nil)
-            return EvaluateCell(elements[1]);
+            RETURN_WITH_COVERAGE(EvaluateCell(elements[1]));
+
     }
 
-    return _nil;
+    RETURN_WITH_COVERAGE(_nil);
 }
 
 CELLID Runtime::CONS(const CELLVEC& args)

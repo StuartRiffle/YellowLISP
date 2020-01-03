@@ -3,6 +3,9 @@
 #include "Yellow.h"
 #include "Console.h"
 #include "Interpreter.h"
+#include "Testing.h"
+
+CoverageMarker* gCoverageMarkerList = NULL;
 
 bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)
 {

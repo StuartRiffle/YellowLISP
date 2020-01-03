@@ -3,6 +3,7 @@
 #include "Yellow.h"
 #include "Runtime.h"
 #include "Errors.h"
+#include "Testing.h"
 
 CELLID Runtime::AllocateCell(CellType type)
 {
@@ -12,6 +13,7 @@ CELLID Runtime::AllocateCell(CellType type)
 
     if (_cellFreeList == 0)
     {
+        TEST_COVERAGE;
         assert(_cellFreeCount == 0);
         ExpandCellTable();
     }
@@ -42,7 +44,7 @@ CELLID Runtime::AllocateCell(CellType type)
     _cell[index]._next = _nil;
     _cell[index]._tags = 0;
 
-    return index;
+    RETURN_WITH_COVERAGE(index);
 }
 
 void Runtime::FreeCell(CELLID index)
@@ -54,6 +56,7 @@ void Runtime::FreeCell(CELLID index)
 
     _cellFreeList = index;
     _cellFreeCount++;
+    TEST_COVERAGE;
 }
 
 void Runtime::ExpandCellTable()
@@ -67,6 +70,7 @@ void Runtime::ExpandCellTable()
         FreeCell(i);
 
     DebugValidateCells();
+    TEST_COVERAGE;
 }
 
 void Runtime::MarkCellsInUse(CELLID index)
@@ -143,13 +147,19 @@ size_t Runtime::CollectGarbage()
         MarkCellsInUse(symbol._symbolCell);
         MarkCellsInUse(symbol._valueCell);
         MarkCellsInUse(symbol._macroBindings);
+        TEST_COVERAGE;
     }
 
     // Mark cells with references on the callstack that got us here
 
     for (Scope* scope : _environment)
+    {
         for (auto& binding : *scope)
+        {
             MarkCellsInUse(binding.second);
+            TEST_COVERAGE;
+        }
+    }
 
     // Mark everything on the free list too, so it doesn't get clobbered
 
@@ -163,6 +173,7 @@ size_t Runtime::CollectGarbage()
         _cell[slot]._tags |= TAG_GC_MARK;
         slot = _cell[slot]._next;
         numFree++;
+        TEST_COVERAGE;
     }
 
     DebugValidateCells();
@@ -181,6 +192,7 @@ size_t Runtime::CollectGarbage()
         if (_cell[i]._tags & TAG_GC_MARK)
         {
             _cell[i]._tags &= ~TAG_GC_MARK;
+            TEST_COVERAGE;
         }
         else
         {
@@ -202,12 +214,16 @@ size_t Runtime::CollectGarbage()
                         RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT);
 
                         _stringTable.erase(hash);
+                        TEST_COVERAGE;
                     }
+                    TEST_COVERAGE;
                 }
+                TEST_COVERAGE;
             }
 
             FreeCell(i);
             numCellsFreed++;
+            TEST_COVERAGE;
         }
     }
 
