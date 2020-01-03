@@ -51,7 +51,7 @@ struct YellowError : std::exception
 };
 
 #define RAISE_ERROR(_CODE, _DETAILS) { ASSERT_COVERAGE; DoRaiseError((_CODE), (_DETAILS)); }
-#define RAISE_ERROR_IF(_COND, _CODE, _DETAILS) { ASSERT_COVERAGE; if (_COND) DoRaiseError((_CODE), (_DETAILS)); }
+#define RAISE_ERROR_IF(_COND, _CODE, _DETAILS) { if (_COND) { ASSERT_COVERAGE; DoRaiseError((_CODE), (_DETAILS)); } }
 
 inline void DoRaiseError(ErrorCode code, const char* details = "")
 {

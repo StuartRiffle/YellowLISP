@@ -51,3 +51,5 @@ YellowError::YellowError(ErrorCode code, const char* details) :
 
     _finalMessage = ss.str();
 }
+
+UPDATE_COVERAGE_MARKER_RANGE;

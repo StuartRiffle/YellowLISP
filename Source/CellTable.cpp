@@ -262,3 +262,5 @@ void Runtime::HandleGarbage()
 
     VOID_RETURN_ASSERT_COVERAGE;
 }
+
+UPDATE_COVERAGE_MARKER_RANGE;

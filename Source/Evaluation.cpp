@@ -351,3 +351,4 @@ CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateAr
 }
 
 
+UPDATE_COVERAGE_MARKER_RANGE;

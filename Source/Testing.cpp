@@ -6,10 +6,8 @@
 #include "Coverage.h"
 
 #if DEBUG_BUILD
-    CoverageTracker<CoverageMarker> gCoverageTracker;
-
-    const int MAX_MARKERS = 1000;
-    CoverageMarker gCoverageMarker[MAX_MARKERS];
+    CoverageTrackerType gCoverageTracker;
+    CoverageMarker gCoverageMarker[MAX_COVERAGE_MARKERS];
 #endif
 
 bool CheckOutput(Console* console, Interpreter& lisp, const char* source, const char* expectedOutput, ErrorCode expectedError = ERROR_NONE)

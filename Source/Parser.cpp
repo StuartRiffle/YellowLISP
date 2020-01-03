@@ -465,3 +465,5 @@ NodeRef Parser::Simplify(NodeRef node)
 
     RETURN_ASSERT_COVERAGE(node);
 }
+
+UPDATE_COVERAGE_MARKER_RANGE;

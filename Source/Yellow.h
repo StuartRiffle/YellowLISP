@@ -20,6 +20,9 @@
 #define DEBUG_BUILD (1)
 #endif
 
+#define STRINGIFY_IMPL(x) #x
+#define STRINGIFY(x)      STRINGIFY_IMPL(x)
+
 #define RELEASE_BUILD (!DEBUG_BUILD )
 
 #define VERSION_MAJOR           (0)

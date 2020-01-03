@@ -6,6 +6,26 @@
 #include "Console.h"
 #include "CommandLine.h"
 
+// We need to bulk-build all the .cpp files so that the __COUNTER__ macro
+// isn't reset between them, which is required for code coverage testing
+
+/*
+#include "Bootstrap.cpp"
+#include "CellGraph.cpp"
+#include "CellTable.cpp"
+#include "Commands.cpp"
+#include "Errors.cpp"
+#include "Evaluation.cpp"
+#include "Interpreter.cpp"
+#include "Literals.cpp"
+#include "Math.cpp"
+#include "Parser.cpp"
+#include "Primitives.cpp"
+#include "Runtime.cpp"
+#include "Testing.cpp"
+*/
+
+
 void PrintTitleASCII(Console* console)
 {
     const char* titleASCII = R"TITLE(

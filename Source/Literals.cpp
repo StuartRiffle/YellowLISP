@@ -158,3 +158,5 @@ void Runtime::StoreStringLiteral(CELLID index, const char* value)
     VOID_RETURN_ASSERT_COVERAGE;
 }
 
+UPDATE_COVERAGE_MARKER_RANGE;
+

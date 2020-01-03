@@ -133,4 +133,4 @@ void Interpreter::RunREPL()
     }
 }
 
-
+UPDATE_COVERAGE_MARKER_RANGE;
