@@ -85,7 +85,7 @@
             if (counterHere > highestCounterSeen)
                 highestCounterSeen = counterHere;
 
-            // Sampling the counter incremented it, so track the number of range finders
+            // Sampling __COUNTER__ incremented it, so track the number of range finders
             // so that CoverageTracker can correct for that.
 
             int rangeFindersConstructed = CoverageTrackerType::GetMarkerRangeOverageRef();

@@ -6,7 +6,7 @@
 
 size_t Runtime::ExtractList(CELLID index, CELLVEC* dest)
 {
-    while ((index != _nil) && (_cell[index]._type == TYPE_CONS))
+    while ((index != _null) && (_cell[index]._type == TYPE_CONS))
     {
         dest->push_back(_cell[index]._data);
         index = _cell[index]._next;
@@ -17,7 +17,7 @@ size_t Runtime::ExtractList(CELLID index, CELLVEC* dest)
 
 CELLID Runtime::GenerateList(const CELLVEC& elements)
 {
-    CELLID head = _nil;
+    CELLID head = _null;
 
     // FIXME: improper lists?
 
@@ -109,8 +109,8 @@ CELLID Runtime::ExpandQuasiquoted(CELLID index, int level)
 CELLID Runtime::EvaluateCell(CELLID index)
 {
     assert(index.IsValid());
-    if (index == _nil)
-        return _nil;
+    if (index == _null)
+        return _null;
 
 #if DEBUG_BUILD
     // For debugging, this generates a graph of cell connections for GraphViz to render
@@ -159,8 +159,8 @@ CELLID Runtime::EvaluateCell(CELLID index)
                 // Special form: quote
 
                 CELLID quoted = _cell[index]._next;
-                RAISE_ERROR_IF(quoted == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "not enough parameters to QUOTE");
-                RAISE_ERROR_IF(_cell[quoted]._next != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "too many parameters to QUOTE");
+                RAISE_ERROR_IF(quoted == _null, ERROR_RUNTIME_WRONG_NUM_PARAMS, "not enough parameters to QUOTE");
+                RAISE_ERROR_IF(_cell[quoted]._next != _null, ERROR_RUNTIME_WRONG_NUM_PARAMS, "too many parameters to QUOTE");
 
                 RETURN_ASSERT_COVERAGE(_cell[quoted]._data);
             }
@@ -207,7 +207,7 @@ CELLID Runtime::EvaluateCell(CELLID index)
             RAISE_ERROR_IF(!callTarget.IsValid(), ERROR_RUNTIME_UNDEFINED_FUNCTION, "the first list element must be a function");
 
             CELLID argList = _cell[index]._next;
-            RAISE_ERROR_IF((argList != _nil) && _cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "argument list is not a list");
+            RAISE_ERROR_IF((argList != _null) && _cell[argList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "argument list is not a list");
 
             // Down the rabbit hole we go
 
@@ -233,9 +233,9 @@ CELLID Runtime::EvaluateCell(CELLID index)
 
 void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evaluate, Scope* destScope)
 {
-    while (valueList != _nil)
+    while (valueList != _null)
     {
-        RAISE_ERROR_IF(bindingList == _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "binding list is empty");
+        RAISE_ERROR_IF(bindingList == _null, ERROR_RUNTIME_WRONG_NUM_PARAMS, "binding list is empty");
 
         CELLID value = _cell[valueList]._data;
         CELLID boundSymbolCell = _cell[bindingList]._data;
@@ -260,7 +260,7 @@ void Runtime::BindScopeMappings(CELLID bindingList, CELLID valueList, bool evalu
         ASSERT_COVERAGE;
     }
 
-    RAISE_ERROR_IF(bindingList != _nil, ERROR_RUNTIME_WRONG_NUM_PARAMS, "more bindings than parameters");
+    RAISE_ERROR_IF(bindingList != _null, ERROR_RUNTIME_WRONG_NUM_PARAMS, "more bindings than parameters");
 }
 
 CELLID Runtime::GetScopeOverride(SYMBOLIDX symbolIndex)
@@ -298,7 +298,7 @@ CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
     }
 
     CELLID lambdaCell = callTarget._lambdaCell;
-    RAISE_ERROR_IF((lambdaCell == _nil) || (_cell[lambdaCell]._type != TYPE_LAMBDA), ERROR_RUNTIME_UNDEFINED_FUNCTION, "not a function");
+    RAISE_ERROR_IF((lambdaCell == _null) || (_cell[lambdaCell]._type != TYPE_LAMBDA), ERROR_RUNTIME_UNDEFINED_FUNCTION, "not a function");
 
     CELLID bindingList = _cell[lambdaCell]._data;
     CELLID bodyCell = _cell[lambdaCell]._next;

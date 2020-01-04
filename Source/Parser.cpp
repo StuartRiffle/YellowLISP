@@ -118,6 +118,9 @@ NodeRef Parser::ParseNumber()
 {
     RAISE_ERROR_IF(isspace(*_code), ERROR_INTERNAL_PARSER_FAILURE, "whitespace should have been skipped");
 
+    // FIXME: #b #o #d #x #e #i
+
+
     char* end = nullptr;
     float val = strtof(_code, &end);
 

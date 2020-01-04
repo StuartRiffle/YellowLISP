@@ -59,7 +59,7 @@ CELLID Runtime::APPLY(const CELLVEC& args)
             // Special case: if the last argument is a list, append its
             // elements to the argument list
 
-            while (arg != _nil)
+            while (arg != _null)
             {
                 callArgs.push_back(_cell[arg]._data);
                 arg = _cell[arg]._next;
@@ -85,12 +85,12 @@ CELLID Runtime::ATOM(const CELLVEC& args)
     VERIFY_NUM_PARAMETERS(args.size(), 1, "ATOM");
 
     CELLID index = args[0];
-    if (index == _nil)
+    if (index == _null)
         RETURN_ASSERT_COVERAGE(_true);
 
     const Cell& cell = _cell[index];
     if (cell._type == TYPE_CONS)
-        RETURN_ASSERT_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(_true);
 }
@@ -99,12 +99,12 @@ CELLID Runtime::CAR(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CAR");
 
-    if (args[0] == _nil)
-        RETURN_ASSERT_COVERAGE(_nil);
+    if (args[0] == _null)
+        RETURN_ASSERT_COVERAGE(_null);
     
     const Cell& cell = _cell[args[0]];
     if (cell._type != TYPE_CONS)
-        RETURN_ASSERT_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(cell._data);
 }
@@ -113,14 +113,14 @@ CELLID Runtime::CDR(const CELLVEC& args)
 {
     VERIFY_NUM_PARAMETERS(args.size(), 1, "CDR");
 
-    if (args[0] == _nil)
-        RETURN_ASSERT_COVERAGE(_nil);
+    if (args[0] == _null)
+        RETURN_ASSERT_COVERAGE(_null);
 
     const Cell& cell = _cell[args[0]];
-    if (cell._next != _nil)
+    if (cell._next != _null)
         RETURN_ASSERT_COVERAGE(cell._next);
 
-    RETURN_ASSERT_COVERAGE(_nil);
+    RETURN_ASSERT_COVERAGE(_null);
 }
 
 CELLID Runtime::COND(const CELLVEC& args)
@@ -133,11 +133,11 @@ CELLID Runtime::COND(const CELLVEC& args)
         RAISE_ERROR_IF(elements.size() != 2, ERROR_RUNTIME_INVALID_ARGUMENT, "Arguments to COND must be lists of two elements");
 
         CELLID testResult = EvaluateCell(elements[0]);
-        if (testResult != _nil)
+        if (testResult != _null)
             RETURN_ASSERT_COVERAGE(EvaluateCell(elements[1]));
     }
 
-    RETURN_ASSERT_COVERAGE(_nil);
+    RETURN_ASSERT_COVERAGE(_null);
 }
 
 CELLID Runtime::CONS(const CELLVEC& args)
@@ -154,7 +154,7 @@ CELLID Runtime::CONS(const CELLVEC& args)
         RAISE_ERROR_IF(args.size() != 3, ERROR_RUNTIME_WRONG_NUM_PARAMS, "CONS");
 
         tail = args[2];
-        if (tail != _nil)
+        if (tail != _null)
             RAISE_ERROR_IF(_cell[tail]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "a list must follow the dot");
 
         tail = _cell[tail]._data;
@@ -180,7 +180,7 @@ CELLID Runtime::EQLOP(const CELLVEC& args)
     double first = LoadNumericLiteral(args[0]);
     for (int i = 1; i < args.size(); i++)
         if (LoadNumericLiteral(args[i]) != first)
-            RETURN_ASSERT_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(_true);
 }
@@ -193,7 +193,7 @@ CELLID Runtime::EQ(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (args[i] != args[0])
-            RETURN_ASSERT_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(_true);
 }
@@ -248,7 +248,7 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
 
     if ((_cell[a]._type == TYPE_CONS) && (_cell[b]._type == TYPE_CONS))
     {
-        while ((a != _nil) && (b != _nil))
+        while ((a != _null) && (b != _null))
         {
             if (!TestStructureEQUAL(_cell[a]._data, _cell[b]._data, strict))
                 RETURN_ASSERT_COVERAGE(false);
@@ -259,7 +259,7 @@ bool Runtime::TestStructureEQUAL(CELLID a, CELLID b, bool strict)
             assert(a.IsValid() && b.IsValid());
         }
 
-        if ((a != _nil) || (b != _nil))
+        if ((a != _null) || (b != _null))
             RETURN_ASSERT_COVERAGE(false);
 
         RETURN_ASSERT_COVERAGE(true);
@@ -278,7 +278,7 @@ CELLID Runtime::EQL(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestCellsEQL(args[0], args[i], true))
-            RETURN_ASSERT_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(_true);
 }
@@ -289,7 +289,7 @@ CELLID Runtime::EQUAL(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], true))
-            RETURN_ASSERT_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(_true);
 }
@@ -303,7 +303,7 @@ CELLID Runtime::EQUALP(const CELLVEC& args)
 
     for (int i = 1; i < args.size(); i++)
         if (!TestStructureEQUAL(args[0], args[i], false))
-            RETURN_ASSERT_COVERAGE(_nil);
+            RETURN_ASSERT_COVERAGE(_null);
 
     RETURN_ASSERT_COVERAGE(_true);
 }
@@ -318,14 +318,14 @@ CELLID Runtime::LESS(const CELLVEC& args)
     if (a < b)
         RETURN_ASSERT_COVERAGE(_true);
 
-    RETURN_ASSERT_COVERAGE(_nil);
+    RETURN_ASSERT_COVERAGE(_null);
 }
 
 CELLID Runtime::LET(const CELLVEC& args)
 {
     RAISE_ERROR_IF(args.size() < 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LET");
     if (args.size() < 2)
-        RETURN_ASSERT_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_null);
 
     CELLID bindingList = args[0];
     RAISE_ERROR_IF(_cell[bindingList]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the first argument to LET must be a list of symbol/value pairs");
@@ -359,7 +359,7 @@ CELLID Runtime::LET(const CELLVEC& args)
     }
 
     ScopeGuard scopeGuard(_environment, &blockScope);
-    CELLID result = _nil;
+    CELLID result = _null;
 
     for (int i = 1; i < args.size(); i++)
     {
@@ -375,7 +375,7 @@ CELLID Runtime::LET(const CELLVEC& args)
 CELLID Runtime::LIST(const CELLVEC& args)
 {
     if (args.empty())
-        RETURN_ASSERT_COVERAGE(_nil);
+        RETURN_ASSERT_COVERAGE(_null);
 
     vector<CELLID> listCells;
     listCells.reserve(args.size());
@@ -383,7 +383,7 @@ CELLID Runtime::LIST(const CELLVEC& args)
     for (int i = 0; i < args.size(); i++)
     {
         CELLID elem = args[i];
-        CELLID elemCell = _nil;
+        CELLID elemCell = _null;
 
         if (elem == _dot)
         {
@@ -399,7 +399,7 @@ CELLID Runtime::LIST(const CELLVEC& args)
             RAISE_ERROR_IF(i != (args.size() - 1), ERROR_RUNTIME_INVALID_ARGUMENT, "the dot must go before the last argument");
 
             elem = args[i];
-            if (elem == _nil)
+            if (elem == _null)
                 BREAK_ASSERT_COVERAGE;
 
             RAISE_ERROR_IF(_cell[elem]._type != TYPE_CONS, ERROR_RUNTIME_INVALID_ARGUMENT, "the dot must be followed by a list");
@@ -438,7 +438,7 @@ CELLID Runtime::SETQ(const CELLVEC& args)
     RAISE_ERROR_IF(args.empty(), ERROR_RUNTIME_WRONG_NUM_PARAMS, "SETQ needs at least 2 arguments");
     RAISE_ERROR_IF(args.size() & 1, ERROR_RUNTIME_WRONG_NUM_PARAMS, "SETQ needs an even number of arguments");
 
-    CELLID valueCell = _nil;
+    CELLID valueCell = _null;
 
     for (int argIdx = 0; argIdx < args.size(); argIdx += 2)
     {
@@ -467,7 +467,7 @@ CELLID Runtime::SETQ(const CELLVEC& args)
 
 CELLID Runtime::PROGN(const CELLVEC& args)
 {
-    CELLID result = _nil;
+    CELLID result = _null;
 
     for (int i = 0; i < args.size(); i++)
     {
@@ -494,10 +494,10 @@ CELLID Runtime::DEFUN(const CELLVEC& args)
     RAISE_ERROR_IF(_cell[symbolCell]._type != TYPE_SYMBOL, ERROR_RUNTIME_TYPE_MISMATCH, "function name");
 
     CELLID bindingListCell  = args[1];
-    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "function arguments");
+    RAISE_ERROR_IF((bindingListCell != _null) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "function arguments");
 
     CELLID functionBodyCell = args[2];
-    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "function body");
+    RAISE_ERROR_IF((functionBodyCell != _null) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "function body");
 
     CELLVEC lambdaArgs = { bindingListCell, functionBodyCell };
     CELLID lambdaCell = LAMBDA(lambdaArgs);
@@ -516,10 +516,10 @@ CELLID Runtime::LAMBDA(const CELLVEC& args)
     RAISE_ERROR_IF(args.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LAMBDA");
 
     CELLID bindingListCell = args[0];
-    RAISE_ERROR_IF((bindingListCell != _nil) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda binding list");
+    RAISE_ERROR_IF((bindingListCell != _null) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda binding list");
 
     CELLID functionBodyCell = args[1];
-    RAISE_ERROR_IF((functionBodyCell != _nil) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda function body");
+    RAISE_ERROR_IF((functionBodyCell != _null) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda function body");
 
     CELLID lambdaCell = AllocateCell(TYPE_LAMBDA);
     _cell[lambdaCell]._data = bindingListCell;

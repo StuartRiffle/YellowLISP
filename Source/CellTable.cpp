@@ -24,8 +24,8 @@ CELLID Runtime::AllocateCell(CellType type)
         return 0;
     }
 
-    if (_nil)
-        assert(_cellFreeList != _nil);
+    if (_null)
+        assert(_cellFreeList != _null);
 
     CELLID index  = _cellFreeList;
 
@@ -41,7 +41,7 @@ CELLID Runtime::AllocateCell(CellType type)
         assert(_cellFreeCount == 0);
 
     _cell[index]._type = type;
-    _cell[index]._next = _nil;
+    _cell[index]._next = _null;
     _cell[index]._tags = 0;
 
     RETURN_ASSERT_COVERAGE(index);
@@ -76,9 +76,9 @@ void Runtime::ExpandCellTable()
 void Runtime::MarkCellsInUse(CELLID index)
 {
     if (!index.IsValid())
-        VOID_RETURN_ASSERT_COVERAGE;;
+        VOID_RETURN_ASSERT_COVERAGE;
 
-    if (index == _nil)
+    if (index == _null)
         VOID_RETURN_ASSERT_COVERAGE;
 
     Cell& cell = _cell[index];
@@ -191,7 +191,7 @@ size_t Runtime::CollectGarbage()
 
     for (CELLID i = 1; i < _cell.size(); i = i + 1)
     {
-        if (i == _nil)
+        if (i == _null)
         {
             ASSERT_COVERAGE;
             continue;

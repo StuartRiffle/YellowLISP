@@ -64,6 +64,7 @@ void PrintTitleANSI(Console* console)
             console->Print("%c", *str);
     }
 }
+
 void PrintBanner(Console* console)
 {
     if (console->IsExtendedCharSet())

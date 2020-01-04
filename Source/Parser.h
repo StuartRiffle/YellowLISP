@@ -46,6 +46,26 @@ class Parser
 
     map<string, MacroDef> _macros;
 
+    inline bool SkipComments()
+    {
+        if (*_code == ';')
+        {
+            while (*_code && *_code != '\n')
+                _code++;
+
+            return true;
+        }
+        else if (_code[0] == '#' && _code[1] == '|')
+        {
+            while (*_code && !(_code[0] == '|' && _code[1] == '#'))
+                _code++;
+
+            return true;
+        }
+
+        return false;
+    }
+
     inline void SkipWhitespace()
     {
         while (isspace(*_code))
@@ -57,11 +77,8 @@ class Parser
         for (;;)
         {
             SkipWhitespace();
-            if (*_code != ';')
+            if (!SkipComments())
                 break;
-
-            while (*_code && *_code != '\n')
-                _code++;
         }
 
         return (*_code == c);

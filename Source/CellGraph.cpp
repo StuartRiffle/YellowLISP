@@ -9,7 +9,7 @@
 void Runtime::FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLID>& cellsDone, set<SYMBOLIDX>& symbolsDone, bool expandSymbols)
 {
     assert(cellIndex.IsValid());
-    if (cellIndex == _nil)
+    if (cellIndex == _null)
         return;
 
     if (cellsDone.count(cellIndex))
@@ -48,7 +48,7 @@ void Runtime::FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLI
         
     ss << "<next>";
 
-    if (_cell[cellIndex]._next != _nil)
+    if (_cell[cellIndex]._next != _null)
         ss << "cell " << _cell[cellIndex]._next;
 
     ss << "| <data>" << ssValue.str() << " } }\"];" << std::endl;
@@ -69,7 +69,7 @@ void Runtime::FormatCellLabel(CELLID cellIndex, std::stringstream& ss, set<CELLI
         FormatCellLabel(_cell[cellIndex]._data, ss, cellsDone, symbolsDone, expandSymbols);
     }
 
-    if (_cell[cellIndex]._next != _nil)
+    if (_cell[cellIndex]._next != _null)
     {
         ss << "cell" << cellIndex << ":next -> cell" << _cell[cellIndex]._next << ":header;" << std::endl;
         FormatCellLabel(_cell[cellIndex]._next, ss, cellsDone, symbolsDone, expandSymbols);
@@ -96,25 +96,25 @@ void Runtime::FormatSymbolLabel(SYMBOLIDX symbolIndex, std::stringstream& ss, se
         ss << symbol._symbolCell;
     ss << " | ";
 
-    if (symbol._valueCell.IsValid() && (symbol._valueCell != _nil))
+    if (symbol._valueCell.IsValid() && (symbol._valueCell != _null))
         ss << "<valueCell>cell " << symbol._valueCell;
 
     ss << "| <macroBindings>";
     
-    if (symbol._macroBindings.IsValid() && (symbol._macroBindings != _nil))
+    if (symbol._macroBindings.IsValid() && (symbol._macroBindings != _null))
         ss << symbol._macroBindings;
 
     ss << " } }\"];" << std::endl;
 
     symbolsDone.insert(symbolIndex);
 
-    if (symbol._valueCell.IsValid() && (symbol._valueCell != _nil))
+    if (symbol._valueCell.IsValid() && (symbol._valueCell != _null))
     {
         ss << "symbol" << symbolIndex << ":valueCell -> cell" << symbol._valueCell << ":header;" << std::endl;
         FormatCellLabel(symbol._valueCell, ss, cellsDone, symbolsDone, true);
     }
 
-    if (symbol._macroBindings.IsValid() && (symbol._macroBindings != _nil))
+    if (symbol._macroBindings.IsValid() && (symbol._macroBindings != _null))
     {
         ss << "symbol" << symbolIndex << ":macroBindings -> cell" << symbol._macroBindings << ":header;" << std::endl;
         FormatCellLabel(symbol._macroBindings, ss, cellsDone, symbolsDone, true);

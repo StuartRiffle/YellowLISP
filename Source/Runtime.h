@@ -20,6 +20,14 @@ enum CellType : uint32_t
     TYPE_INT,           //   a signed integer literal
     TYPE_FLOAT,         //   an IEEE floating point literal
 
+    TYPE_CHAR,
+    TYPE_COMPLEX,
+    TYPE_REAL,
+    TYPE_RATIONAL,
+    TYPE_VECTOR,
+    TYPE_FIXNUM,
+
+
     TYPE_COUNT,
     TYPE_BITS = 3
 };
@@ -183,9 +191,10 @@ class Runtime
 
     vector<PrimitiveInfo> _primitive;
 
-    CELLID  _nil;
+    CELLID  _null;
     CELLID  _dot;
     CELLID  _true;
+    CELLID  _false;
     CELLID  _eval;
     CELLID  _quote;
     CELLID  _unquote;
@@ -207,6 +216,7 @@ class Runtime
     void   BindScopeMappings(CELLID bindingList, CELLID valueList, bool evaluate, Scope* destScope);
     CELLID CallPrimitive(PRIMIDX primIndex, CELLID argCellIndex, bool evaluateArgs);
     CELLID ExpandQuasiquoted(CELLID macroBodyCell, int level = 0);
+    bool IsTruthy(CELLID index);
 
     // CellTable.cpp
 

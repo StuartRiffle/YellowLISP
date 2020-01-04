@@ -10,39 +10,68 @@ Runtime::Runtime(Console* console) : _console(console)
 
     _cell.resize(2);
 
-    _nil = 1;
-    _cell[_nil]._type = TYPE_SYMBOL;
-    StoreSymbol("nil", _nil, SYMBOL_RESERVED);
+    _null = 1;
+    _cell[_null]._type = TYPE_SYMBOL;
+    StoreSymbol("nil", _null, SYMBOL_RESERVED);
 
     _cellFreeList  = 0;
     _cellFreeCount = 0;
     _garbageCollectionNeeded = false;
 
     _dot = RegisterReserved(".");
-    _true = RegisterReserved("t");
+    _true = RegisterReserved("#t");
+    _false = RegisterReserved("#f");
     _quote = RegisterPrimitive("quote", nullptr, SYMBOLFLAG_DONT_EVAL_ARGS);
     _unquote = RegisterPrimitive("unquote", nullptr, SYMBOLFLAG_DONT_EVAL_ARGS);
     _quasiquote = RegisterPrimitive("quasiquote", nullptr, SYMBOLFLAG_DONT_EVAL_ARGS);
 
+    // R5RS fundamental forms: define, lambda, quote, if, define-syntax, let-syntax, letrec-syntax, syntax-rules, set!
+    // R5RS derived forms:     do, let, let*, letrec, cond, case, and, or, begin, named let, delay, unquote, unquote-splicing, quasiquote
+
+
     // Language primitives
 
-    RegisterPrimitive("apply",   &Runtime::APPLY);
-    RegisterPrimitive("atom",    &Runtime::ATOM);
-    RegisterPrimitive("car",     &Runtime::CAR);
-    RegisterPrimitive("cdr",     &Runtime::CDR);
-    RegisterPrimitive("cond",    &Runtime::COND,    SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("cons",    &Runtime::CONS,    SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("defun",   &Runtime::DEFUN,   SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("eq",      &Runtime::EQ);
-    RegisterPrimitive("eql",     &Runtime::EQL);
-    RegisterPrimitive("equal",   &Runtime::EQUAL);
-    RegisterPrimitive("equalp",  &Runtime::EQUALP);
-    RegisterPrimitive("eval",    &Runtime::EVAL);
-    RegisterPrimitive("lambda",  &Runtime::LAMBDA,  SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("let",     &Runtime::LET,     SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("list",    &Runtime::LIST,    SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("progn",   &Runtime::PROGN,   SYMBOLFLAG_DONT_EVAL_ARGS);
-    RegisterPrimitive("setq",    &Runtime::SETQ,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("apply",      &Runtime::APPLY);
+    RegisterPrimitive("atom",       &Runtime::ATOM);
+    RegisterPrimitive("begin",      &Runtime::BEGIN,   SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("car",        &Runtime::CAR);
+    RegisterPrimitive("cdr",        &Runtime::CDR);
+    RegisterPrimitive("cond",       &Runtime::COND,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("cons",       &Runtime::CONS,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("define",     &Runtime::DEFINE,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("eval",       &Runtime::EVAL);
+    RegisterPrimitive("lambda",     &Runtime::LAMBDA,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("let",        &Runtime::LET,     SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("letrec",     &Runtime::LETREC,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("let*",       &Runtime::LETSTAR, SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("list",       &Runtime::LIST,    SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("set!",       &Runtime::SETQ,    SYMBOLFLAG_DONT_EVAL_ARGS);
+
+    RegisterPrimitive("define-syntax",     &Runtime::DEFINE,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("let-syntax",        &Runtime::LET,     SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("letrec-syntax",     &Runtime::LETREC,  SYMBOLFLAG_DONT_EVAL_ARGS);
+    RegisterPrimitive("syntax-rules",       &Runtime::SETQ,    SYMBOLFLAG_DONT_EVAL_ARGS);
+
+    RegisterPrimitive("eq?",        &Runtime::EQP);
+    RegisterPrimitive("eqv?",       &Runtime::EQVP);
+    RegisterPrimitive("equal?",     &Runtime::EQUALP);
+
+    RegisterPrimitive("pair?",      &Runtime::PAIRP);
+    RegisterPrimitive("symbol?",    &Runtime::SYMBOLP);
+    RegisterPrimitive("procedure?", &Runtime::PROCEDUREP);
+    RegisterPrimitive("boolean?",    &Runtime::NUMBERP);
+    RegisterPrimitive("char?",    &Runtime::NUMBERP);
+    RegisterPrimitive("string?",    &Runtime::NUMBERP);
+    RegisterPrimitive("port?",    &Runtime::NUMBERP);
+    RegisterPrimitive("procedure?",    &Runtime::NUMBERP);
+
+    RegisterPrimitive("number?",    &Runtime::NUMBERP);
+    RegisterPrimitive("complex?",    &Runtime::NUMBERP);
+    RegisterPrimitive("real?",    &Runtime::NUMBERP);
+    RegisterPrimitive("rational?",    &Runtime::NUMBERP);
+    RegisterPrimitive("integer?",    &Runtime::NUMBERP);
+
+
 
     RegisterPrimitive("+",       &Runtime::ADD);
     RegisterPrimitive("-",       &Runtime::SUB);
@@ -145,6 +174,14 @@ CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolF
     RETURN_ASSERT_COVERAGE(symbol._symbolCell);
 }
 
+bool Runtime::IsTruthy(CELLID index)
+{
+    if (index == _false)
+        return _false;
+
+    return _true;
+}
+
 CELLID Runtime::EncodeSyntaxTree(const NodeRef& node)
 {
     DebugValidateCells();
@@ -191,7 +228,7 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
         case AST_NODE_LIST:
         {
             if (node->_list.empty())
-                RETURN_ASSERT_COVERAGE(_nil);
+                RETURN_ASSERT_COVERAGE(_null);
 
             CELLID listHeadCell;
             CELLID listPrevCell;
@@ -224,7 +261,7 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
 string Runtime::GetPrintedValue(CELLID index)
 {
     assert(index.IsValid());
-    if (index == _nil)
+    if (index == _null)
         RETURN_ASSERT_COVERAGE("nil");
 
     std::stringstream ss;
@@ -256,21 +293,21 @@ string Runtime::GetPrintedValue(CELLID index)
                 ss << '(';
 
                 CELLID curr = index;
-                while (curr != _nil)
+                while (curr != _null)
                 {
                     ss << GetPrintedValue(_cell[curr]._data);
 
                     CELLID next = _cell[curr]._next;
                     assert(next.IsValid());
 
-                    if ((next != _nil) && (_cell[next]._type != TYPE_CONS))
+                    if ((next != _null) && (_cell[next]._type != TYPE_CONS))
                     {
                         ss << " . " << GetPrintedValue(next);
                         ASSERT_COVERAGE;
                         break;
                     }
 
-                    if (next != _nil)
+                    if (next != _null)
                         ss << " ";
 
                     curr = next;
@@ -295,7 +332,4 @@ string Runtime::GetPrintedValue(CELLID index)
     RETURN_ASSERT_COVERAGE(ss.str());
 }
 
-UPDATE_COVERAGE_MARKER_RANGE;
-UPDATE_COVERAGE_MARKER_RANGE;
-UPDATE_COVERAGE_MARKER_RANGE;
 UPDATE_COVERAGE_MARKER_RANGE;
