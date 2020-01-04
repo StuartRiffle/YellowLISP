@@ -1,0 +1,242 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from /home/jaffer/scheme/r4rs.txi on 21 April 1998 -->
+
+<TITLE>Revised(4) Scheme - Basic concepts</TITLE>
+</HEAD>
+<BODY>
+Go to the <A HREF="r4rs_1.html">first</A>, <A HREF="r4rs_4.html">previous</A>, <A HREF="r4rs_6.html">next</A>, <A HREF="r4rs_14.html">last</A> section, <A HREF="r4rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC18" HREF="r4rs_toc.html#TOC18">Basic concepts</A></H1>
+
+
+
+<H2><A NAME="SEC19" HREF="r4rs_toc.html#TOC19">Variables and regions</A></H2>
+
+<P>
+Any identifier that is not a syntactic keyword (see
+<A NAME="IDX32"></A>
+section see section <A HREF="r4rs_4.html#SEC15">Identifiers</A>) may be used as a variable.  A variable may name a
+<A NAME="IDX33"></A>
+<A NAME="IDX34"></A>
+<A NAME="IDX35"></A>
+location where a value can be stored.  A variable that does so is said
+to be <EM>bound</EM> to the location.  The set of all visible
+bindings in effect at some point in a program is
+<A NAME="IDX36"></A>
+known as the <EM>environment</EM> in effect at that point.  The value
+stored in the location to which a variable is bound is called the
+variable's value.  By abuse of terminology, the variable is sometimes
+said to name the value or to be bound to the value.  This is not quite
+accurate, but confusion rarely results from this practice.
+
+</P>
+
+<P>
+Certain expression types are used to create new locations and to
+bind variables to those locations.  The most fundamental of these <EM>binding constructs</EM> is the
+<A NAME="IDX37"></A>
+lambda expression, because all other binding constructs
+<A NAME="IDX38"></A>
+can be explained in terms of lambda expressions.  The other binding
+constructs are <CODE>let</CODE>, <CODE>let*</CODE>, <CODE>letrec</CODE>, and <CODE>do</CODE>
+<A NAME="IDX39"></A>
+<A NAME="IDX40"></A>
+<A NAME="IDX41"></A>
+<A NAME="IDX42"></A>
+expressions (see sections see section <A HREF="r4rs_6.html#SEC29">lambda expressions</A>, see section <A HREF="r4rs_6.html#SEC34">Binding constructs</A>, and see section <A HREF="r4rs_6.html#SEC36">Iteration</A>).
+
+</P>
+
+<P>
+Like Algol and Pascal, and unlike most other dialects of Lisp
+except for Common Lisp, Scheme is a statically scoped language with
+block structure.  To each place where a variable is bound in a program
+there corresponds a <EM>region</EM> of the program text within which
+<A NAME="IDX43"></A>
+the binding is effective.  The region is determined by the particular
+binding construct that establishes the binding; if the binding is
+established by a lambda expression, for example, then its region
+is the entire lambda expression.  Every reference to or assignment of a
+variable refers to the binding of the variable that established the
+innermost of the regions containing the use.  If there is no binding of
+the variable whose region contains the use, then the use refers to the
+binding for the variable in the top level environment, if any
+(section see section <A HREF="r4rs_8.html#SEC44">Standard procedures</A>); if there is no binding for the identifier,
+it is said to be <EM>unbound</EM>.
+<A NAME="IDX44"></A>
+<A NAME="IDX45"></A>
+<A NAME="IDX46"></A>
+
+</P>
+
+
+
+<H2><A NAME="SEC20" HREF="r4rs_toc.html#TOC20">True and false</A></H2>
+
+<P>
+Any Scheme value can be used as a boolean value for the purpose of a
+conditional test.  As explained in section section <A HREF="r4rs_8.html#SEC45">Booleans</A>, all
+values count as true in such a test except for <TT>#f</TT>.
+This report uses the word "true" to refer to any
+Scheme value that counts as true, and the word "false" to refer to
+<TT>#f</TT>.  
+<A NAME="IDX47"></A>
+<A NAME="IDX48"></A>
+
+</P>
+
+
+<BLOCKQUOTE>
+<P>
+<EM>Note:</EM>
+In some implementations the empty list also counts as false instead
+of true.
+</BLOCKQUOTE>
+
+
+
+<H2><A NAME="SEC21" HREF="r4rs_toc.html#TOC21">External representations</A></H2>
+
+<P>
+An important concept in Scheme (and Lisp) is that of the <EM>external
+representation</EM> of an object as a sequence of characters.  For example,
+an external representation of the integer 28 is the sequence of
+characters "<TT>28</TT>", and an external representation of a list consisting
+of the integers 8 and 13 is the sequence of characters "<TT>(8 13)</TT>".
+
+</P>
+<P>
+The external representation of an object is not necessarily unique.  The
+integer 28 also has representations "<TT>#e28.000</TT>" and "<TT>#x1c</TT>", and the
+list in the previous paragraph also has the representations "<TT>( 08 13
+)</TT>" and "<TT>(8 . (13 . ()))</TT>" (see section see section <A HREF="r4rs_8.html#SEC47">Pairs and lists</A>).
+
+</P>
+<P>
+Many objects have standard external representations, but some, such as
+procedures, do not have standard representations (although particular
+implementations may define representations for them).
+
+</P>
+<P>
+An external representation may be written in a program to obtain the
+corresponding object (see <CODE>quote</CODE>, section see section <A HREF="r4rs_6.html#SEC27">Literal expressions</A>).
+<A NAME="IDX49"></A>
+
+</P>
+<P>
+External representations can also be used for input and output.  The
+procedure <CODE>read</CODE> (section see section <A HREF="r4rs_8.html#SEC62">Input</A>) parses external
+<A NAME="IDX50"></A>
+representations, and the procedure <CODE>write</CODE> (section see section <A HREF="r4rs_8.html#SEC63">Output</A>)
+<A NAME="IDX51"></A>
+generates them.  Together, they provide an elegant and powerful
+input/output facility.
+
+</P>
+<P>
+Note that the sequence of characters "<TT>(+ 2 6)</TT>" is <EM>not</EM> an
+external representation of the integer 8, even though it <EM>is</EM> an
+expression evaluating to the integer 8; rather, it is an external
+representation of a three-element list, the elements of which are the symbol
+<TT>+</TT> and the integers 2 and 6.  Scheme's syntax has the property that
+any sequence of characters that is an expression is also the external
+representation of some object.  This can lead to confusion, since it may
+not be obvious out of context whether a given sequence of characters is
+intended to denote data or program, but it is also a source of power,
+since it facilitates writing programs such as interpreters and
+compilers that treat programs as data (or vice versa).
+
+</P>
+<P>
+The syntax of external representations of various kinds of objects
+accompanies the description of the primitives for manipulating the
+objects in the appropriate sections of chapter section <A HREF="r4rs_8.html#SEC44">Standard procedures</A>.
+
+</P>
+
+
+
+<H2><A NAME="SEC22" HREF="r4rs_toc.html#TOC22">Disjointness of types</A></H2>
+
+<P>
+No object satisfies more than one of the following predicates:
+
+</P>
+
+
+<PRE>
+
+boolean?          pair?
+symbol?           number?
+char?             string?
+vector?           procedure?
+
+</PRE>
+
+<P>
+These predicates define the types <EM>boolean</EM>, <EM>pair</EM>, <EM>symbol</EM>, <EM>number</EM>, <EM>char</EM> (or <EM>character</EM>), <EM>string</EM>, <EM>vector</EM>, and <EM>procedure</EM>.
+<A NAME="IDX52"></A>
+
+</P>
+
+
+
+<H2><A NAME="SEC23" HREF="r4rs_toc.html#TOC23">Storage model</A></H2>
+
+<P>
+Variables and objects such as pairs, vectors, and strings implicitly
+denote locations or sequences of locations.  A string, for
+<A NAME="IDX53"></A>
+example, denotes as many locations as there are characters in the string. 
+(These locations need not correspond to a full machine word.) A new value may be
+stored into one of these locations using the <TT>string-set!</TT> procedure, but
+the string continues to denote the same locations as before.
+
+</P>
+<P>
+An object fetched from a location, by a variable reference or by
+a procedure such as <CODE>car</CODE>, <CODE>vector-ref</CODE>, or <CODE>string-ref</CODE>, is
+<A NAME="IDX54"></A>
+<A NAME="IDX55"></A>
+<A NAME="IDX56"></A>
+equivalent in the sense of <CODE>eqv?</CODE> (section see section <A HREF="r4rs_8.html#SEC46">Equivalence predicates</A>)
+<A NAME="IDX57"></A>
+to the object last stored in the location before the fetch.
+
+</P>
+<P>
+Every location is marked to show whether it is in use.
+No variable or object ever refers to a location that is not in use.
+Whenever this report speaks of storage being allocated for a variable
+or object, what is meant is that an appropriate number of locations are
+chosen from the set of locations that are not in use, and the chosen
+locations are marked to indicate that they are now in use before the variable
+or object is made to denote them.
+
+</P>
+<P>
+In many systems it is desirable for constants (i.e. the values of
+<A NAME="IDX58"></A>
+literal expressions) to reside in read-only-memory.  To express this, it is
+convenient to imagine that every object that denotes locations is associated
+with a flag telling whether that object is mutable or
+<A NAME="IDX59"></A>
+immutable.  The constants and the strings returned by
+<A NAME="IDX60"></A>
+<CODE>symbol-&#62;string</CODE> are then the immutable objects, while all objects created by
+<A NAME="IDX61"></A>
+the other procedures listed in this report are mutable.  It is an error to
+attempt to store a new value into a location that is denoted by an immutable
+object.
+       
+
+</P>
+<P><HR><P>
+Go to the <A HREF="r4rs_1.html">first</A>, <A HREF="r4rs_4.html">previous</A>, <A HREF="r4rs_6.html">next</A>, <A HREF="r4rs_14.html">last</A> section, <A HREF="r4rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

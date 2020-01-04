@@ -1,0 +1,273 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from /home/jaffer/scheme/r3rs.txi on 21 April 1998 -->
+
+<TITLE>Revised(3) Scheme - Lexical conventions</TITLE>
+</HEAD>
+<BODY>
+Go to the <A HREF="r3rs_1.html">first</A>, <A HREF="r3rs_3.html">previous</A>, <A HREF="r3rs_5.html">next</A>, <A HREF="r3rs_13.html">last</A> section, <A HREF="r3rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC13" HREF="r3rs_toc.html#TOC13">Lexical conventions</A></H1>
+
+<P>
+This section gives an informal account of some of the lexical
+conventions used in writing Scheme programs.  For a formal syntax of
+Scheme, see section section <A HREF="r3rs_9.html#SEC64">Formal syntax</A>.
+
+</P>
+<P>
+Upper and lower case forms of a letter are never distinguished
+except within character and string constants.  For example, <CODE>Foo</CODE> is
+<A NAME="IDX9"></A>
+the same identifier as <CODE>FOO</CODE>, and <TT>#x1AB</TT> is the same number as
+<A NAME="IDX10"></A>
+<TT>#X1ab</TT>.
+
+</P>
+
+
+<H2><A NAME="SEC14" HREF="r3rs_toc.html#TOC14">Identifiers</A></H2>
+
+<P>
+Most identifiers allowed by other programming
+<A NAME="IDX11"></A>
+languages are also acceptable to Scheme.  The precise rules for forming
+identifiers vary among implementations of Scheme, but in all
+implementations a sequence of letters, digits, and "extended alphabetic
+characters" that begins with a character that cannot begin a number is
+an identifier.  In addition, <CODE>+</CODE> and <CODE>-</CODE> (which can begin
+<A NAME="IDX12"></A>
+<A NAME="IDX13"></A>
+numbers) are identifiers.  Here are some examples of identifiers:
+
+</P>
+
+
+<PRE>
+
+lambda                   q
+list-&#62;vector             soup
++                        V17a
+&#60;=?                      a34kTMNs
+the-word-recursion-has-many-meanings
+
+</PRE>
+
+<P>
+Extended alphabetic characters may be used in identifiers exactly as if
+they were letters.  The following are extended alphabetic characters:
+
+</P>
+
+
+<PRE>
+
+* / &#60; = &#62; ! ? : $ % _ &#38; ~ ^ 
+</PRE>
+
+<P>
+See section section <A HREF="r3rs_9.html#SEC65">Lexical structure</A> for a formal syntax of identifiers.
+
+</P>
+<P>
+Identifiers have several uses within Scheme programs:
+
+</P>
+
+
+<UL>
+
+<LI>
+
+Certain identifiers are reserved for use as syntactic keywords
+(see below).
+
+<LI>
+
+Any identifier that is not a syntactic keyword may be used as a
+variable (see section see section <A HREF="r3rs_5.html#SEC18">Variables and regions</A>).
+
+<LI>
+
+When an identifier appears as a literal or within a literal
+(see section see section <A HREF="r3rs_6.html#SEC24">Literal expressions</A>), it is being used to denote a <EM>symbol</EM>
+(see section see section <A HREF="r3rs_8.html#SEC45">Symbols</A>).
+
+</UL>
+
+<P>
+<A NAME="IDX14"></A>
+<A NAME="IDX15"></A>
+<A NAME="IDX16"></A>
+
+</P>
+
+<P>
+The following identifiers are syntactic keywords, and should not be used
+as variables:
+
+</P>
+
+
+<PRE>
+
+=&#62;           do            or
+and          else          quasiquote
+begin        if            quote
+case         lambda        set!
+cond         let           unquote
+define       let*          unquote-splicing
+delay        letrec
+
+</PRE>
+
+<P>
+Some implementations allow all identifiers, including syntactic
+keywords, to be used as variables.  This is a compatible extension to
+the language, but ambiguities in the language result when the
+restriction is relaxed, and the ways in which these ambiguities are
+resolved vary between implementations.
+
+</P>
+
+<P>
+The characters <TT>?</TT> and <TT>!</TT> have no special properties--they are
+extended alphabetic characters.  By convention, however, most predicate
+procedures (those that return boolean values) are named by identifiers
+that end in <TT>?</TT>, and most data mutation procedures are named by
+identifiers that end in <TT>!</TT>.
+<A NAME="IDX17"></A>
+<A NAME="IDX18"></A>
+
+</P>
+
+
+
+<H2><A NAME="SEC15" HREF="r3rs_toc.html#TOC15">Whitespace and comments</A></H2>
+
+<P>
+<EM>Whitespace</EM> characters are spaces and newlines.
+<A NAME="IDX19"></A>
+(Implementations typically provide additional whitespace characters such
+as tab or page break.)  Whitespace is used for improved readability and
+as necessary to separate tokens from each other, a token being an
+indivisible lexical unit such as an identifier or number, but is
+otherwise insignificant.  Whitespace may occur between any two tokens,
+but not within a token.  Whitespace may also occur inside a string,
+where it is significant.
+
+</P>
+<P>
+A semicolon (<TT>;</TT>) indicates the start of a
+comment.  The comment continues to the
+<A NAME="IDX20"></A>
+<A NAME="IDX21"></A>
+end of the line on which the semicolon appears.  Comments are invisible
+to Scheme, but the end of the line is visible as whitespace.  This
+prevents a comment from appearing in the middle of an identifier or
+number.
+
+</P>
+
+
+<PRE>
+
+;;; The FACT procedure computes the factorial
+;;; of a non-negative integer.
+(define fact
+  (lambda (n)
+    (if (= n 0)
+        1        ;Base case: return 1
+        (* n (fact (- n 1))))))
+
+</PRE>
+
+
+
+<H2><A NAME="SEC16" HREF="r3rs_toc.html#TOC16">Other notations</A></H2>
+
+<P>
+For a description of the notations used for numbers, see
+section section <A HREF="r3rs_8.html#SEC46">Numbers</A>.
+
+</P>
+
+<DL COMPACT>
+
+<DT><TT><TT>. + -</TT></TT>
+<DD>
+These are used in numbers, and may also occur anywhere in an identifier
+except as the first character.  A delimited plus or minus sign by itself
+is also an identifier.
+A delimited period (not occurring within a number or identifier) is used
+in the notation for pairs (section see section <A HREF="r3rs_8.html#SEC44">Pairs and lists</A>), and to indicate a
+rest-parameter in a  formal parameter list (section see section <A HREF="r3rs_6.html#SEC26">lambda expressions</A>).
+
+<DT><TT><TT>( )</TT></TT>
+<DD>
+Parentheses are used for grouping and to notate lists
+(section see section <A HREF="r3rs_8.html#SEC44">Pairs and lists</A>).
+
+<DT><TT><TT>'</TT></TT>
+<DD>
+The single quote character is used to indicate literal data (section see section <A HREF="r3rs_6.html#SEC24">Literal expressions</A>).
+
+<DT><TT><TT>`</TT></TT>
+<DD>
+The backquote character is used to indicate almost-constant
+data (section see section <A HREF="r3rs_6.html#SEC35">Quasiquotation</A>).
+
+<DT><TT><TT>, ,@</TT></TT>
+<DD>
+The character comma and the sequence comma at-sign are used in conjunction
+with backquote (section see section <A HREF="r3rs_6.html#SEC35">Quasiquotation</A>).
+
+<DT><TT><TT>"</TT></TT>
+<DD>
+The double quote character is used to delimit strings (section see section <A HREF="r3rs_8.html#SEC55">Strings</A>).
+
+<DT><TT>\</TT>
+<DD>
+Backslash is used in the syntax for character constants and as an escape
+character within string constants (section see section <A HREF="r3rs_8.html#SEC55">Strings</A>).
+
+<DT><TT><TT>[ ] { }</TT></TT>
+<DD>
+Left and right square brackets and curly braces
+are reserved for possible future extensions to the language.
+
+<DT><TT>#</TT>
+<DD>
+ Sharp sign is used for a variety of purposes depending on
+the character that immediately follows it:
+
+<DT><TT><TT>#t</TT> <TT>#f</TT></TT>
+<DD>
+These are the boolean constants (section see section <A HREF="r3rs_8.html#SEC42">Booleans</A>).
+
+<DT><TT>#\</TT>
+<DD>
+This introduces a character constant (section see section <A HREF="r3rs_8.html#SEC54">Characters</A>).
+
+<DT><TT>#<TT>(</TT></TT>
+<DD>
+This introduces a vector constant (section see section <A HREF="r3rs_8.html#SEC56">Vectors</A>).  Vector constants
+are terminated by <TT>)</TT> .
+
+<DT><TT><TT>#e #i #l #s #b #o #d #x</TT></TT>
+<DD>
+These are used in the notation for numbers (section see section <A HREF="r3rs_8.html#SEC49">Number syntax</A>).
+
+</DL>
+
+<P>
+       
+
+</P>
+<P><HR><P>
+Go to the <A HREF="r3rs_1.html">first</A>, <A HREF="r3rs_3.html">previous</A>, <A HREF="r3rs_5.html">next</A>, <A HREF="r3rs_13.html">last</A> section, <A HREF="r3rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

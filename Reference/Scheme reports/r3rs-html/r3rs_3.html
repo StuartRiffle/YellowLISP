@@ -1,0 +1,351 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from /home/jaffer/scheme/r3rs.txi on 21 April 1998 -->
+
+<TITLE>Revised(3) Scheme - Overview of Scheme</TITLE>
+</HEAD>
+<BODY>
+Go to the <A HREF="r3rs_1.html">first</A>, <A HREF="r3rs_2.html">previous</A>, <A HREF="r3rs_4.html">next</A>, <A HREF="r3rs_13.html">last</A> section, <A HREF="r3rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC5" HREF="r3rs_toc.html#TOC5">Overview of Scheme</A></H1>
+
+
+
+<H2><A NAME="SEC6" HREF="r3rs_toc.html#TOC6">Semantics</A></H2>
+
+<P>
+This section gives an overview of Scheme's semantics.  A
+detailed informal semantics is the subject of
+chapters section <A HREF="r3rs_5.html#SEC17">Basic concepts</A> through section <A HREF="r3rs_8.html#SEC41">Standard procedures</A>.  For reference
+purposes, section section <A HREF="r3rs_9.html#SEC70">Formal semantics</A> provides a formal
+semantics of Scheme.
+
+</P>
+<P>
+Following Algol, Scheme is a statically scoped programming
+language.  Each use of a variable is associated with a lexically
+apparent binding of that variable.
+
+</P>
+<P>
+Scheme has latent as opposed to manifest types.  Types
+are associated with values (also called objects) rather than with
+variables.  (Some authors refer to languages with latent types as
+weakly typed or dynamically typed languages.)  Other languages with
+latent types are APL, Snobol, and other dialects of Lisp.  Languages
+with manifest types (sometimes referred to as strongly typed or
+statically typed languages) include Algol 60, Pascal, and C.
+
+</P>
+<P>
+All objects created in the course of a Scheme computation, including
+procedures and continuations, have unlimited extent.
+No Scheme object is ever destroyed.  The reason that
+implementations of Scheme do not (usually!) run out of storage is that
+they are permitted to reclaim the storage occupied by an object if
+they can prove that the object cannot possibly matter to any future
+computation.  Other languages in which most objects have unlimited
+extent include APL and other Lisp dialects.
+
+</P>
+<P>
+Implementations of Scheme are required to be properly tail-recursive.
+This allows the execution of an iterative computation in constant space,
+even if the iterative computation is described by a syntactically
+recursive procedure.  Thus with a tail-recursive implementation,
+iteration can be expressed using the ordinary procedure-call
+mechanics, so that special iteration constructs are useful only as
+syntactic sugar.
+
+</P>
+<P>
+Scheme procedures are objects in their own right.  Procedures can be
+created dynamically, stored in data structures, returned as results of
+procedures, and so on.  Other languages with these properties include
+Common Lisp and ML. 
+
+</P>
+
+<P>
+One distinguishing feature of Scheme is that continuations, which
+in most other languages only operate behind the scenes, also have
+"first-class" status.  Continuations are useful for implementing a
+wide variety of advanced control constructs, including non-local exits,
+backtracking, and coroutines.  See section section <A HREF="r3rs_8.html#SEC57">Control features</A>.
+
+</P>
+<P>
+Arguments to Scheme procedures are always passed by value, which
+means that the actual argument expressions are evaluated before the
+procedure gains control, whether the procedure needs the result of the
+evaluation or not.  ML, C, and APL are three other languages that always
+pass arguments by value.
+This is distinct from the lazy-evaluation semantics of SASL,
+or the call-by-name semantics of Algol 60, where an argument
+expression is not evaluated unless its value is needed by the
+procedure.
+
+</P>
+
+
+
+<H2><A NAME="SEC7" HREF="r3rs_toc.html#TOC7">Syntax</A></H2>
+
+<P>
+Scheme employs a parenthesized-list Polish notation to describe programs
+and (other) data.  The syntax of Scheme, like that of most Lisp
+dialects, provides for great expressive power, largely due to its
+simplicity.  An important consequence of this simplicity is the
+susceptibility of Scheme programs and data to uniform treatment by other
+Scheme programs.  As with other Lisp dialects, the <CODE>read</CODE> primitive
+<A NAME="IDX1"></A>
+parses its input; that is, it performs syntactic as well as lexical
+decomposition of what it reads.
+
+</P>
+
+
+
+<H2><A NAME="SEC8" HREF="r3rs_toc.html#TOC8">Notation and terminology</A></H2>
+
+
+
+<H3><A NAME="SEC9" HREF="r3rs_toc.html#TOC9">Essential and non-essential features</A></H3>
+
+<P>
+It is required that every implementation of Scheme support
+features that are marked as being <EM>essential</EM>.  Features not
+<A NAME="IDX2"></A>
+explicitly marked as essential are not essential.  Implementations are
+free to omit non-essential features of Scheme or to add extensions,
+provided the extensions are not in conflict with the language reported
+here.
+
+</P>
+
+
+
+<H3><A NAME="SEC10" HREF="r3rs_toc.html#TOC10">Error situations and unspecified behavior</A></H3>
+
+<P>
+<A NAME="IDX3"></A>
+When speaking of an error situation, this report uses the phrase "an
+error is signalled" to indicate that implementations must detect and
+report the error.  If such wording does not appear in the discussion of
+an error, then implementations are not required to detect or report the
+error, though they are encouraged to do so.  An error situation that
+implementations are not required to detect is usually referred to simply
+as "an error."
+
+</P>
+<P>
+For example, it is an error for a procedure to be passed an argument that
+the procedure is not explicitly specified to handle, even though such
+domain errors are seldom mentioned in this report.  Implementations may
+extend a procedure's domain of definition to include other arguments.
+
+</P>
+<P>
+If the value of an expression is said to be "unspecified," then
+the expression must evaluate to some object without signalling an error,
+but the value depends on the implementation; this report explicitly does
+not say what value should be returned.
+
+</P>
+
+
+
+<H3><A NAME="SEC11" HREF="r3rs_toc.html#TOC11">Entry format</A></H3>
+
+<P>
+Chapters section <A HREF="r3rs_6.html#SEC21">Expressions</A> and section <A HREF="r3rs_8.html#SEC41">Standard procedures</A> are organized
+into entries.  Each entry describes one language feature or a group of
+related features, where a feature is either a syntactic construct or a
+built-in procedure.  An entry begins with one or more header lines of the form
+
+</P>
+
+<P>
+<DL>
+<DT><U>essential <VAR>category</VAR>:</U> <B><VAR>template</VAR></B>
+<DD><A NAME="IDX4"></A>
+
+</P>
+</DL>
+
+<P>
+if the feature is an essential feature, or simply
+
+</P>
+
+<P>
+<DL>
+<DT><U><VAR>category</VAR>:</U> <B><VAR>template</VAR></B>
+<DD><A NAME="IDX5"></A>
+
+</P>
+</DL>
+
+<P>
+if the feature is not an essential feature.
+
+</P>
+<P>
+If <VAR>category</VAR> is "syntax", the entry describes an expression
+type, and the header line gives the syntax of the expression type.
+Components of expressions are designated by syntactic variables, which
+are written using angle brackets, for example, &#60;expression&#62;,
+&#60;variable&#62;.  Syntactic variables should be understood to denote segments of
+program text; for example, &#60;expression&#62; stands for any string of
+characters which is a syntactically valid expression.  The notation
+
+</P>
+
+<PRE>
+ &#60;thing1&#62; ...
+</PRE>
+
+<P>
+indicates zero or more occurrences of a &#60;thing&#62;, and
+
+</P>
+
+<PRE>
+ &#60;thing1&#62; &#60;thing2&#62; ...
+</PRE>
+
+<P>
+indicates one or more occurrences of a &#60;thing&#62;.
+
+</P>
+<P>
+If <VAR>category</VAR> is "procedure", then the entry describes a procedure, and
+the header line gives a template for a call to the procedure.  Argument
+names in the template are <VAR>italicized</VAR>.  Thus the header line
+
+</P>
+
+<P>
+<DL>
+<DT><U>essential procedure:</U> <B>(vector-ref</B> <I><VAR>vector</VAR> <VAR>k</VAR>)</I>
+<DD><A NAME="IDX6"></A>
+
+</P>
+</DL>
+
+<P>
+indicates that the essential built-in procedure <TT>vector-ref</TT> takes
+two arguments, a vector <VAR>vector</VAR> and an exact non-negative integer
+<VAR>k</VAR> (see below).  The header lines
+
+</P>
+
+<P>
+
+</P>
+<P>
+<DL>
+<DT><U>essential procedure:</U> <B>(append</B> <I><VAR>list1</VAR> <VAR>list2</VAR>)</I>
+<DD><A NAME="IDX7"></A>
+
+</P>
+
+<P>
+<DT><U>procedure:</U> <B>(append</B> <I><VAR>list</VAR> ...,)</I>
+<DD><A NAME="IDX8"></A>
+
+</P>
+</DL>
+
+<P>
+indicate that in all implementations, the <TT>append</TT> procedure
+must be defined to take two arguments, and some implementations will
+extend it to take zero or more arguments.
+
+</P>
+
+<P>
+It is an error for an operation to be presented with an argument that it
+is not specified to handle.  For succinctness, we follow the convention
+that if an argument name is also the name of a type, then this implies a
+restriction on the type of that argument to the procedure.  For example,
+the header line for <TT>vector-ref</TT> given above dictates that first
+argument to <TT>vector-ref</TT> must be a vector.  The following naming
+conventions also imply type restrictions:
+
+</P>
+
+<P>
+
+<BLOCKQUOTE>
+<DL COMPACT>
+
+<DT><VAR>obj</VAR>
+<DD>
+any object
+<DT><VAR>z</VAR>, <VAR>z1</VAR>, ... <VAR>zj</VAR>, ...
+<DD>
+complex, real, rational, integer
+<DT><VAR>x</VAR>, <VAR>x1</VAR>, ... <VAR>xj</VAR>, ...
+<DD>
+real, rational, integer
+<DT><VAR>y</VAR>, <VAR>y1</VAR>, ... <VAR>yj</VAR>, ...
+<DD>
+real, rational, integer
+<DT><VAR>q</VAR>, <VAR>q1</VAR>, ... <VAR>qj</VAR>, ...
+<DD>
+rational, integer
+<DT><VAR>n</VAR>, <VAR>n1</VAR>, ... <VAR>nj</VAR>, ...
+<DD>
+integer
+<DT><VAR>k</VAR>, <VAR>k1</VAR>, ... <VAR>kj</VAR>, ...
+<DD>
+exact non-negative integer
+<DT>
+<DD>
+</DL>
+</BLOCKQUOTE>
+
+
+
+<H3><A NAME="SEC12" HREF="r3rs_toc.html#TOC12">Evaluation examples</A></H3>
+
+<P>
+The symbol "=>" used in program examples should be read
+"evaluates to."  For example,
+
+</P>
+
+
+<PRE>
+
+(* 5 8)                                ==&#62;  40
+
+</PRE>
+
+<P>
+means that the expression <TT>(* 5 8)</TT> evaluates to the object <TT>40</TT>.
+Or, more precisely:  the expression given by the sequence of characters
+"<TT>(* 5 8)</TT>" evaluates, in the initial environment, to an object
+that may be represented externally by the sequence of characters "<TT>40</TT>".  See section section <A HREF="r3rs_5.html#SEC20">External representations</A> for a discussion of external
+representations of objects.
+
+</P>
+
+<P>
+        
+
+</P>
+
+<P>
+  
+
+</P>
+
+<P><HR><P>
+Go to the <A HREF="r3rs_1.html">first</A>, <A HREF="r3rs_2.html">previous</A>, <A HREF="r3rs_4.html">next</A>, <A HREF="r3rs_13.html">last</A> section, <A HREF="r3rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>
