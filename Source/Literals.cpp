@@ -13,7 +13,7 @@ int Runtime::LoadIntLiteral(CELLID index)
     RAISE_ERROR_IF((cell._tags & TAG_EMBEDDED) == 0, ERROR_INTERNAL_CELL_TABLE_CORRUPT, "LoadIntLiteral expects embedded data");
 
     int value = (int)cell._data;
-    RETURN_ASSERT_COVERAGE(value);
+    return (value);
 }
 
 void Runtime::StoreIntLiteral(CELLID index, int value)
@@ -26,7 +26,7 @@ void Runtime::StoreIntLiteral(CELLID index, int value)
     cell._data = value;
     cell._type = TYPE_INT;
     cell._tags = TAG_EMBEDDED;
-    VOID_RETURN_ASSERT_COVERAGE;
+    return;
 }
 
 float Runtime::LoadFloatLiteral(CELLID index)
@@ -40,7 +40,7 @@ float Runtime::LoadFloatLiteral(CELLID index)
     union { uint32_t raw; float value; } pun;
     pun.raw = cell._data;
 
-    RETURN_ASSERT_COVERAGE(pun.value);
+    return (pun.value);
 }
 
 void Runtime::StoreFloatLiteral(CELLID index, float value)
@@ -55,7 +55,7 @@ void Runtime::StoreFloatLiteral(CELLID index, float value)
     cell._data = pun.raw;
     cell._type = TYPE_FLOAT;
     cell._tags = TAG_EMBEDDED;
-    VOID_RETURN_ASSERT_COVERAGE;
+    return;
 }
 
 double Runtime::LoadNumericLiteral(CELLID index)
@@ -64,13 +64,13 @@ double Runtime::LoadNumericLiteral(CELLID index)
 
     switch (_cell[index]._type)
     {
-        case TYPE_INT:   ASSERT_COVERAGE; value = LoadIntLiteral(index); break;
-        case TYPE_FLOAT: ASSERT_COVERAGE; value = LoadFloatLiteral(index); break;
+        case TYPE_INT:    value = LoadIntLiteral(index); break;
+        case TYPE_FLOAT:  value = LoadFloatLiteral(index); break;
 
         default: RAISE_ERROR(ERROR_RUNTIME_TYPE_MISMATCH, "numeric type expected");
     }
 
-    RETURN_ASSERT_COVERAGE(value);
+    return (value);
 }
 
 CELLID Runtime::CreateNumericLiteral(double value, bool storeAsInt)
@@ -82,12 +82,12 @@ CELLID Runtime::CreateNumericLiteral(double value, bool storeAsInt)
 
         CELLID index = AllocateCell(TYPE_INT);
         StoreIntLiteral(index, intValue);
-        RETURN_ASSERT_COVERAGE(index);
+        return (index);
     }
 
     CELLID index = AllocateCell(TYPE_FLOAT);
     StoreFloatLiteral(index, (float) value);
-    RETURN_ASSERT_COVERAGE(index);
+    return (index);
 }
 
 string Runtime::LoadStringLiteral(CELLID index)
@@ -103,14 +103,14 @@ string Runtime::LoadStringLiteral(CELLID index)
         const char* chars = (const char*)&cell._data;
         strncpy(tiny, chars, sizeof(cell._data));
 
-        RETURN_ASSERT_COVERAGE(tiny);
+        return (tiny);
     }
 
     STRINGIDX stringIndex = cell._data;
     RAISE_ERROR_IF(!stringIndex.IsValid() || (stringIndex >= _string.GetPoolSize()), ERROR_INTERNAL_CELL_TABLE_CORRUPT, "string index out of range");
 
     const string& value = _string[stringIndex]._str;
-    RETURN_ASSERT_COVERAGE(value);
+    return (value);
 }
 
 void Runtime::StoreStringLiteral(CELLID index, const char* value)
@@ -127,7 +127,7 @@ void Runtime::StoreStringLiteral(CELLID index, const char* value)
         cell._data = 0;
         strncpy((char*)&cell._data, value, sizeof(cell._data));
         cell._tags |= TAG_EMBEDDED;
-        ASSERT_COVERAGE;
+        
     }
     else
     {
@@ -141,22 +141,22 @@ void Runtime::StoreStringLiteral(CELLID index, const char* value)
             assert(stringIndex.IsValid());
 
             RAISE_ERROR_IF(_string[stringIndex]._str != value, ERROR_INTERNAL_HASH_COLLISION, "64-bit hash collision... how did you do that?");
-            ASSERT_COVERAGE;
+            
         }
         else
         {
             stringIndex = _string.Alloc();
             _string[stringIndex]._str = value;
             _stringTable[hash] = stringIndex;
-            ASSERT_COVERAGE;
+            
         }
 
         cell._data = stringIndex;
         _string[stringIndex]._refCount++;
     }
 
-    VOID_RETURN_ASSERT_COVERAGE;
+    return;
 }
 
-UPDATE_COVERAGE_MARKER_RANGE;
+
 

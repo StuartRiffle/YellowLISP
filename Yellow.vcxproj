@@ -175,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap.h" />
     <ClInclude Include="Source\CommandLine.h" />
+    <ClInclude Include="Source\ConsCell.h" />
     <ClInclude Include="Source\Console.h" />
     <ClInclude Include="Source\Embedded.h" />
     <ClInclude Include="Source\Errors.h" />
@@ -184,13 +185,26 @@
     <ClInclude Include="Source\Runtime.h" />
     <ClInclude Include="Source\SlotPool.h" />
     <ClInclude Include="Source\StaticVector.h" />
-    <ClInclude Include="Source\Coverage.h" />
     <ClInclude Include="Source\Utility.h" />
     <ClInclude Include="Source\Yellow.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
+    <None Include="Library\R6RS\compat-r5rs.scm" />
+    <None Include="Library\R6RS\examples.scm" />
+    <None Include="Library\R6RS\expander.scm" />
+    <None Include="Library\R6RS\runtime.scm" />
+    <None Include="Library\R6RS\sample-balloons.scm" />
+    <None Include="Library\R6RS\sample-libs-and-program.scm" />
+    <None Include="Library\R6RS\sample-party.scm" />
+    <None Include="Library\R6RS\sample-program.scm" />
+    <None Include="Library\R6RS\sample-stack.scm" />
+    <None Include="Library\R6RS\simple-macros-tests.scm" />
+    <None Include="Library\R6RS\simple-macros.scm" />
+    <None Include="Library\R6RS\simple-module-examples.scm" />
+    <None Include="Library\R6RS\simple-syntax-case.scm" />
+    <None Include="Library\R6RS\standard-libraries.scm" />
     <None Include="LICENSE" />
     <None Include="README.md" />
   </ItemGroup>

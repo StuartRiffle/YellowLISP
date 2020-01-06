@@ -9,7 +9,8 @@
 #include "Console.h"
 #include "Coverage.h"
 
-enum CellType : uint32_t  
+
+enum CellType : uint64_t  
 {                       // The data stored in the cell is...
     TYPE_VOID,
     TYPE_FREE,          //   a link to the next free cell
@@ -20,30 +21,43 @@ enum CellType : uint32_t
     TYPE_INT,           //   a signed integer literal
     TYPE_FLOAT,         //   an IEEE floating point literal
 
+
     TYPE_CHAR,
     TYPE_COMPLEX,
     TYPE_REAL,
     TYPE_RATIONAL,
     TYPE_VECTOR,
+    TYPE_NUMBER,
+
     TYPE_FIXNUM,
+
+    boolean?          pair?
+    symbol?           number?
+    char?             string?
+    vector?           port?
+    procedure?
+
 
 
     TYPE_COUNT,
-    TYPE_BITS = 3
+    TYPE_BITS = 4
 };
 
-enum Tags
+enum CellTags : uint64_t  
 {
     TAG_GC_MARK    = 1 << 0,   // Marks cell as "reachable" during mark-and-sweep garbage collection
     TAG_EMBEDDED   = 1 << 1,   // The value is contained in the cell (as opposed to indexed)
 
-    TAG_BITS = 3
+    TAG_BITS = 2
 };
 
-const int HEADER_BITS   = sizeof(uint32_t) * 8;
-const int DATA_BITS     = sizeof(uint32_t) * 8;
+const int WORD_BITS     = sizeof(uint64_t) * 8;
 const int METADATA_BITS = TYPE_BITS + TAG_BITS;
-const int INDEX_BITS    = HEADER_BITS - METADATA_BITS;
+const int DATA_BITS     = (WORD_BITS - METADATA_BITS) / 2;
+
+
+const int ADDR_BITS = 26; // 2^26 == 64M 
+
 
 static_assert(TYPE_COUNT <= (1 << TYPE_BITS), "Not enough type bits");
 static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index");
@@ -51,12 +65,19 @@ static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index")
 struct Cell
 {
     CellType _type : TYPE_BITS;
-    uint32_t _tags : TAG_BITS;
+    CellTags _tags : TAG_BITS;
     uint32_t _next : INDEX_BITS;
     uint32_t _data;                 
 
     Cell() : _type(TYPE_VOID), _tags(0), _next(0), _data(0) {}
+
+
+    bool Is(CellType type)  const { return (_type == type); }
+    bool Has(CellTags tags) const { return (_tags & tags); }
 };
+
+static_assert(sizeof(Cell) == sizeof(uint64_t));
+
 
 template<typename TAG = void*, bool ZERO_VALID = true>
 class INDEX
@@ -83,10 +104,12 @@ class SYMBOLIDX : public INDEX<SYMBOLIDX>       { public: using INDEX::INDEX; };
 class STRINGIDX : public INDEX<STRINGIDX>       { public: using INDEX::INDEX; };
 class PRIMIDX   : public INDEX<PRIMIDX>         { public: using INDEX::INDEX; };
 
+
+
 enum SymbolType
 {
     SYMBOL_INVALID,
-    SYMBOL_RESERVED,
+    SYMBOL_RESERVED, // keyword?
     SYMBOL_PRIMITIVE,
     SYMBOL_VARIABLE,
     SYMBOL_FUNCTION,
@@ -163,14 +186,17 @@ struct ScopeGuard
     ScopeGuard(ScopeStack& scopeStack, Scope* scope) : _scopeStack(scopeStack)
     {
         _scopeStack.push_back(scope);
-        ASSERT_COVERAGE;
+        
     }
     ~ScopeGuard()
     {
         _scopeStack.pop_back();
-        ASSERT_COVERAGE;
+        
     }
 };
+
+template<typename KEY, typename VAL> using HashTable = std::unordered_map<KEY, VAL>;
+
 
 class Runtime
 {
@@ -184,8 +210,8 @@ class Runtime
     SlotPool<SymbolInfo, SYMBOLIDX> _symbol;
     SlotPool<StringInfo, STRINGIDX> _string;
 
-    std::unordered_map<STRINGHASH, SYMBOLIDX> _globalScope;
-    std::unordered_map<STRINGHASH, STRINGIDX> _stringTable;
+    HashTable<STRINGHASH, SYMBOLIDX> _globalScope;
+    HashTable<STRINGHASH, STRINGIDX> _stringTable;
 
     ScopeStack _environment;
 

@@ -50,18 +50,18 @@ struct YellowError : std::exception
     static const char* GetDesc(ErrorCode code);
 };
 
-#define RAISE_ERROR(_CODE, _DETAILS) { ASSERT_COVERAGE; DoRaiseError((_CODE), (_DETAILS)); }
-#define RAISE_ERROR_IF(_COND, _CODE, _DETAILS) { if (_COND) { ASSERT_COVERAGE; DoRaiseError((_CODE), (_DETAILS)); } }
+#define RAISE_ERROR(_CODE, _DETAILS) {  DoRaiseError((_CODE), (_DETAILS)); }
+#define RAISE_ERROR_IF(_COND, _CODE, _DETAILS) { if (_COND) {  DoRaiseError((_CODE), (_DETAILS)); } }
 
 inline void DoRaiseError(ErrorCode code, const char* details = "")
 {
-    ASSERT_COVERAGE;
+    
     throw YellowError(code, details);
 }
 
 inline void VERIFY_NUM_PARAMETERS(size_t num, size_t expected, const char* functionName)
 {
     RAISE_ERROR_IF(num != expected, ERROR_RUNTIME_WRONG_NUM_PARAMS, functionName);
-    ASSERT_COVERAGE;
+    
 }
 

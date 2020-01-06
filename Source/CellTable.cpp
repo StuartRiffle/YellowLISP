@@ -15,7 +15,7 @@ CELLID Runtime::AllocateCell(CellType type)
     {
         assert(_cellFreeCount == 0);
         ExpandCellTable();
-        ASSERT_COVERAGE;
+        
     }
 
     if (_cellFreeList == 0)
@@ -44,7 +44,7 @@ CELLID Runtime::AllocateCell(CellType type)
     _cell[index]._next = _null;
     _cell[index]._tags = 0;
 
-    RETURN_ASSERT_COVERAGE(index);
+    return (index);
 }
 
 void Runtime::FreeCell(CELLID index)
@@ -56,7 +56,7 @@ void Runtime::FreeCell(CELLID index)
 
     _cellFreeList = index;
     _cellFreeCount++;
-    ASSERT_COVERAGE;
+    
 }
 
 void Runtime::ExpandCellTable()
@@ -70,21 +70,21 @@ void Runtime::ExpandCellTable()
         FreeCell(i);
 
     DebugValidateCells();
-    ASSERT_COVERAGE;
+    
 }
 
 void Runtime::MarkCellsInUse(CELLID index)
 {
     if (!index.IsValid())
-        VOID_RETURN_ASSERT_COVERAGE;
+        return;
 
     if (index == _null)
-        VOID_RETURN_ASSERT_COVERAGE;
+        return;
 
     Cell& cell = _cell[index];
 
     if (cell._tags & TAG_GC_MARK)
-        VOID_RETURN_ASSERT_COVERAGE;
+        return;
 
     cell._tags |= TAG_GC_MARK;
 
@@ -92,21 +92,20 @@ void Runtime::MarkCellsInUse(CELLID index)
     {
         MarkCellsInUse(cell._data);
         MarkCellsInUse(cell._next);
-        ASSERT_COVERAGE;
+        
     }
 
     if (cell._type == TYPE_LAMBDA)
     {
         CELLID args = cell._data;
-        MarkCellsInUse(args);
-
         CELLID body = cell._next;
-        MarkCellsInUse(body);
 
-        ASSERT_COVERAGE;
+        MarkCellsInUse(args);
+        MarkCellsInUse(body);
+        
     }
 
-    VOID_RETURN_ASSERT_COVERAGE;
+    return;
 }
 
 void Runtime::DebugValidateCells()
@@ -152,7 +151,7 @@ size_t Runtime::CollectGarbage()
         MarkCellsInUse(symbol._symbolCell);
         MarkCellsInUse(symbol._valueCell);
         MarkCellsInUse(symbol._macroBindings);
-        ASSERT_COVERAGE;
+        
     }
 
     // Mark cells with references on the callstack that got us here
@@ -162,7 +161,7 @@ size_t Runtime::CollectGarbage()
         for (auto& binding : *scope)
         {
             MarkCellsInUse(binding.second);
-            ASSERT_COVERAGE;
+            
         }
     }
 
@@ -178,7 +177,7 @@ size_t Runtime::CollectGarbage()
         _cell[slot]._tags |= TAG_GC_MARK;
         slot = _cell[slot]._next;
         numFree++;
-        ASSERT_COVERAGE;
+        
     }
 
     DebugValidateCells();
@@ -193,14 +192,14 @@ size_t Runtime::CollectGarbage()
     {
         if (i == _null)
         {
-            ASSERT_COVERAGE;
+            
             continue;
         }
 
         if (_cell[i]._tags & TAG_GC_MARK)
         {
             _cell[i]._tags &= ~TAG_GC_MARK;
-            ASSERT_COVERAGE;
+            
         }
         else
         {
@@ -222,23 +221,23 @@ size_t Runtime::CollectGarbage()
                         RAISE_ERROR_IF(_stringTable[hash] != stringIndex, ERROR_INTERNAL_STRING_TABLE_CORRUPT, "hashes didn't match");
 
                         _stringTable.erase(hash);
-                        ASSERT_COVERAGE;
+                        
                     }
-                    ASSERT_COVERAGE;
+                    
                 }
-                ASSERT_COVERAGE;
+                
             }
 
             FreeCell(i);
             numCellsFreed++;
-            ASSERT_COVERAGE;
+            
         }
     }
 
     DebugValidateCells();
 
     _console->PrintDebug("[GC freed %d of %d cells]\n", (int) numCellsFreed, (int) _cell.size());
-    RETURN_ASSERT_COVERAGE(numCellsFreed);
+    return (numCellsFreed);
 }
 
 
@@ -254,13 +253,11 @@ void Runtime::HandleGarbage()
         {
             // The GC didn't free up much space, so expand the table to avoid thrashing
 
-
             ExpandCellTable();
-            VOID_RETURN_ASSERT_COVERAGE;
+            return;
         }
     }
-
-    VOID_RETURN_ASSERT_COVERAGE;
+    return;
 }
 
-UPDATE_COVERAGE_MARKER_RANGE;
+

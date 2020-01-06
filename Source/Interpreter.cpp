@@ -32,7 +32,7 @@ vector<CELLID> Interpreter::EvaluateExpressions(const list<NodeRef>& exps)
 
         CELLID valueCell = _runtime.EvaluateCell(exprCell);
         outputs.push_back(valueCell);    
-        ASSERT_COVERAGE;
+        
     }
 
     return outputs;
@@ -48,7 +48,7 @@ CELLID Interpreter::RunSourceCode(const string& source)
     if (!values.empty())
     {
         result = values.back();
-        ASSERT_COVERAGE;
+        
     }
 
     return result;
@@ -68,11 +68,11 @@ string Interpreter::Evaluate(const string& source)
         if (valueCell.IsValid())
             output = _runtime.GetPrintedValue(valueCell);
 
-        ASSERT_COVERAGE;
+        
     }
     catch (YellowError error)
     {
-        ASSERT_COVERAGE;
+        
 
     #if !YELLOW_CATCH_EXCEPTIONS
         throw;
@@ -86,7 +86,7 @@ string Interpreter::Evaluate(const string& source)
     }
     catch (std::exception error)
     {
-        ASSERT_COVERAGE;
+        
 
     #if !YELLOW_CATCH_EXCEPTIONS
         throw;
@@ -100,7 +100,7 @@ string Interpreter::Evaluate(const string& source)
     }
     catch (...)
     {
-        ASSERT_COVERAGE;
+        
 
         _console->PrintErrorPrefix("INTERNAL ERROR");
         _console->Print("unhandled exception\n");
@@ -112,7 +112,7 @@ string Interpreter::Evaluate(const string& source)
 
     //_runtime.HandleGarbage();
 
-    RETURN_ASSERT_COVERAGE(output);
+    return (output);
 }
 
 void Interpreter::RunREPL()
@@ -129,8 +129,8 @@ void Interpreter::RunREPL()
         if (output.length() > 0)
             _console->Print("%s\n", output.c_str());
 
-        ASSERT_COVERAGE;
+        
     }
 }
 
-UPDATE_COVERAGE_MARKER_RANGE;
+

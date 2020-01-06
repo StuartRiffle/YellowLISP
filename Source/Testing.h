@@ -38,12 +38,12 @@ struct CoverageMarker
 // exceptions could cause an early exit, and we need to test all the way to the end.
 
 #if DEBUG_BUILD
-    #define ASSERT_COVERAGE DECLARE_COVERAGE_MARKER(UNIQUE_COVERAGE_MARKER_NAME(__COUNTER__))
+    #define MARK_COVERED DECLARE_COVERAGE_MARKER(UNIQUE_COVERAGE_MARKER_NAME(__COUNTER__))
 #else
-    #define ASSERT_COVERAGE
+    #define MARK_COVERED
 #endif
 
-#define RETURN_ASSERT_COVERAGE(_RESULT) { ASSERT_COVERAGE; return _RESULT; }
-#define VOID_RETURN_ASSERT_COVERAGE     { ASSERT_COVERAGE; return; }
-#define BREAK_ASSERT_COVERAGE           { ASSERT_COVERAGE; break; }
+#define return (_RESULT) {  return _RESULT; }
+#define return     {  return; }
+#define break           {  break; }
 

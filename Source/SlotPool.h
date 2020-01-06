@@ -67,3 +67,28 @@ public:
     }
 };
 
+
+template<typename T>
+class SlotChain
+{
+    static_assert(sizeof(T) >= sizeof(intptr_t));
+    intptr_t* _freeList = nullptr;
+
+public:
+    inline void Free(T* ptr)
+    {
+        *((intptr_t**) ptr) = _freeList;
+        _freeList = (intptr_t*) ptr;
+    }
+
+    inline T* Alloc()
+    {
+        T* result = _freeList;
+        if (_freeList)
+            _freeList = *((intptr_t**) _freeList);
+        return result;
+    }
+};
+
+
+

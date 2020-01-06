@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Library">
+      <UniqueIdentifier>{80f53171-24aa-45b0-8e2d-e0d80991535c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Library\r6rs">
+      <UniqueIdentifier>{90602bb3-5e83-4f0b-8a95-5f6e532d0043}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Bootstrap.cpp">
@@ -94,7 +100,7 @@
     <ClInclude Include="Source\StaticVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Coverage.h">
+    <ClInclude Include="Source\ConsCell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -103,6 +109,48 @@
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include=".gitattributes" />
+    <None Include="Library\R6RS\compat-r5rs.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\examples.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\expander.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\runtime.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\sample-balloons.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\sample-libs-and-program.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\sample-party.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\sample-program.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\sample-stack.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\simple-macros.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\simple-macros-tests.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\simple-module-examples.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\simple-syntax-case.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
+    <None Include="Library\R6RS\standard-libraries.scm">
+      <Filter>Library\r6rs</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

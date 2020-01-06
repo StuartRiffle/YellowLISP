@@ -120,7 +120,7 @@ CELLID Runtime::RegisterReserved(const char* ident)
     CELLID cellIndex = _symbol[symbolIndex]._symbolCell;
 
     _symbol[symbolIndex]._type = SYMBOL_RESERVED;
-    RETURN_ASSERT_COVERAGE(cellIndex);
+    return (cellIndex);
 }
 
 SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, SymbolType symbolType, STRINGHASH hash)
@@ -139,7 +139,7 @@ SYMBOLIDX Runtime::StoreSymbol(const char* ident, CELLID cellIndex, SymbolType s
     symbol._symbolCell = cellIndex;
     symbol._valueCell.SetInvalid();
 
-    RETURN_ASSERT_COVERAGE(symbolIndex);
+    return (symbolIndex);
 }
 
 SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
@@ -148,12 +148,12 @@ SYMBOLIDX Runtime::GetSymbolIndex(const char* ident)
 
     auto iter = _globalScope.find(hash);
     if (iter != _globalScope.end())
-        RETURN_ASSERT_COVERAGE(iter->second);
+        return (iter->second);
 
     CELLID cellIndex = AllocateCell(TYPE_SYMBOL);
     SYMBOLIDX symbolIndex = StoreSymbol(ident, cellIndex, SYMBOL_INVALID, hash);
 
-    RETURN_ASSERT_COVERAGE(symbolIndex);
+    return (symbolIndex);
 }
 
 CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolFlags flags)
@@ -171,7 +171,7 @@ CELLID Runtime::RegisterPrimitive(const char* ident, PrimitiveFunc func, SymbolF
     primInfo._name = ident;
     primInfo._func = func;
 
-    RETURN_ASSERT_COVERAGE(symbol._symbolCell);
+    return (symbol._symbolCell);
 }
 
 bool Runtime::IsTruthy(CELLID index)
@@ -190,7 +190,7 @@ CELLID Runtime::EncodeSyntaxTree(const NodeRef& node)
     //DumpCellGraph(result, true);
 
     DebugValidateCells();
-    RETURN_ASSERT_COVERAGE(result);
+    return (result);
 }
 
 CELLID Runtime::EncodeTreeNode(const NodeRef& node)
@@ -202,33 +202,33 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
             CELLID intCell = AllocateCell(TYPE_INT);
 
             StoreIntLiteral(intCell, node->_int);
-            RETURN_ASSERT_COVERAGE(intCell);
+            return (intCell);
         }
         case AST_NODE_FLOAT_LITERAL:
         {
             CELLID floatCell = AllocateCell(TYPE_FLOAT);
 
             StoreFloatLiteral(floatCell, node->_float);
-            RETURN_ASSERT_COVERAGE(floatCell);
+            return (floatCell);
         }
         case AST_NODE_STRING_LITERAL:
         {
             CELLID stringCell = AllocateCell(TYPE_STRING);
 
             StoreStringLiteral(stringCell, node->_string.c_str());
-            RETURN_ASSERT_COVERAGE(stringCell);
+            return (stringCell);
         }
         case AST_NODE_IDENTIFIER:
         {
             SYMBOLIDX symbolIndex = GetSymbolIndex(node->_identifier.c_str());
 
             SymbolInfo& symbol = _symbol[symbolIndex];
-            RETURN_ASSERT_COVERAGE(symbol._symbolCell);
+            return (symbol._symbolCell);
         }
         case AST_NODE_LIST:
         {
             if (node->_list.empty())
-                RETURN_ASSERT_COVERAGE(_null);
+                return (_null);
 
             CELLID listHeadCell;
             CELLID listPrevCell;
@@ -245,10 +245,10 @@ CELLID Runtime::EncodeTreeNode(const NodeRef& node)
                     listHeadCell = listCell;
 
                 listPrevCell = listCell;
-                ASSERT_COVERAGE;
+                
             }
 
-            RETURN_ASSERT_COVERAGE(listHeadCell);
+            return (listHeadCell);
         }
         default:
             break;
@@ -262,7 +262,7 @@ string Runtime::GetPrintedValue(CELLID index)
 {
     assert(index.IsValid());
     if (index == _null)
-        RETURN_ASSERT_COVERAGE("nil");
+        return ("nil");
 
     std::stringstream ss;
 
@@ -274,19 +274,19 @@ string Runtime::GetPrintedValue(CELLID index)
             {
                 ss << "'";
                 ss << GetPrintedValue(_cell[_cell[index]._next]._data);
-                ASSERT_COVERAGE;
+                
             }
             else if (_cell[index]._data == _unquote)
             {
                 ss << ",";
                 ss << GetPrintedValue(_cell[_cell[index]._next]._data);
-                ASSERT_COVERAGE;
+                
             }
             else if (_cell[index]._data == _quasiquote)
             {
                 ss << "`";
                 ss << GetPrintedValue(_cell[_cell[index]._next]._data);
-                ASSERT_COVERAGE;
+                
             }
             else
             {
@@ -303,7 +303,7 @@ string Runtime::GetPrintedValue(CELLID index)
                     if ((next != _null) && (_cell[next]._type != TYPE_CONS))
                     {
                         ss << " . " << GetPrintedValue(next);
-                        ASSERT_COVERAGE;
+                        
                         break;
                     }
 
@@ -311,25 +311,25 @@ string Runtime::GetPrintedValue(CELLID index)
                         ss << " ";
 
                     curr = next;
-                    ASSERT_COVERAGE;
+                    
                 }
 
                 ss << ')';
-                ASSERT_COVERAGE;
+                
             }
             break;
         }
 
-        case TYPE_INT:    ss <<  LoadIntLiteral(index);                     BREAK_ASSERT_COVERAGE;
-        case TYPE_FLOAT:  ss <<  LoadFloatLiteral(index);                   BREAK_ASSERT_COVERAGE;
-        case TYPE_STRING: ss <<  '\"' << LoadStringLiteral(index) << '\"';  BREAK_ASSERT_COVERAGE;
-        case TYPE_SYMBOL: ss <<  _symbol[_cell[index]._data]._ident;        BREAK_ASSERT_COVERAGE;
-        case TYPE_LAMBDA: ss <<  "<lambda " << index << ">";                BREAK_ASSERT_COVERAGE;
+        case TYPE_INT:    ss <<  LoadIntLiteral(index);                     break;
+        case TYPE_FLOAT:  ss <<  LoadFloatLiteral(index);                   break;
+        case TYPE_STRING: ss <<  '\"' << LoadStringLiteral(index) << '\"';  break;
+        case TYPE_SYMBOL: ss <<  _symbol[_cell[index]._data]._ident;        break;
+        case TYPE_LAMBDA: ss <<  "<lambda " << index << ">";                break;
         default:          
             RAISE_ERROR(ERROR_INTERNAL_CELL_TABLE_CORRUPT, "unrecognized cell type"); break;
     }
 
-    RETURN_ASSERT_COVERAGE(ss.str());
+    return (ss.str());
 }
 
-UPDATE_COVERAGE_MARKER_RANGE;
+

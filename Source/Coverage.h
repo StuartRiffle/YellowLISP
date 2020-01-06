@@ -3,7 +3,7 @@
 #pragma once
 #if DEBUG_BUILD
 
-    // This is hacky and fragile! It's just to use as rought guide while debugging,
+    // This is hacky and fragile! It's just to use as rough guide while debugging,
     // and has only been tested in MSVC so far. It can not generate a list of
     // missed coverage markers, and it only works in DEBUG_BUILD.
     //
@@ -12,7 +12,7 @@
     //
     // For this to work, the compiler macro __COUNTER__ has to be unique over the
     // entire codebase, but by default it resets for every compilation unit. So
-    // the code has to be built as one bulk/unity/jumbo build!
+    // the code has to be built as one bulk/unity/jumbo build! 
 
     #define MAX_COVERAGE_MARKERS (2000) // Arbitrary; just increase it if you hit the assert
 
@@ -93,10 +93,10 @@
         }
     };
 
-    // When placing these markers, put them at the *end* of basic blocks, because
-    // exceptions could cause an early exit, and we need to test all the way to the end.
+    // When placing these markers, put them at the *end* of basic blocks, because an
+    // exception could cause an early exit, but we need to test all the way to the end.
 
-    #define ASSERT_COVERAGE \
+    #define MARK_COVERED \
     { \
         extern CoverageMarker gCoverageMarker[MAX_COVERAGE_MARKERS]; \
         const int indexLocal = __COUNTER__; \
@@ -114,13 +114,13 @@
 #else
     // RELEASE_BUILD
     
-    #define ASSERT_COVERAGE
+    #define MARK_COVERED
     #define DECLARE_UNIQUE_COVERAGE_RANGE_FINDER(_INDEX)
 #endif
 
-#define RETURN_ASSERT_COVERAGE(_RESULT) { ASSERT_COVERAGE; return _RESULT; }
-#define VOID_RETURN_ASSERT_COVERAGE     { ASSERT_COVERAGE; return; }
-#define BREAK_ASSERT_COVERAGE           { ASSERT_COVERAGE; break; }
+#define RETURN_COVERED(_RESULT) { MARK_COVERED; return _RESULT; }
+#define RETURN_VOID_COVERED     { MARK_COVERED; return; }
+#define BREAK_COVERED           { MARK_COVERED; break; }
 
 #define UPDATE_COVERAGE_MARKER_RANGE_FOR_REAL(_INDEX) DECLARE_UNIQUE_COVERAGE_RANGE_FINDER(_INDEX)
 #define UPDATE_COVERAGE_MARKER_RANGE UPDATE_COVERAGE_MARKER_RANGE_FOR_REAL(__COUNTER__)
