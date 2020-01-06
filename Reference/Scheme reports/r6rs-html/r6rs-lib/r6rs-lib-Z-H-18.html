@@ -1,0 +1,99 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from r6rs-lib.tex by tex2page, v 20100828
+(running on MzScheme 4.2.4, :unix), 
+(c) Dorai Sitaram, 
+http://evalwhen.com/tex2page/index.html
+
+-->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>
+r6rs-lib
+</title>
+<link rel="stylesheet" type="text/css" href="r6rs-lib-Z-S.css" title=default>
+<meta name=robots content="index,follow">
+</head>
+<body>
+<div id=slidecontent>
+<div align=right class=navigation>[Go to <span><a href="r6rs-lib.html">first</a>, <a href="r6rs-lib-Z-H-17.html">previous</a></span><span>, <a href="r6rs-lib-Z-H-19.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="r6rs-lib-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="r6rs-lib-Z-H-21.html#node_index_start">index</a></span>]</div>
+<p></p>
+<a name="node_chap_17"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="r6rs-lib-Z-H-1.html#node_toc_node_chap_17">Chapter 17</a></div><br>
+<a href="r6rs-lib-Z-H-1.html#node_toc_node_chap_17">Mutable pairs</a></h1>
+<p></p>
+<p>
+The procedures provided by the <tt>(rnrs mutable-pairs (6))</tt><a name="node_idx_1272"></a>library
+allow new values to be assigned to the car and cdr fields of
+previously allocated pairs.  </p>
+<p>
+</p>
+<p></p>
+<div align=left><tt>(<a name="node_idx_1274"></a>set-car!<i> pair obj</i>)</tt><span style="margin-left: .5em">&zwnj;</span><span style="margin-left: .5em">&zwnj;</span>procedure&nbsp;</div>
+<p>
+Stores <i>obj</i> in the car field of <i>pair</i>.
+The <tt>set-car!</tt> procedure returns unspecified values.</p>
+<p>
+</p>
+
+<tt>(define&nbsp;(f)&nbsp;(list&nbsp;'not-a-constant-list))
+<p class=nopadding>(define&nbsp;(g)&nbsp;'(constant-list))</p>
+
+<p class=nopadding>(set-car!&nbsp;(f)&nbsp;3)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="margin-left: 2em">&zwnj;</span>&rArr;&nbsp;&nbsp;<em>unspecified</em></p>
+
+<p class=nopadding>(set-car!&nbsp;(g)&nbsp;3)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="margin-left: 2em">&zwnj;</span>&rArr;&nbsp;&nbsp;<i>unspecified</i><br>
+;&nbsp;should&nbsp;raise&nbsp;<tt>&nbsp;&amp;assertion</tt>&nbsp;<i>exception</i></p>
+
+<p class=nopadding></p>
+<p></tt></p>
+<p>
+If an immutable pair is passed to <tt>set-car!</tt>, an exception
+with condition type <tt>&amp;assertion</tt> should be raised.
+</p>
+<p></p>
+<p>
+</p>
+<p></p>
+<div align=left><tt>(<a name="node_idx_1276"></a>set-cdr!<i> pair obj</i>)</tt><span style="margin-left: .5em">&zwnj;</span><span style="margin-left: .5em">&zwnj;</span>procedure&nbsp;</div>
+<p>
+Stores <i>obj</i> in the cdr field of <i>pair</i>.
+The <tt>set-cdr!</tt> procedure returns unspecified values.</p>
+<p>
+If an immutable pair is passed to <tt>set-cdr!</tt>, an exception
+with condition type <tt>&amp;assertion</tt> should be raised.</p>
+<p>
+</p>
+
+<tt>(let&nbsp;((x&nbsp;(list&nbsp;'a&nbsp;'b&nbsp;'c&nbsp;'a))
+<p class=nopadding>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(y&nbsp;(list&nbsp;'a&nbsp;'b&nbsp;'c&nbsp;'a&nbsp;'b&nbsp;'c&nbsp;'a)))</p>
+
+<p class=nopadding>&nbsp;&nbsp;(set-cdr!&nbsp;(list-tail&nbsp;x&nbsp;2)&nbsp;x)</p>
+
+<p class=nopadding>&nbsp;&nbsp;(set-cdr!&nbsp;(list-tail&nbsp;y&nbsp;5)&nbsp;y)</p>
+
+<p class=nopadding>&nbsp;&nbsp;(list</p>
+
+<p class=nopadding>&nbsp;&nbsp;&nbsp;(equal?&nbsp;x&nbsp;x)</p>
+
+<p class=nopadding>&nbsp;&nbsp;&nbsp;(equal?&nbsp;x&nbsp;y)</p>
+
+<p class=nopadding>&nbsp;&nbsp;&nbsp;(equal?&nbsp;(list&nbsp;x&nbsp;y&nbsp;'a)&nbsp;(list&nbsp;y&nbsp;x&nbsp;'b))))&nbsp;<br><span style="margin-left: 2em">&zwnj;</span><span style="margin-left: 2em">&zwnj;</span>&rArr;&nbsp;&nbsp;(<tt>#t</tt>&nbsp;<tt>#t</tt>&nbsp;<tt>#f</tt>)</p>
+
+<p class=nopadding></p>
+<p></tt>
+</p>
+<p></p>
+<p>
+  </p>
+<p></p>
+<div class=smallskip></div>
+<p style="margin-top: 0pt; margin-bottom: 0pt">
+<div align=right class=navigation>[Go to <span><a href="r6rs-lib.html">first</a>, <a href="r6rs-lib-Z-H-17.html">previous</a></span><span>, <a href="r6rs-lib-Z-H-19.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="r6rs-lib-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="r6rs-lib-Z-H-21.html#node_index_start">index</a></span>]</div>
+</p>
+<p></p>
+</div>
+</body>
+</html>
