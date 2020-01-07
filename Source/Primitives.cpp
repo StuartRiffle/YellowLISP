@@ -63,15 +63,12 @@ CELLID Runtime::APPLY(const CELLVEC& args)
             {
                 callArgs.push_back(_cell[arg]._data);
                 arg = _cell[arg]._next;
-                
             }
         }
         else
         {
             callArgs.push_back(args[i]);
-            
         }
-        
     }
 
     CELLID callArgList = GenerateList(callArgs);
@@ -504,13 +501,23 @@ CELLID Runtime::DEFUN(const CELLVEC& args)
     CELLVEC lambdaArgs = { bindingListCell, functionBodyCell };
     CELLID lambdaCell = LAMBDA(lambdaArgs);
 
+
+
     SYMBOLIDX symbolIndex = _cell[symbolCell]._data;
     SymbolInfo&  functionSymbol = _symbol[symbolIndex];
+
 
     functionSymbol._type = SYMBOL_FUNCTION;
     functionSymbol._valueCell = lambdaCell;
 
     return (symbolCell);
+
+
+
+
+    int si = _mem.GetSymbol(symbolCell);
+    _symbol[si].
+
 }
 
 CELLID Runtime::LAMBDA(const CELLVEC& args)
@@ -520,19 +527,35 @@ CELLID Runtime::LAMBDA(const CELLVEC& args)
     // FIXME: if the formal parameter is one ident not in a list, it is treated as a list of all input args
     // FIXME: dot notation before the last parameter to bind the rest into a list 
 
-    RAISE_ERROR_IF(args.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LAMBDA");
+//    RAISE_ERROR_IF(args.size() != 2, ERROR_RUNTIME_WRONG_NUM_PARAMS, "LAMBDA");
 
+    ListWalker
+
+    /*
     CELLID bindingListCell = args[0];
-    RAISE_ERROR_IF((bindingListCell != _null) && (_cell[bindingListCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda binding list");
-
     CELLID functionBodyCell = args[1];
-    RAISE_ERROR_IF((functionBodyCell != _null) && (_cell[functionBodyCell]._type != TYPE_CONS), ERROR_RUNTIME_TYPE_MISMATCH, "lambda function body");
+
+    RAISE_ERROR_IF((bindingListCell != _null) && (_cell[bindingListCell]._type != TYPE_CONS), 
+        ERROR_RUNTIME_TYPE_MISMATCH, "lambda binding list");
+    RAISE_ERROR_IF((functionBodyCell != _null) && (_cell[functionBodyCell]._type != TYPE_CONS), 
+        ERROR_RUNTIME_TYPE_MISMATCH, "lambda function body");
 
     CELLID lambdaCell = AllocateCell(TYPE_LAMBDA);
     _cell[lambdaCell]._data = bindingListCell;
     _cell[lambdaCell]._next = functionBodyCell;
+    return lambdaCell;
+    */
 
-    return (lambdaCell);
+    CELLID proc = ConstructCell(bindingList, body);
+    return (proc);
+}
+
+
+template<typename TCAR, typename TCDR>
+CELLID Runtime::ConstructCell(TCAR car, TCDR cdr)
+{
+    CELLID cell = AllocateCell();
+
 }
 
 

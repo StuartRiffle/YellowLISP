@@ -298,7 +298,8 @@ CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
     }
 
     CELLID lambdaCell = callTarget._lambdaCell;
-    RAISE_ERROR_IF((lambdaCell == _null) || (_cell[lambdaCell]._type != TYPE_LAMBDA), ERROR_RUNTIME_UNDEFINED_FUNCTION, "not a function");
+    RAISE_ERROR_IF((lambdaCell == _null) || (_cell[lambdaCell]._type != TYPE_LAMBDA), 
+        ERROR_RUNTIME_UNDEFINED_FUNCTION, "not a function");
 
     CELLID bindingList = _cell[lambdaCell]._data;
     CELLID bodyCell = _cell[lambdaCell]._next;
@@ -315,20 +316,6 @@ CELLID Runtime::ApplyFunction(const CallTarget& callTarget, CELLID argList)
     return (result);
 }
 
-/*
-digraph G {
-    graph[rankdir = "LR"];
-    node [fontname = "segoe ui semibold";shape=rectangle];
-    EvaluateCell -> EvaluateCell;
-    EvaluateCell -> ApplyFunction;
-    ApplyFunction -> EvaluateCell;
-    ApplyFunction -> CallPrimitive;
-    CallPrimitive -> EvaluateCell;
-    CallPrimitive -> "(primitive...)";
-    "(primitive...)" -> EvaluateCell;
-    "(primitive...)" -> ApplyFunction;
-}
-*/
 
 CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateArgs)
 {
@@ -338,13 +325,8 @@ CELLID Runtime::CallPrimitive(PRIMIDX primIndex, CELLID argCell, bool evaluateAr
     PrimitiveInfo& prim = _primitive[primIndex];
 
     if (evaluateArgs)
-    {
         for (int i = 0; i < args.size(); i++)
-        {
             args[i] = EvaluateCell(args[i]);
-            
-        }
-    }
 
     CELLID result = (*this.*prim._func)(args);
     return (result);

@@ -10,73 +10,42 @@
 #include "Coverage.h"
 
 
-enum CellType : uint64_t  
-{                       // The data stored in the cell is...
-    TYPE_VOID,
-    TYPE_FREE,          //   a link to the next free cell
-    TYPE_CONS,          //   an index into the cell table
-    TYPE_LAMBDA,        //   an index into the cell table for the binding list
-    TYPE_SYMBOL,        //   an index into the symbol table
-    TYPE_STRING,        //   a tiny string literal, or an index into the string table
-    TYPE_INT,           //   a signed integer literal
-    TYPE_FLOAT,         //   an IEEE floating point literal
+//    CELL TABLE           VALUE TABLE          LARGE OBJECTS
+//    24-bit index x2      Up to 64 bits        Reference counted
+//                       
+//    :     :     :        :           :       
+//    |-----|-----|        |-----------|        
+//    | CAR | CDR |------->|  variant  |---+--> bignum
+//    |-----|-----|        |-----------|   |
+//    :     :     :        :     ^     :   +--> string
+//                               |         |
+//                               |         +--> vector  [0][1][2] ...
+//                               |         :             |  |  |
+//                               |                       |  |  |
+//                               +-----------------------+--+--+- ...                            
+//  
+//
+//  A cons cell is 64 bits, and after type/tags we have 24 bits left over
+//  (for each of CAR and CDR) to store their data.
+//
+//  Chars and small integers are stored directly in the cons cell, but
+//  other types are given 8 bytes of storage in a value table,
+//  and the cons cell only contains an index into that table.
+//
+//  Large objects are allocated on the heap, and the value table is
+//  used to hold a reference counted pointer. The objects are eventually
+//  deleted by the garbage collector when they become unreachable.
+// 
+//  A vector can hold any mix of types, so it uses the value table for storage.
+//
+//  The cell table and value table themselves are allocated in pages,
+//  and expand by just adding more pages. The pages are never released,
+//  so memory usage will stay at the high-water mark reached at runtime.
+//
+//  Strings support the full range of Unicode, and are encoded as UTF-8.
+// 
+//  Big integers are allowed to grow without bounds. Caveat auctor.
 
-
-    TYPE_CHAR,
-    TYPE_COMPLEX,
-    TYPE_REAL,
-    TYPE_RATIONAL,
-    TYPE_VECTOR,
-    TYPE_NUMBER,
-
-    TYPE_FIXNUM,
-
-    boolean?          pair?
-    symbol?           number?
-    char?             string?
-    vector?           port?
-    procedure?
-
-
-
-    TYPE_COUNT,
-    TYPE_BITS = 4
-};
-
-enum CellTags : uint64_t  
-{
-    TAG_GC_MARK    = 1 << 0,   // Marks cell as "reachable" during mark-and-sweep garbage collection
-    TAG_EMBEDDED   = 1 << 1,   // The value is contained in the cell (as opposed to indexed)
-
-    TAG_BITS = 2
-};
-
-const int WORD_BITS     = sizeof(uint64_t) * 8;
-const int METADATA_BITS = TYPE_BITS + TAG_BITS;
-const int DATA_BITS     = (WORD_BITS - METADATA_BITS) / 2;
-
-
-const int ADDR_BITS = 26; // 2^26 == 64M 
-
-
-static_assert(TYPE_COUNT <= (1 << TYPE_BITS), "Not enough type bits");
-static_assert(INDEX_BITS <= DATA_BITS, "Not enough data bits to store an index");
-
-struct Cell
-{
-    CellType _type : TYPE_BITS;
-    CellTags _tags : TAG_BITS;
-    uint32_t _next : INDEX_BITS;
-    uint32_t _data;                 
-
-    Cell() : _type(TYPE_VOID), _tags(0), _next(0), _data(0) {}
-
-
-    bool Is(CellType type)  const { return (_type == type); }
-    bool Has(CellTags tags) const { return (_tags & tags); }
-};
-
-static_assert(sizeof(Cell) == sizeof(uint64_t));
 
 
 template<typename TAG = void*, bool ZERO_VALID = true>
@@ -134,7 +103,14 @@ struct SymbolInfo
     CELLID  _macroBindings;
 };
 
-#define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_FLOAT))
+struct SymbolInfo
+{
+    uint64_t    _immutable : 1;
+    uint32_t    _
+    uint32_t    _identHash;
+};
+
+#define IS_NUMERIC_TYPE(_IDX)   ((_cell[_IDX]._type == TYPE_INT) ||(_cell[_IDX]._type == TYPE_REAL))
 
 struct CallTarget
 {
