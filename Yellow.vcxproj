@@ -183,9 +183,9 @@
     <ClInclude Include="Source\Errors.h" />
     <ClInclude Include="Source\Hash.h" />
     <ClInclude Include="Source\Interpreter.h" />
+    <ClInclude Include="Source\PagedTable.h" />
     <ClInclude Include="Source\Parser.h" />
     <ClInclude Include="Source\Runtime.h" />
-    <ClInclude Include="Source\SlotPool.h" />
     <ClInclude Include="Source\StaticVector.h" />
     <ClInclude Include="Source\Utility.h" />
     <ClInclude Include="Source\Yellow.h" />
