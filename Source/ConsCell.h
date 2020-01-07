@@ -89,9 +89,12 @@ enum FieldType : FieldWord
     TYPE_COUNT
 };
 
-template<typename T> using ObjectReference = std::shared_ptr<T>;
+template<typename T> using Ref = std::shared_ptr<T>;
 
-typedef std::pair<int32_t, uint32_t>    RationalNumber;
+class BigInteger;
+class RationalNumber;
+
+
 typedef std::complex<float>             ComplexNumber;
 typedef void*                           BigInteger;  // Placeholder
 typedef void*                           ValueVector; // Placeholder
@@ -105,16 +108,40 @@ struct Field
     FieldWord _data : DATA_BITS;
 
     // The value stored in _data is an index into the value table, unless
-    // the _local flag is set. This happens for a couple of cases:
+    // the _embedded flag is set. This happens for a couple of cases:
     // 
     //   - TYPE_POINTER and TYPE_PROCEDURE hold a cell table address
     //   - TYPE_CHAR and TYPE_INTEGER store the value directly, if it
     //     is small enough to fit.
 
-    FieldWord _local : 1;       // Value is embedded in _data
-    FieldWord _exact : 1;       // Value is numeric and "exact"
-    FieldWord _immutable : 1;   // Value is a constant and cannot be changed
-    FieldWord _extra : 1;       // Reserved for use by ConsCell
+    FieldWord _embedded : 1;    // Value is 24 bits or less, and embedded in _data
+    FieldWord _exact    : 1;    // Value is numeric and "exact"
+    FieldWord _reserved : 2;    // These bits are reserved for ConsCell to use as flags
+};
+
+template<typename T> bool CanBeEmbedded
+
+
+// Values 
+
+union ValueUnion
+{
+    uintptr_t           _raw;
+    double              _real;      
+    char32_t            _char;      
+    ComplexNumber       _complex;
+    uintptr_t           _external;
+
+    template<typename T>
+    inline Ref<T>& AsExternalReference()
+    {
+        return *((Ref<T>*) _external);
+    }
+};
+
+struct ValueVariant
+{
+    ValueUnion  _value;
 };
 
 
@@ -122,48 +149,13 @@ struct ConsCell
 {
     Field _field[2]; // CAR and CDR
 
+    // 
+
     inline bool IsAllocated() const          { return _field[CAR]._extra; }
     inline bool SetAllocated(bool allocated) { _field[CAR]._extra = allocated? 1 : 0; }
 
     inline bool IsReachable() const          { return _field[CDR]._extra; }
     inline bool SetReachable(bool marked)    { _field[CDR]._extra = marked? 1 : 0; }
-};
-
-
-
-
-union ValueVariant
-{
-    uintptr_t           _raw;
-    double              _real;      
-    char32_t            _char;      
-    ComplexNumber       _complex;   
-
-    Ref<BigInteger>     _integer;       
-    Ref<BigRational>    _rational;
-    Ref<Environment>    _environment;
-    Ref<SymbolInfo>     _symbol;
-    Ref<StringInfo>     _string;
-    Ref<ValueVector>    _vector;
-
-    ~ValueVariant() { Reset(); }
-
-    void Reset(FieldType fieldType)
-    {
-        switch (fieldType)
-        {
-            case TYPE_INTEGER:      value->_integer.reset();     break;
-            case TYPE_RATIONAL:     value->_rational.reset();    break;
-            case TYPE_ENVIRONMENT:  value->_environment.reset(); break;
-            case TYPE_SYMBOL:       value->_symbol.reset();      break;
-            case TYPE_STRING:       value->_string.reset();      break;
-            case TYPE_VECTOR:       value->_vector.reset();      break;
-            default:
-                break;
-        }
-
-        _raw = 0;
-    }
 };
 
 
@@ -185,19 +177,31 @@ class Storage
     PagedTable<FatCell>      _fats;
     PagedTable<ValueVariant> _values;
 
-    inline Field* LocateCellField(CELLADDR addr, int field)
+    inline Field* LocateCell(int addr)
     {
-        ConsCell* cell = _cells.Get(addr);
-        assert(cell);
+        ConsCell* cell;
 
-        Field* field = &cell._field[field];
-        return field;
+        if (addr < 0)
+            cell = (ConsCell*) &_fats[-addr];
+        else
+            cell = &cells[addr];
+
+        return cell;
     }
 
-    inline ValueVariant* GetCellValueStorage(CELLADDR addr, int field)
+    inline ValueVariant* LocateValueStorage(int addr, int field)
     {
-        Field* field = LocateCellField(addr, field);
-        assert(field->_local == false);
+        ConsCell* cell = LocateCell(addr);
+        Field* field = &cell->_field[field];
+
+        if (field->_embedded)
+            return nullptr;
+
+        if (field->_adjacent)
+        {
+            assert(field == CAR);
+            return (ValueVariant*) (cell + 1);
+        }
 
         int valueIndex = field->_data;
         ValueVariant* value = _values.Get(valueIndex);
@@ -206,9 +210,23 @@ class Storage
         return value;
     }
 
-    void ResetField(Field* field)
+    template<typename CELLTYPE> struct ExternalReferenceType {};
+    template<> ExternalReferenceType<TYPE_ENVIRONMENT> { typedef Environment Type; };
+    template<> ExternalReferenceType<TYPE_SYMBOL> { typedef Environment Type; };
+    template<> ExternalReferenceType<TYPE_STRING> { typedef Environment Type; };
+    template<> ExternalReferenceType<TYPE_INTEGER> { typedef Environment Type; };
+    template<> ExternalReferenceType<TYPE_RATIONAL> { typedef Environment Type; };
+    template<> ExternalReferenceType<TYPE_VECTOR> { typedef Environment Type; };
+
+
+
+    template<typename T> ReleaseExternalReference(ValueVariant* value);
+    template<> ReleaseExternalReference<CELL_ENVIRONMENT>()
+
+    void ReleaseValueStorage(Field* field)
     {
-        if (!field->_local)
+        if (field-)
+        if (!field->_embedded)
         {
             int valueIndex = field->_data;
             value = _values.Get(valueIndex);
@@ -219,7 +237,7 @@ class Storage
         }
 
         field->_type = TYPE_VOID;
-        field->_local = 1;
+        field->_embedded = 1;
         field->_exact = 0;
         field->_immutable = 0;
     }
@@ -236,7 +254,7 @@ class Storage
         ResetField(field);
 
         field->_type = CELLTYPE;
-        field->_local = 1;
+        field->_embedded = 1;
         field->_immutable = 1;
         field->_data = valueIndex;
     }
@@ -258,7 +276,7 @@ public:
         ResetField(field);
         field->_type  = TYPE_POINTER;
         field->_data  = value;
-        field->_local = true;
+        field->_embedded = true;
     }
 
     // TYPE_PROCEDURE
@@ -276,7 +294,7 @@ public:
         ResetField(field);
         field->_type  = TYPE_PROCEDURE;
         field->_data  = value;
-        field->_local = true;
+        field->_embedded = true;
     }
 
     // TYPE_ENVIRONMENT
