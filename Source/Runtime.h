@@ -114,16 +114,14 @@ class Runtime
 {
     Console* _console;
 
-    friend class CELLITER;
-    vector<Cell> _cell;
-    uint32_t     _cellFreeList;
-    int          _cellFreeCount;
+    PagedTable<ConsCell>            _cells;
+    PagedTable<SmallValue>          _values;
+    PagedTable<Ref<Environment>>    _environs;
+    PagedTable<Ref<SymbolInfo>>     _symbols;
+    PagedTable<Ref<string>>         _strings;
+    PagedTable<Ref<CellVector>>     _vectors;
 
-    SlotPool<SymbolInfo, SYMBOLIDX> _symbol;
-    SlotPool<StringInfo, STRINGIDX> _string;
-
-    HashTable<STRINGHASH, SYMBOLIDX> _globalScope;
-    HashTable<STRINGHASH, STRINGIDX> _stringTable;
+    Environment
 
     ScopeStack _environment;
 

@@ -334,10 +334,7 @@ NodeRef Parser::ExpandMacroBody(NodeRef node, map<string, NodeRef>& argValues)
         case AST_NODE_STRING_LITERAL:    clone->_string = node->_string; break;
         case AST_NODE_LIST:
             for (auto& elem : node->_list)
-            {
                 clone->_list.push_back(ExpandMacroBody(elem, argValues));
-                
-            }
             break;
 
         default:
@@ -352,10 +349,7 @@ NodeRef Parser::Simplify(NodeRef node)
     if (node->_type == AST_NODE_LIST)
     {
         for (auto& elem : node->_list)
-        {
             elem = Simplify(elem);
-            
-        }
 
         if (node->_list.size() > 0)
         {
@@ -381,14 +375,12 @@ NodeRef Parser::Simplify(NodeRef node)
                 {
                     RAISE_ERROR_IF(arg->_type != AST_NODE_IDENTIFIER, ERROR_PARSER_SYNTAX, "expected macro argument name");
                     macroDef._argNames.push_back(arg->_identifier);
-                    
                 }
 
                 // Macros will be expanded here in the parser, so there's nothing to evaluate now
 
                 return (nullptr);
             }
-
 
             if (head->_type == AST_NODE_IDENTIFIER)
             {
@@ -403,10 +395,7 @@ NodeRef Parser::Simplify(NodeRef node)
 
                     map<string, NodeRef> argValues;
                     for (size_t i = 0; i < macroDef._argNames.size(); i++)
-                    {
                         argValues[macroDef._argNames[i]] = Simplify(node->_list[i + 1]);
-                        
-                    }
 
                     NodeRef expanded = ExpandMacroBody(macroDef._macroBody, argValues);
                     NodeRef simplified = Simplify(expanded);

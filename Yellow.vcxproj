@@ -175,6 +175,7 @@
     <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\BigInteger.h" />
     <ClInclude Include="Source\Bootstrap.h" />
     <ClInclude Include="Source\CommandLine.h" />
     <ClInclude Include="Source\ConsCell.h" />

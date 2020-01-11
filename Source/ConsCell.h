@@ -1,155 +1,223 @@
 #pragma once
 
-//
-//    CELL TABLE           VALUE TABLE          LARGE OBJECTS
-//    24-bit index x2      8 bytes of data      Reference counted
-//                       
-//    :     :     :        :           :       
-//    |=====|=====|        |===========|        
-//    | CAR | CDR |------->|  variant  |---+--> bignum
-//    |=====|=====|        |===========|   |
-//    :     :     :        :     ^     :   +--> string
-//                               |         |
-//                               |         +--> vector  [0][1][2] ...
-//                               |         :             |  |  |
-//                               |                       |  |  |
-//                               +-----------------------+--+--+- ...                            
-//  
-//
-//  A cons cell is 64 bits, and after type/tags we have 24 bits left over
-//  (for each of CAR and CDR) to store their data.
-//
-//  Chars and small integers are stored directly in the cons cell, but
-//  other types are given 8 bytes of storage in a value table,
-//  and the cons cell only contains an index into that table.
-//
-//  Large objects are allocated on the heap, and the value table is
-//  used to hold a reference counted pointer. The objects are eventually
-//  deleted by the garbage collector when they become unreachable.
-//  Big integer objects are allowed to grow without bounds. Caveat auctor!
-// 
-//  A vector can hold any mix of types, and uses the value table for storage.
-//  Vector elements are 32 bit value table indices.
-//
-//  There is a special case though (of course), which is "fat" cells:
-//
-//    :     :     :           :       
-//    |=====+=====+===========|        
-//    | CAR | CDR | CAR value | 
-//    |=====+=====+===========|
-//    :     :     :           :
-//
-//  A "fat" cell is immediately followed by the value of CAR. This is an
-//  optimization for simple list nodes, where CDR is just an embedded
-//  pointer, to avoid the [potential] cache miss of doing a value table
-//  for CAR. Fat cells are stored in their own table.
-//  
-//  If a fat cell is ever mutated into something that is NOT a garden variety 
-//  list node, it falls back to being normal cell, and just ignores that 
-//  extra word of storage. The code calls that a "degenerate" fat cell, and 
-//  I'd expect them to be rare.
-//  
-//  Fat cells are created opportunistically, at cons time, as a happy surprise. 
-//  A normal cell is never be promoted to a fat cell, and a degenerate fat
-//  cell is never demoted to normal storage.
-//  
-//      TODO: gather metrics about this to validate assumptions
-//
-//  The cell table, fat cell table, and value table /themselves/ are allocated
-//  in pages, and expand by just adding more pages. The pages are never released,
-//  so total memory usage will reach some high-water mark at runtime and stay there.
-//
-
 enum
 {
     CAR = 0,
     CDR = 1
 };
 
-typedef uint32_t FieldWord;
-typedef uint64_t CellWord;
-
-enum FieldType : FieldWord
+enum ValueType
 {
     TYPE_INVALID = 0,
-    TYPE_NULL, // Only the empty list is TYPE_NULL
-
-    TYPE_POINTER,
-    TYPE_PROCEDURE,
-    TYPE_ENVIRONMENT,
-    TYPE_SYMBOL,
-    TYPE_STRING,
-    TYPE_CHAR,
-    TYPE_INTEGER,
-    TYPE_RATIONAL,
-    TYPE_REAL,
-    TYPE_COMPLEX,
-    TYPE_VECTOR,
+                        // This value is:                       It is represented by:
+                        // --------------                       ---------------------
+    TYPE_NULL,          // The empty list ()                    Type only
+    TYPE_POINTER,       // A cons cell reference                An index into _cells[]
+    TYPE_PROCEDURE,     // A callable procedure                 An index into _cells[] for a pair (bindings . body)
+    TYPE_ENVIRONMENT,   // An Environment object reference      An index into _environs[]
+    TYPE_SYMBOL,        // A SymbolInfo object reference        An index into _symbols[]
+    TYPE_VECTOR,        // A mixed-type vector of values        An index into _vectors[]
+    TYPE_CHAR,          // A UTF-32 code point                  Immediate value
+    TYPE_STRING,        // A vector of TYPE_CHAR code points    An index into _vectors[]
+    TYPE_FIXED_INT,     // An exact 28-bit signed integer       Immediate value
+    TYPE_NUMBER,        // Any other numeric value              An index into _numbers[]
 
     TYPE_COUNT
 };
 
-template<typename T> using Ref = std::shared_ptr<T>;
+struct Datum
+{
+    uint32_t    _type : 4;
+    uint32_t    _data : 28;
+};
 
-class BigInteger;
-class RationalNumber;
+
+enum TowerLevel
+{
+    LEVEL_INVALID = 0,
+
+    LEVEL_INTEGER,
+    LEVEL_RATIONAL,
+    LEVEL_REAL,
+    LEVEL_COMPLEX
+};
+
+struct Scalar
+{
+    bool        _big;       
+    bool        _rational;  
+
+    // The storage format used depends on the flags:
+    //
+    //                  rational            not rational
+    //
+    //      big         _bignum/_bigden     _flonum
+    //      not big     _fixnum/_fixden     _flonum
+    //
+    // Simple integers are represented as rational numbers with 
+    // a denominator of 1.
+    //
+    // The storage format is independent of Scheme's "exactness"
+
+    int64_t     _fixnum;
+    uint64_t    _fixden;
+
+    bignum_t    _bignum;
+    bignum_t    _bigden;
+
+    double      _flonum;
+};
+
+class Number
+{
+    TowerLevel  _level   = LEVEL_INVALID;
+    bool        _exact   = true;
+    Scalar      _real;
+    Scalar      _imag;
+
+public:
+
+    Number Add         (const Number& lhs, const Number& rhs) const;
+    Number Subtract    (const Number& lhs, const Number& rhs) const;
+    Number Multiply    (const Number& lhs, const Number& rhs) const;
+    Number Gcd         (const Number& lhs, const Number& rhs) const;
+    Number Lcm         (const Number& lhs, const Number& rhs) const; 
+
+    bool    IsEqualTo
+    bool    IsLessThan
+
+    Number Abs         () const;
+    Number Numerator   () const; 
+    Number Denominator () const; 
+    Number Floor       () const; 
+    Number Ceiling     () const;
+    Number Truncate    () const; 
+    Number Round       () const; 
+    Number Rationalize () const;
+
+    Number RealPart    () const;
+    Number ImagPart    () const;
+    Number Magnitude   () const;
+    Number Angle       () const;
+    Number ToExact
+    Number ToInexact
 
 
-typedef std::complex<float>             ComplexNumber;
-typedef void*                           BigInteger;  // Placeholder
-typedef void*                           ValueVector; // Placeholder
+    Number MakeRectangular
+    Number MakePolar
+    Number FromString 
+    Number FromStringRadix 
+
+    bool    IsNumber
+    bool    IsComplex
+    bool    IsReal
+    bool    IsRational
+    bool    IsInteger
+    bool    IsExact
+    bool    IsRealValued
+    bool    IsRationalValued
+    bool    IsZero
+    bool    IsPositive
+    bool    IsNegative
+    bool    IsFinite
+    bool    IsNan
+
+    Number Exp
+    Number Expt
+    Number Log
+    Number LogBase
+    Number Sin
+    Number Cos
+    Number Tan
+    Number Asin
+    Number Acos
+    Number Atan
+    Number Atan2
+    Number Sqrt
+    Number ExactIntegerSqrt
+
+    string ToString 
+    string ToStringRadix 
+    string ToStringRadixPrecision
+};
+
+// Scheme rules:
+// - A number is _exact 
+
+
+
+    bignum_t    _num;
+    bignum_t    _den;
+    double      _real;
+
+    //  Non-complex values are stored in _real  
+    //
+    //  Exact integer       _real._fixnum       _real._bignum
+    //  Inexact integer     _real._fixnum       _real._bignum
+    //
+    //  Exact rational      _real._fixnum/den   _real._bignum/den
+    //  Inexact rational    _real._flonum       _real._flonum
+    //
+    //  Exact real          _real._flonum       _real._flonum       
+    //  Inexact real        _real._flonum       _real._flonum    
+    //
+    //  Exact/inexact complex   (_real, _imag)
+    //
+    //  Exact complex       (_real, _imag)      (_real, _imag)
+    //  Inexact complex
+    //  Exact real          _num/_den       _bignum/_bigden     (demoted to rational)
+    //  
+
+    // Integers with an exact representation in 64-bits are stored in _num
+
+    int64_t _num = 0;
+
+    // Small, exact rational values are represented as _num/_den
+
+    uint64_t _den = 1;
+
+    // Inexact values of any type are kept 
+
+    double _real = 0;
+    BigInteger  _num    = 0;
+    BigInteger  _den    = 1;
+
+    // 
+
+
+    bool        _exact  = true;
+    double      _real   = 0;
+    double      _imag   = 0;
+    std::
+
+    union
+    {
+        int64_t     _integer;
+        double      _real;      
+
+
+    } _inexactValue;
+
+
+};
+
+
+
 
 const int TYPE_BITS = 4;
-const int DATA_BITS = 24;
+const int DATA_BITS = 28;
 
-struct Field
+
+union BoxedValue
 {
-    FieldType _type : TYPE_BITS;
-    FieldWord _data : DATA_BITS;
-
-    // The value stored in _data is an index into the value table, unless
-    // the _embedded flag is set. This happens for a couple of cases:
-    // 
-    //   - TYPE_POINTER and TYPE_PROCEDURE hold a cell table address
-    //   - TYPE_CHAR and TYPE_INTEGER store the value directly, if it
-    //     is small enough to fit.
-
-    FieldWord _embedded : 1;    // Value is 24 bits or less, and embedded in _data
-    FieldWord _exact    : 1;    // Value is numeric and "exact"
-    FieldWord _reserved : 2;    // These bits are reserved for ConsCell to use as flags
+    int64_t     _integer;
+    double      _real;      
+    char32_t    _char;      
 };
-
-template<typename T> bool CanBeEmbedded
-
-
-// Values 
-
-union ValueUnion
-{
-    uintptr_t           _raw;
-    double              _real;      
-    char32_t            _char;      
-    ComplexNumber       _complex;
-    uintptr_t           _external;
-
-    template<typename T>
-    inline Ref<T>& AsExternalReference()
-    {
-        return *((Ref<T>*) _external);
-    }
-};
-
-struct ValueVariant
-{
-    ValueUnion  _value;
-};
-
 
 struct ConsCell
 {
     Field _field[2]; // CAR and CDR
-
-    // 
 
     inline bool IsAllocated() const          { return _field[CAR]._extra; }
     inline bool SetAllocated(bool allocated) { _field[CAR]._extra = allocated? 1 : 0; }
@@ -159,11 +227,6 @@ struct ConsCell
 };
 
 
-struct FatCell : public ConsCell
-{
-    ValueVariant _car;
-};
-
 static_assert(TYPE_COUNT < (1 << TYPE_BITS));
 static_assert(sizeof(ValueVariant)  == 8);
 static_assert(sizeof(Field)         == 8);
@@ -171,11 +234,28 @@ static_assert(sizeof(ConsCell)      == 8);
 
 
 
+template<typename T> using Ref = std::shared_ptr<T>;
+
+
+
+typedef int CellIndex;
+typedef vector<Value> CellVector;
+
+typedef std::shared_ptr<ValueVector>    ValueVectorRef;
+typedef std::shared_ptr<Environment>    EnvironmentRef;
+typedef std::shared_ptr<SymbolInfo>     SymbolRef;
+typedef std::shared_ptr<SchemeNumber>   NumberRef;
+
+
 class Storage
 {
-    PagedTable<ConsCell>     _cells;
-    PagedTable<FatCell>      _fats;
-    PagedTable<ValueVariant> _values;
+    PagedTable<ConsCell>        _cells;
+    PagedTable<SmallValue>      _boxes;
+    PagedTable<EnvironmentRef>  _environs;
+    PagedTable<SymbolRef>       _symbols;
+    PagedTable<StringRef>       _strings;
+    PagedTable<VectorRef>       _vectors;
+    PagedTable<NumberRef>       _numbers;
 
     inline Field* LocateCell(int addr)
     {

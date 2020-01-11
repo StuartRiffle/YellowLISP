@@ -15,6 +15,9 @@
     <Filter Include="Library\r6rs">
       <UniqueIdentifier>{90602bb3-5e83-4f0b-8a95-5f6e532d0043}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Numbers">
+      <UniqueIdentifier>{78c60fff-2e6b-4e8d-9b4f-132c9cfae6f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Bootstrap.cpp">
@@ -101,6 +104,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\PagedTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\BigInteger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
