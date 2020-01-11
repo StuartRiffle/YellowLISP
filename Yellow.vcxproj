@@ -159,39 +159,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\CellGraph.cpp" />
-    <ClCompile Include="Source\Evaluation.cpp" />
-    <ClCompile Include="Source\Math.cpp" />
-    <ClCompile Include="Source\Bootstrap.cpp" />
-    <ClCompile Include="Source\CellTable.cpp" />
-    <ClCompile Include="Source\Commands.cpp" />
-    <ClCompile Include="Source\Errors.cpp" />
-    <ClCompile Include="Source\Interpreter.cpp" />
-    <ClCompile Include="Source\Literals.cpp" />
-    <ClCompile Include="Source\Parser.cpp" />
-    <ClCompile Include="Source\Primitives.cpp" />
-    <ClCompile Include="Source\Runtime.cpp" />
-    <ClCompile Include="Source\Testing.cpp" />
-    <ClCompile Include="Source\Yellow.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Source\BigInteger.h" />
-    <ClInclude Include="Source\Bootstrap.h" />
-    <ClInclude Include="Source\CommandLine.h" />
-    <ClInclude Include="Source\ConsCell.h" />
-    <ClInclude Include="Source\Console.h" />
-    <ClInclude Include="Source\Embedded.h" />
-    <ClInclude Include="Source\Errors.h" />
-    <ClInclude Include="Source\Hash.h" />
-    <ClInclude Include="Source\Interpreter.h" />
-    <ClInclude Include="Source\PagedTable.h" />
-    <ClInclude Include="Source\Parser.h" />
-    <ClInclude Include="Source\Runtime.h" />
-    <ClInclude Include="Source\StaticVector.h" />
-    <ClInclude Include="Source\Utility.h" />
-    <ClInclude Include="Source\Yellow.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="Library\R6RS\compat-r5rs.scm" />
@@ -210,12 +177,41 @@
     <None Include="Library\R6RS\standard-libraries.scm" />
     <None Include="LICENSE" />
     <None Include="README.md" />
+    <None Include="Source\Bootstrap\Bootstrap.lisp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Yellow.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Bootstrap\Bootstrap.cpp" />
+    <ClCompile Include="Source\Interpreter\Commands.cpp" />
+    <ClCompile Include="Source\Interpreter\Interpreter.cpp" />
+    <ClCompile Include="Source\Numeric\Literals.cpp" />
+    <ClCompile Include="Source\Numeric\Math.cpp" />
+    <ClCompile Include="Source\Runtime\CellTable.cpp" />
+    <ClCompile Include="Source\Runtime\Evaluation.cpp" />
+    <ClCompile Include="Source\Runtime\Primitives.cpp" />
+    <ClCompile Include="Source\Runtime\Runtime.cpp" />
+    <ClCompile Include="Source\Testing\Testing.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Bootstrap\Bootstrap.h" />
+    <ClInclude Include="Source\Interpreter\Embedded.h" />
+    <ClInclude Include="Source\Interpreter\Interpreter.h" />
+    <ClInclude Include="Source\Runtime\ConsCell.h" />
+    <ClInclude Include="Source\Runtime\Runtime.h" />
+    <ClInclude Include="Source\Testing\Testing.h" />
+    <ClInclude Include="Source\Utility\BigInteger.h" />
+    <ClInclude Include="Source\Utility\CommandLine.h" />
+    <ClInclude Include="Source\Utility\Console.h" />
+    <ClInclude Include="Source\Utility\Coverage.h" />
+    <ClInclude Include="Source\Utility\Hash.h" />
+    <ClInclude Include="Source\Utility\PagedTable.h" />
+    <ClInclude Include="Source\Utility\StaticVector.h" />
+    <ClInclude Include="Source\Utility\Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
