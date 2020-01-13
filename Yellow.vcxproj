@@ -189,7 +189,6 @@
     <ClCompile Include="Source\Bootstrap\Bootstrap.cpp" />
     <ClCompile Include="Source\Interpreter\Commands.cpp" />
     <ClCompile Include="Source\Interpreter\Interpreter.cpp" />
-    <ClCompile Include="Source\Numeric\Literals.cpp" />
     <ClCompile Include="Source\Numeric\Math.cpp" />
     <ClCompile Include="Source\Runtime\CellTable.cpp" />
     <ClCompile Include="Source\Runtime\Evaluation.cpp" />
@@ -201,10 +200,14 @@
     <ClInclude Include="Source\Bootstrap\Bootstrap.h" />
     <ClInclude Include="Source\Interpreter\Embedded.h" />
     <ClInclude Include="Source\Interpreter\Interpreter.h" />
+    <ClInclude Include="Source\Numeric\BaseLibrary.h" />
+    <ClInclude Include="Source\Numeric\BigInteger.h" />
+    <ClInclude Include="Source\Numeric\Complex.h" />
+    <ClInclude Include="Source\Numeric\Number.h" />
+    <ClInclude Include="Source\Numeric\Rational.h" />
     <ClInclude Include="Source\Runtime\ConsCell.h" />
     <ClInclude Include="Source\Runtime\Runtime.h" />
     <ClInclude Include="Source\Testing\Testing.h" />
-    <ClInclude Include="Source\Utility\BigInteger.h" />
     <ClInclude Include="Source\Utility\CommandLine.h" />
     <ClInclude Include="Source\Utility\Console.h" />
     <ClInclude Include="Source\Utility\Coverage.h" />

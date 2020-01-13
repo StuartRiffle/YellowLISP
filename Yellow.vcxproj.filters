@@ -93,9 +93,6 @@
     <ClCompile Include="Source\Interpreter\Interpreter.cpp">
       <Filter>Interpreter</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Numeric\Literals.cpp">
-      <Filter>Numeric</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Numeric\Math.cpp">
       <Filter>Numeric</Filter>
     </ClCompile>
@@ -134,9 +131,6 @@
     <ClInclude Include="Source\Runtime\Runtime.h">
       <Filter>Runtime</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Utility\BigInteger.h">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Utility\CommandLine.h">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -157,6 +151,21 @@
     </ClInclude>
     <ClInclude Include="Source\Utility\Utility.h">
       <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Numeric\Rational.h">
+      <Filter>Numeric</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Numeric\Complex.h">
+      <Filter>Numeric</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Numeric\BigInteger.h">
+      <Filter>Numeric</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Numeric\Number.h">
+      <Filter>Numeric</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Numeric\BaseLibrary.h">
+      <Filter>Runtime</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

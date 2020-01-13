@@ -38,12 +38,6 @@ inline Complex<T> operator-(const Complex<T>& u, const Complex<T>& v)
 }
 
 template<typename T>
-inline Complex<T> operator*(const Complex<T>& u, const T& sv)
-{
-    return Complex<T>(u.r * sv, u.i * sv);
-}
-
-template<typename T>
 inline Complex<T> operator*(const Complex<T>& u, const Complex<T>& v)
 {
     const T& a = u.r;
@@ -74,12 +68,17 @@ inline Complex<T> operator/(const Complex<T>& u, const Complex<T>& v)
 }
 
 template<typename T>
+inline Complex<T> operator*(const Complex<T>& u, const T& sv)
+{
+    return Complex<T>(u.r * sv, u.i * sv);
+}
+
+template<typename T>
 inline Complex<T> operator/(const Complex<T>& u, const T& sv)
 {
     T scale = (T) Rational(1, sv);
     return u * scale;
 }
-
 
 template<typename T>
 inline Complex<T> pow(const Complex<T>& u, const Complex<T>& v)
@@ -109,8 +108,15 @@ inline Complex<T> pow(const T& u, const Complex<T>& v)
 }
 
 template<typename T>
+inline Complex<T> log(const Complex<T>& u)
+{
+    return Complex<T>(log(Magnitude(u)), Phase(u));
+}
+
+template<typename T>
 inline Complex<T> exp(const Complex<T>& u)
 {
     return Complex<T>(cos(u.i), sin(u.i)) * exp(u.r);
 }
+
 

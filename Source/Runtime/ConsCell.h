@@ -14,13 +14,15 @@ enum ValueType
     TYPE_NULL,          // The empty list ()                    Type only
     TYPE_POINTER,       // A cons cell reference                An index into _cells[]
     TYPE_PROCEDURE,     // A callable procedure                 An index into _cells[] for a pair (bindings . body)
-    TYPE_ENVIRONMENT,   // An Environment object reference      An index into _environs[]
+    TYPE_ENVIRONMENT,   // An Environment object reference      An index into _environments[]
     TYPE_SYMBOL,        // A SymbolInfo object reference        An index into _symbols[]
     TYPE_VECTOR,        // A mixed-type vector of values        An index into _vectors[]
+    TYPE_BYTEVECTOR,    // A vector of uint8_t                  An index into _bytevectors[]
     TYPE_CHAR,          // A UTF-32 code point                  Immediate value
     TYPE_STRING,        // A vector of TYPE_CHAR code points    An index into _vectors[]
     TYPE_FIXED_INT,     // An exact 28-bit signed integer       Immediate value
     TYPE_NUMBER,        // Any other numeric value              An index into _numbers[]
+    TYPE_EOF_OBJECT,    // An end-of-file (port) marker         Type only
 
     TYPE_COUNT
 };
@@ -29,176 +31,6 @@ struct Datum
 {
     uint32_t    _type : 4;
     uint32_t    _data : 28;
-};
-
-
-enum TowerLevel
-{
-    LEVEL_INVALID = 0,
-
-    LEVEL_INTEGER,
-    LEVEL_RATIONAL,
-    LEVEL_REAL,
-    LEVEL_COMPLEX
-};
-
-struct Scalar
-{
-    bool        _big;       
-    bool        _rational;  
-
-    // The storage format used depends on the flags:
-    //
-    //                  rational            not rational
-    //
-    //      big         _bignum/_bigden     _flonum
-    //      not big     _fixnum/_fixden     _flonum
-    //
-    // Simple integers are represented as rational numbers with 
-    // a denominator of 1.
-    //
-    // The storage format is independent of Scheme's "exactness"
-
-    int64_t     _fixnum;
-    uint64_t    _fixden;
-
-    bignum_t    _bignum;
-    bignum_t    _bigden;
-
-    double      _flonum;
-};
-
-class Number
-{
-    TowerLevel  _level   = LEVEL_INVALID;
-    bool        _exact   = true;
-    Scalar      _real;
-    Scalar      _imag;
-
-public:
-
-    Number Add         (const Number& lhs, const Number& rhs) const;
-    Number Subtract    (const Number& lhs, const Number& rhs) const;
-    Number Multiply    (const Number& lhs, const Number& rhs) const;
-    Number Gcd         (const Number& lhs, const Number& rhs) const;
-    Number Lcm         (const Number& lhs, const Number& rhs) const; 
-
-    bool    IsEqualTo
-    bool    IsLessThan
-
-    Number Abs         () const;
-    Number Numerator   () const; 
-    Number Denominator () const; 
-    Number Floor       () const; 
-    Number Ceiling     () const;
-    Number Truncate    () const; 
-    Number Round       () const; 
-    Number Rationalize () const;
-
-    Number RealPart    () const;
-    Number ImagPart    () const;
-    Number Magnitude   () const;
-    Number Angle       () const;
-    Number ToExact
-    Number ToInexact
-
-
-    Number MakeRectangular
-    Number MakePolar
-    Number FromString 
-    Number FromStringRadix 
-
-    bool    IsNumber
-    bool    IsComplex
-    bool    IsReal
-    bool    IsRational
-    bool    IsInteger
-    bool    IsExact
-    bool    IsRealValued
-    bool    IsRationalValued
-    bool    IsZero
-    bool    IsPositive
-    bool    IsNegative
-    bool    IsFinite
-    bool    IsNan
-
-    Number Exp
-    Number Expt
-    Number Log
-    Number LogBase
-    Number Sin
-    Number Cos
-    Number Tan
-    Number Asin
-    Number Acos
-    Number Atan
-    Number Atan2
-    Number Sqrt
-    Number ExactIntegerSqrt
-
-    string ToString 
-    string ToStringRadix 
-    string ToStringRadixPrecision
-};
-
-// Scheme rules:
-// - A number is _exact 
-
-
-
-    bignum_t    _num;
-    bignum_t    _den;
-    double      _real;
-
-    //  Non-complex values are stored in _real  
-    //
-    //  Exact integer       _real._fixnum       _real._bignum
-    //  Inexact integer     _real._fixnum       _real._bignum
-    //
-    //  Exact rational      _real._fixnum/den   _real._bignum/den
-    //  Inexact rational    _real._flonum       _real._flonum
-    //
-    //  Exact real          _real._flonum       _real._flonum       
-    //  Inexact real        _real._flonum       _real._flonum    
-    //
-    //  Exact/inexact complex   (_real, _imag)
-    //
-    //  Exact complex       (_real, _imag)      (_real, _imag)
-    //  Inexact complex
-    //  Exact real          _num/_den       _bignum/_bigden     (demoted to rational)
-    //  
-
-    // Integers with an exact representation in 64-bits are stored in _num
-
-    int64_t _num = 0;
-
-    // Small, exact rational values are represented as _num/_den
-
-    uint64_t _den = 1;
-
-    // Inexact values of any type are kept 
-
-    double _real = 0;
-    BigInteger  _num    = 0;
-    BigInteger  _den    = 1;
-
-    // 
-
-
-    bool        _exact  = true;
-    double      _real   = 0;
-    double      _imag   = 0;
-    std::
-
-    union
-    {
-        int64_t     _integer;
-        double      _real;      
-
-
-    } _inexactValue;
-
-
 };
 
 
