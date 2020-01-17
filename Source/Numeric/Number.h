@@ -78,6 +78,11 @@ public:
 
 
     /*
+    (if (< (numeric-tower-level b) (numeric-tower-level a))
+        (func b a)
+        (
+
+
     rational        real        complex
     rational    rational        real            
     real

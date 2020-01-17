@@ -357,6 +357,7 @@ CELLID Runtime::LET(const CELLVEC& args)
         
     }
 
+
     ScopeGuard scopeGuard(_environment, &blockScope);
     CELLID result = _null;
 
@@ -800,6 +801,62 @@ write-char
 write-string
 write-u8
 zero?
+
+
+(case (car ’(c d)) 
+    ((a e i o u) ’vowel) 
+    ((w y) ’semivowel) 
+    (else => (lambda (x) x)))
+
+
+
+(let (## (car '(cd)))
+    (if (in-list (a e i o u) ##)
+        'vowel
+        (if (in-list (w y) ##)
+            'semivowel
+            (lambda (x) x))))
+
+
+(* x 3)
+push 3
+push 'x'
+push 'eval'
+call
+push '*'
+call
+
+
+
+; caller pushes s-expression
+; calls eval
+
+; eval 
+
+
+(enter "eval")
+    ; stack: proc continuation args
+    (pop proc)
+    (
+    (pop args)
+    (load 
+
+push '(cd)
+push car
+call
+push (a e i o u)
+push in-list
+call/cc 
+pop-test-continue 'vowel
+push (w y)
+push in-list
+call
+pop-test-continue 'semivowel
+
+
+
+
+
 
 
 */

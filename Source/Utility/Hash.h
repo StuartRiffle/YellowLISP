@@ -30,17 +30,34 @@ inline uint64_t WangMix64(uint64_t n)
     return n;
 }
 
-inline uint64_t HashString(const char* str)
+template<int A, int B, int C>
+inline uint64_t XorShift64(uint64_t n)
 {
-    const uint64_t FNV1A_OFFSET = uint64_t(0x00000100000001B3ULL);
-    const uint64_t FNV1A_PRIME  = uint64_t(0xCBF29CE484222325ULL);
+    n ^= (n << A);
+    n ^= (n >> B);
+    n ^= (n << C);
 
-    uint64_t fnv = FNV1A_OFFSET;
-    while (*str)
-        fnv = (fnv * FNV1A_PRIME) ^ *str++;
-
-    return WangMix64(fnv);
+    return n;
 }
 
+inline uint64_t HashString64(const char* str)
+{
+    const uint64_t FRAC_SQRT_2  = 0x6A09E667F3BCC908ULL;
+    const uint64_t FNV1A_OFFSET = 0xCBF29CE484222325ULL;
+    const uint64_t FNV1A_PRIME  = 0x00000100000001B3ULL;
+
+    uint64_t a = FNV1A_OFFSET;
+    uint64_t b = FRAC_SQRT_2;
+
+    while (*str)
+    {
+        a ^= *str++;
+        a *= FNV1A_PRIME;
+        a ^= b;
+        b -= XorShift64<18, 31, 11>(a);
+    }
+
+    return (b);
+}
 
 

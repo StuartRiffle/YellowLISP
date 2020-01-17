@@ -6,26 +6,6 @@ enum
     CDR = 1
 };
 
-enum ValueType
-{
-    TYPE_INVALID = 0,
-                        // This value is:                       It is represented by:
-                        // --------------                       ---------------------
-    TYPE_NULL,          // The empty list ()                    Type only
-    TYPE_POINTER,       // A cons cell reference                An index into _cells[]
-    TYPE_PROCEDURE,     // A callable procedure                 An index into _cells[] for a pair (bindings . body)
-    TYPE_ENVIRONMENT,   // An Environment object reference      An index into _environments[]
-    TYPE_SYMBOL,        // A SymbolInfo object reference        An index into _symbols[]
-    TYPE_VECTOR,        // A mixed-type vector of values        An index into _vectors[]
-    TYPE_BYTEVECTOR,    // A vector of uint8_t                  An index into _bytevectors[]
-    TYPE_CHAR,          // A UTF-32 code point                  Immediate value
-    TYPE_STRING,        // A vector of TYPE_CHAR code points    An index into _vectors[]
-    TYPE_FIXED_INT,     // An exact 28-bit signed integer       Immediate value
-    TYPE_NUMBER,        // Any other numeric value              An index into _numbers[]
-    TYPE_EOF_OBJECT,    // An end-of-file (port) marker         Type only
-
-    TYPE_COUNT
-};
 
 struct Datum
 {

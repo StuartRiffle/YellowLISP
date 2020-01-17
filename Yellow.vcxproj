@@ -161,20 +161,6 @@
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
-    <None Include="Library\R6RS\compat-r5rs.scm" />
-    <None Include="Library\R6RS\examples.scm" />
-    <None Include="Library\R6RS\expander.scm" />
-    <None Include="Library\R6RS\runtime.scm" />
-    <None Include="Library\R6RS\sample-balloons.scm" />
-    <None Include="Library\R6RS\sample-libs-and-program.scm" />
-    <None Include="Library\R6RS\sample-party.scm" />
-    <None Include="Library\R6RS\sample-program.scm" />
-    <None Include="Library\R6RS\sample-stack.scm" />
-    <None Include="Library\R6RS\simple-macros-tests.scm" />
-    <None Include="Library\R6RS\simple-macros.scm" />
-    <None Include="Library\R6RS\simple-module-examples.scm" />
-    <None Include="Library\R6RS\simple-syntax-case.scm" />
-    <None Include="Library\R6RS\standard-libraries.scm" />
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include="Source\Bootstrap\Bootstrap.lisp" />
@@ -187,17 +173,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Bootstrap\Bootstrap.cpp" />
+    <ClCompile Include="Source\CellGraph.cpp" />
+    <ClCompile Include="Source\Errors.cpp" />
     <ClCompile Include="Source\Interpreter\Commands.cpp" />
     <ClCompile Include="Source\Interpreter\Interpreter.cpp" />
     <ClCompile Include="Source\Numeric\Math.cpp" />
+    <ClCompile Include="Source\Parser.cpp" />
     <ClCompile Include="Source\Runtime\CellTable.cpp" />
     <ClCompile Include="Source\Runtime\Evaluation.cpp" />
     <ClCompile Include="Source\Runtime\Primitives.cpp" />
     <ClCompile Include="Source\Runtime\Runtime.cpp" />
     <ClCompile Include="Source\Testing\Testing.cpp" />
+    <ClCompile Include="Source\Yellow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bootstrap\Bootstrap.h" />
+    <ClInclude Include="Source\Errors.h" />
     <ClInclude Include="Source\Interpreter\Embedded.h" />
     <ClInclude Include="Source\Interpreter\Interpreter.h" />
     <ClInclude Include="Source\Numeric\BaseLibrary.h" />
@@ -205,8 +196,10 @@
     <ClInclude Include="Source\Numeric\Complex.h" />
     <ClInclude Include="Source\Numeric\Number.h" />
     <ClInclude Include="Source\Numeric\Rational.h" />
+    <ClInclude Include="Source\Parser.h" />
     <ClInclude Include="Source\Runtime\ConsCell.h" />
     <ClInclude Include="Source\Runtime\Runtime.h" />
+    <ClInclude Include="Source\Runtime\StackMachine.h" />
     <ClInclude Include="Source\Testing\Testing.h" />
     <ClInclude Include="Source\Utility\CommandLine.h" />
     <ClInclude Include="Source\Utility\Console.h" />
@@ -215,6 +208,7 @@
     <ClInclude Include="Source\Utility\PagedTable.h" />
     <ClInclude Include="Source\Utility\StaticVector.h" />
     <ClInclude Include="Source\Utility\Utility.h" />
+    <ClInclude Include="Source\Yellow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
