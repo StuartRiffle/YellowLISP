@@ -3,21 +3,9 @@
 #pragma once
 #include "Yellow.h"
 
-typedef uint64_t STRINGHASH;
+typedef uint64_t hash64_t;
 
-inline uint32_t WangMix32(uint32_t n)
-{
-    n = n + ~(n << 15);
-    n = n ^  (n >> 10);
-    n = n +  (n << 3);
-    n = n ^  (n >> 6);
-    n = n + ~(n << 11);
-    n = n ^  (n >> 16);
-
-    return n;
-}
-
-inline uint64_t WangMix64(uint64_t n)
+inline constexpr uint64_t WangMix64(uint64_t n)
 {
     n = ~n + (n << 21);
     n =  n ^ (n >> 24);
@@ -31,7 +19,7 @@ inline uint64_t WangMix64(uint64_t n)
 }
 
 template<int A, int B, int C>
-inline uint64_t XorShift64(uint64_t n)
+inline constexpr uint64_t Xorshift64(uint64_t n)
 {
     n ^= (n << A);
     n ^= (n >> B);
@@ -42,22 +30,29 @@ inline uint64_t XorShift64(uint64_t n)
 
 inline uint64_t HashString64(const char* str)
 {
-    const uint64_t FRAC_SQRT_2  = 0x6A09E667F3BCC908ULL;
-    const uint64_t FNV1A_OFFSET = 0xCBF29CE484222325ULL;
-    const uint64_t FNV1A_PRIME  = 0x00000100000001B3ULL;
+    // This function keeps 128 bits of internal state. The seed
+    // values are arbitrary, but should have [roughly] the same 
+    // number of zeroes and ones to kickstart the avalache. The
+    // mix function used to generate them is constexpr, and can 
+    // be evaluated at compile time.
 
-    uint64_t a = FNV1A_OFFSET;
-    uint64_t b = FRAC_SQRT_2;
+    uint64_t a = WangMix64('hash');
+    uint64_t b = WangMix64('init');
 
     while (*str)
     {
-        a ^= *str++;
-        a *= FNV1A_PRIME;
-        a ^= b;
-        b -= XorShift64<18, 31, 11>(a);
+        const uint64_t FNV1A_PRIME = 0x100000001B3ULL;
+        uint64_t fnv = ((a - b) ^ *str++) * FNV1A_PRIME;
+
+        // The Xorshift parameters below are from Marsaglia's paper
+        // (in the Reference folder) and have a period of 2^64-1. 
+        // The two calculations are independent and should pipeline well.
+
+        a ^= Xorshift64<13,  7, 17>(fnv);
+        b ^= Xorshift64<49, 15, 61>(fnv);
     }
 
-    return (b);
+    return (a ^ b);
 }
 
 

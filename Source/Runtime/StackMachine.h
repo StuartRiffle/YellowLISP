@@ -22,38 +22,37 @@ struct complex_t
 enum ValueType : uint8_t
 {
     TYPE_INVALID = 0,
-                        // This value is:                       It is represented by:
-                        // --------------                       ---------------------
-    TYPE_NULL,          // The empty list ()                    Type only
-    TYPE_POINTER,       // A cons cell reference                An index into _cells[]
-    TYPE_PROCEDURE,     // A callable procedure                 An index into _cells[] for a pair (bindings . body)
+    TYPE_POINTER,       
+    TYPE_PROCEDURE,     
+    TYPE_ENVIRONMENT,   
 
-    TYPE_ENVIRONMENT,   // An Environment object reference      An index into _environments[]
-    TYPE_SYMBOL,        // A SymbolInfo object reference        An index into _symbols[]
-    TYPE_VECTOR,        // A mixed-type vector of values        An index into _vectors[]
-    TYPE_BYTEVECTOR,    // A vector of uint8_t                  An index into _bytevectors[]
+    TYPE_SYMBOL,        
+    TYPE_VECTOR,        
+    TYPE_BYTEVECTOR,    
 
-    TYPE_CHAR,          // A UTF-32 code point                  Immediate value
-    TYPE_STRING,        // A vector of TYPE_CHAR code points    An index into _vectors[]
+    TYPE_CHAR,          
+    TYPE_STRING,        
+
     TYPE_FIXNUM,
     TYPE_FLONUM,
-    TYPE_FANCYNUM,        // Any other numeric value              An index into _numbers[]
+    TYPE_NUMERIC,      
 
-    TYPE_EOF_OBJECT,    // An end-of-file (port) marker         Type only
+    TYPE_EOF_OBJECT,    
+    TYPE_RECORD,
 
     TYPE_COUNT
 };
 
 
-union Value
+struct NanBox
+
+
+union ValueData
 {
-    int64_t     _int;           // TYPE_FIXNUMEmbedded fixnum
+    uintptr_t   _ptr;           // Pointer to a (type-specific) external object
+    int64_t     _int;           // Embedded fixnum
     float64_t   _fp;            // Embedded flonum
-    rational_t  _ratio;         // Embedded rational number
-    complex_t   _complex;       // Embedded complex number
-    char8_t     _str[8];        // Embedded UTF-8 small string literal (possibly NOT zero terminated!)
     char32_t    _char;          // Embedded UTF-32 code point
-    uintptr_t   _ptr;           // Pointer to a (type-specific) external representation of the value
 };
 
 struct ValueMeta
@@ -66,24 +65,16 @@ struct ValueMeta
 
 struct ValueVector : public RefCounted
 {
-    ValueType       _type;
     size_t          _count;
-    Up<Value>       _value;
+    Up<ValueData>   _data;
     Up<ValueMeta>   _meta;
 };
 
 struct Symbol : public RefCounted
 {
-    string      _ident;
-    uint64_t    _hash;
+    string          _ident;
+    hash64_t        _hash;
 };
-struct Procedure : public RefCounted
-{
-    Ref<Environment>    _environ;
-    Vec<Ref<Symbol>>    _formals;
-    Cell*               _body;
-};
-
 
 
 
@@ -102,8 +93,6 @@ struct CellBlock
     uint8_t     _reachable;     // One bit per cell, used as the "mark" during mark-and-sweep garbage collection
 
     CellBlock() : _allocated(0), _reachable(0) {}
-
-    ValueMeta* GetCellMeta(Cell* cell) {}
 };
 
 inline CellBlock* GetCellBlock(const Cell* cell)
@@ -172,6 +161,49 @@ struct StackFrame : public RefCounted
     Value*          _stack;     // Stack for values
     ValueMeta*      _meta;      // Parallel stack for type/tags
     string          _desc;      // Backtrace text
+};
+
+
+
+struct BytecodeBlock : public RefCounted
+{
+    vector<uint8_t>     _code;
+    HashTable<hash_t, 
+};
+
+
+struct BytecodePtr
+{
+    Ref<BytecodeBlock>  _block;
+    uint64_t            _offset;
+};
+
+struct Environment : public RefCounted
+{
+    const Ref<Environment> _enclosing;
+};
+
+struct Procedure : public RefCounted
+{
+    Ref<Environment>    _environment;
+    vector<Ref<Symbol>> _formals;
+    BytecodePtr         _entryPoint;
+};
+
+
+
+struct Context : public RefCounted
+{
+    BytecodePtr         _nextInstruction;
+    Ref<Environment>    _environment;
+    Ref<Procedure>      _continuation;
+    Ref<Procedure>      _exceptionHandler;
+    Ref<Procedure>      _beforeThunk;
+    Ref<Procedure>      _afterThunk;
+
+
+    vector<ValueData>   _stack;
+    vector<ValueMeta>   _meta;
 };
 
 
