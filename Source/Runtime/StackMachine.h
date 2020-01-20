@@ -44,16 +44,122 @@ enum ValueType : uint8_t
 };
 
 
-struct NanBox
 
+/// ValueBox uses "NaN boxing" to implement a union of
+/// double precision float point numbers and tagged 
+/// pointers. Basically, if the double is encoded as a
+/// NaN, the lower 51 bits are unused, and we can use them
+/// to represent a pointer.
+///
+/// A lot of existing hardware only actually uses 48 bits of
+/// address space, so 51 bits is enough to store any
+/// pointer value directly, and still have a few bits left 
+/// over for tag/type information. Newer hardware has
+/// a wider effective address space though, and that trick 
+/// doesn't work anymore. 
+///
+/// So instead of storing pointers directly, we encode them
+/// as an *offset* into a heap that we manage ourselves.
+/// There are multiple heaps (for different object types), so
+/// to resolve a pointer the offset has to be added to the base
+/// address of the appropriate heap.
 
-union ValueData
+union ValueBox
 {
-    uintptr_t   _ptr;           // Pointer to a (type-specific) external object
-    int64_t     _int;           // Embedded fixnum
-    float64_t   _fp;            // Embedded flonum
-    char32_t    _char;          // Embedded UTF-32 code point
+private:
+    double          _fp;
+    uint64_t        _raw;
+                                                                
+    const uint64_t SIGN_BIT         = 0x8000'0000'0000'0000;    //    1  Ignored by boxed values
+    const uint64_t NAN_BITS         = 0x7ff8'0000'0000'0000;    //   12  All must be set for boxed values
+    const uint64_t BOXED_TYPE_MASK  = 0x0007'8000'0000'0000;    //    4  Boxed value type
+    const uint64_t BOXED_DATA_MASK  = 0x0000'7FFF'FFFF'FFFE;    //   46  Boxed value data, format depends on type
+    const uint64_t REACHABLE_FLAG   = 0x0000'0000'0000'0001;    //    1  Must be kept in LSB, used by both boxed values and real floats
+                                                                // ----
+                                                                //   64
+public:
+    inline bool IsBoxedValue() const 
+    {
+        bool nanEncoding = (_raw & NAN_BITS) == NAN_BITS;
+
+        const uint64_t payloadMask = (BOXED_TYPE_MASK | BOXED_DATA_MASK);
+        bool hasPayload = (_raw & payloadMask) != 0;
+
+        return nanEncoding && hasPayload;
+    }
+
+    inline bool IsFloat() const
+    {
+        return !IsBoxedValue();
+    }
+
+    inline double GetFloat() const
+    {
+        assert(IsFloat());
+        assert(_raw & REACHABLE_BIT == 0);
+
+        return _fp;
+    }
+
+    inline void SetFloat(double val)
+    {
+        // The least significant bit is reserved for use during the first pass of
+        // garbage collection, to mark this ValueBox as "reachable" and prevent 
+        // it from being recycled. During normal operation, the LSB must remain zero,
+        // so floating point values are rounded when they are stored using Dekker's
+        // algorithm from "A Floating-Point Technique for Extending the Available Precision".
+
+        double t = val * 3.0;
+        _fp = t - (t - val);
+
+        assert(_raw & REACHABLE_BIT == 0);
+        assert(IsFloat());
+    }
+
+    inline int64_t GetInteger() const
+    {
+        assert(GetType() == TYPE_FIXNUM);
+
+        int64_t signExtended = ((int64_t) _raw << 17) >> 17;
+        return signExtended;
+    }
+
+    inline ValueType GetType() const
+    {
+        if (IsBoxedValue())
+            return (ValueType) (_raw & BOXED_TYPE_MASK) >> 47;
+
+        return TYPE_FLONUM;
+    }
+
+    inline uint64_t GetBoxedData() const
+    {
+        assert(IsBoxedValue());
+        return (_raw & BOXED_DATA_MASK) >> 1;
+    }
+
+    inline void SetBoxedData(ValueType type, uint64_t data)
+    {
+        _raw = 
+            NAN_BITS |
+            (((uint64_t) type << 47) & BOXED_TYPE_MASK) |
+            ((data << 1) & BOXED_DATA_MASK);
+    }
+
+    inline void MarkReachable()
+    {
+        assert(_raw & REACHABLE_BIT == 0);
+        _raw |= REACHABLE_BIT;
+    }
+
+    inline bool TestAndClearReachable()
+    {
+        bool reachable = (_raw & REACHABLE_BIT) != 0;
+        _raw &= ~REACHABLE_BIT;
+        return reachable;
+    }
 };
+
 
 struct ValueMeta
 {
