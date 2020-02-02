@@ -19,29 +19,141 @@ struct complex_t
     float32_t   _imag;
 };
 
-enum ValueType : uint8_t
+enum ValueType 
 {
     TYPE_INVALID = 0,
-    TYPE_POINTER,       
-    TYPE_PROCEDURE,     
-    TYPE_ENVIRONMENT,   
+    TYPE_POINTER,       // index
+    TYPE_PROCEDURE,     // pair?
+    TYPE_ENVIRONMENT,   // obj
 
-    TYPE_SYMBOL,        
-    TYPE_VECTOR,        
-    TYPE_BYTEVECTOR,    
+    TYPE_SYMBOL,        // index
+    TYPE_VECTOR,        // obj
+    TYPE_BLOB,    
 
-    TYPE_CHAR,          
-    TYPE_STRING,        
+    TYPE_CHAR,          // immed
+    TYPE_STRING,        // obj
 
-    TYPE_FIXNUM,
-    TYPE_FLONUM,
-    TYPE_NUMERIC,      
+    TYPE_FIXNUM,        // immed
+    TYPE_FLONUM,        // immed
+    TYPE_NUMERIC,       // obj
 
-    TYPE_EOF_OBJECT,    
-    TYPE_RECORD,
+    TYPE_EOF_OBJECT,    // obj
+    TYPE_RECORD,        // obj
 
     TYPE_COUNT
 };
+
+enum CdrType
+{
+    CDR_FOLLOWS,
+    CDR_SKIPPED,
+};
+
+union Field
+{
+    float       _float;
+    int32_t     _int;
+    uint32_t    _raw;
+
+    uint32_t GetType() const    { return (_raw & TYPE_MASK) >> TYPE_SHIFT; }
+    void SetType(uint32_t type) { _raw = (_raw & ~TYPE_MASK) | (type << TYPE_SHIFT); }
+
+    uint32_t GetFlags(uint32_t mask) const { return (_raw & mask); }
+    void SetFlags(uint32_t mask) { _raw |= mask; }
+
+    int32_t GetInt() const   { int32_t val = _raw; val >>= DATA_SHIFT; return val; }
+    void SetInt(int32_t val) { _raw = (val << DATA_SHIFT) | (_raw & ~DATA_MASK); }
+
+    float GetFloat() const { }
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+1 1 5 26 5 26 5/27 for all
+
+8 8 24 24
+
+
+
+
+pointer
+
+
+index
+object
+
+
+float
+float/float
+double
+double/double
+
+
+// cdr coded:
+
+[link32][data32]    fixnum, flonum, char
+[link32][data64...]  
+
+
+
+two byte header
+indices are 3 bytes
+immediates are 4
+
+Non-chain cells can fit in 8 with one byte header
+
+
+Index field is 5/27
+
+
+TYPE_POINTER,       // index
+TYPE_PROCEDURE,     // pair?
+TYPE_ENVIRONMENT,   // obj
+TYPE_SYMBOL,        // index
+TYPE_VECTOR,        // obj
+TYPE_BLOB,    
+TYPE_CHAR,          // immed
+TYPE_STRING,        // obj
+TYPE_FIXNUM,        // immed
+TYPE_FLONUM,        // immed
+TYPE_NUMERIC,       // obj
+TYPE_EOF_OBJECT,    // obj
+TYPE_RECORD,        // obj
+
+
+*/
+
+
+
+
+
 
 
 
@@ -71,12 +183,20 @@ private:
     uint64_t        _raw;
                                                                 
     const uint64_t SIGN_BIT         = 0x8000'0000'0000'0000;    //    1  Ignored by boxed values
-    const uint64_t NAN_BITS         = 0x7ff8'0000'0000'0000;    //   12  All must be set for boxed values
+    const uint64_t NAN_BITS         = 0x7ff8'0000'0000'0000;    //   12  All bits must be set for boxed values
     const uint64_t BOXED_TYPE_MASK  = 0x0007'8000'0000'0000;    //    4  Boxed value type
     const uint64_t BOXED_DATA_MASK  = 0x0000'7FFF'FFFF'FFFE;    //   46  Boxed value data, format depends on type
     const uint64_t REACHABLE_FLAG   = 0x0000'0000'0000'0001;    //    1  Must be kept in LSB, used by both boxed values and real floats
                                                                 // ----
                                                                 //   64
+
+
+
+
+/*
+
+*/
+
 public:
     inline bool IsBoxedValue() const 
     {
@@ -184,6 +304,12 @@ struct Symbol : public RefCounted
 
 
 
+struct TypedValue
+{
+    uint32_t    _val;
+    uint8_t     _type;
+};
+
 
 struct Cell
 {
@@ -218,6 +344,59 @@ inline ValueMeta* GetValueMeta(const Value* value)
 
     return cellBlock->_meta + cellIndex;
 }
+
+
+class TypedMemory
+{
+    TypedBlock*  _core;
+
+public:
+    inline void GetValue(uint32_t addr, TypedValue& dest) const
+    {
+        uint32_t blockIndex = addr >> 4;
+        uint32_t valueOffset = addr & 0xF;
+
+        const CellBlock* __restrict block = _core + blockIndex;
+        dest._value = block->_value[valueOffset];
+
+        uint8_t typePair = block->_typeInfo[valueOffset >> 1];
+        dest._type = (addr & 1)? (typePair >> 4) : (typePair & 0xF);
+    }
+
+    inline void SetValue(uint32_t addr, const TypedValue& src)
+    {
+        uint32_t blockIndex  = addr >> 4;
+        uint32_t valueOffset = addr & 0xF;
+
+        CellBlock* block __restrict = _core + blockIndex;
+        block->_value[valueOffset] = src._value;
+
+        uint8_t& typePair = block->_typeInfo[valueOffset >> 1];
+        typePair = (addr & 1)? 
+            ((typePair & 0x0F) | (src._type << 4)) :
+            ((typePair & 0xF0) | src._type);
+    }
+
+
+    inline void GetPair(uint32_t addr, TypedValue& car, TypedValue& cdr) const
+    {
+        assert(addr & 1 == 0);
+
+        uint32_t blockIndex  = addr >> 4;
+        uint32_t valueOffset = addr & 0xF;
+
+        const CellBlock* __restrict block = _core + blockIndex;
+        car._value = block->_value[valueOffset];
+        cdr._value = block->_value[valueOffset + 1];
+
+        uint8_t typePair = block->_typeInfo[valueOffset >> 1];
+        car._type = typePair & 0xF;
+        cdr._type = typePair >> 4;
+    }
+
+
+};
+
 
 class RefCounted
 {
@@ -310,6 +489,90 @@ struct Context : public RefCounted
 
     vector<ValueData>   _stack;
     vector<ValueMeta>   _meta;
+
+
+
+    void EnterLet()
+    {
+        bool evalBeforeBinding = !isStarForm;
+        bool bindAllBeforeEval = isRecForm;
+        bool bindAllAfterEval  = isStarForm;
+
+        auto innerEnv = _vm->Alloc<Environment>();
+        const auto& outerEnv = _vm->_environment;
+        const auto& bindingEnv = (evalBeforeBinding? outerEnv : innerEnv);
+
+        if (isRecForm)
+            for (const auto& binding : block->bindings)
+                environment->Declare(binding._var);
+
+        for (const auto& binding : block->bindings)
+        {
+            // FIXME: call/cc these evals
+            auto boundValue = _vm->Evaluate(binding._expression, bindingEnv);
+            environment->Define(binding._var, boundValue);
+        }
+
+
+
+        struct Context
+        {
+            Ref<Context> _continuation;
+            int _blockIndex;
+            Value[]
+            // tos
+            // ip
+            // regs[] (effectively the stack; size known aot)
+            // bindings[] (values only)
+        };
+
+
+        // 
+        /*
+
+
+        (define (fact n)
+            (if (< n 2) 1
+                (* n (fact (- n 1))))
+
+        @fact:              ; n
+            (push-copy 1)   ; n n
+            (push-int 2)    ; n n 2
+            (call <)        ; n (n<2)?
+            (pop-jump @r1)  ; n                 sp++; if (IsTruthy(sp[-1])) goto @R1;
+            (push-copy 1)   ; n n               sp--; sp[0] = sp[1];
+            (push-int 1)    ; n n 1             sp--; sp[0] = 1;
+            (call -)        ; n (n-1)
+            (call *)        ; result
+            (ret)
+
+
+
+            push-copy   1
+            push-int    2
+            call        <
+            pop-jump    
+
+        (define (fact n k)
+            (if (< n 2) (k 1)
+                (fact (- n 1) (lambda (partial k) (k (* part n)))))
+
+
+
+        */
+
+
+
+        auto context = _vm->Alloc<Context>();
+        context->_outerScope = _vm->_environment;
+
+        auto localEnv = _vm->Alloc<Environment>();
+        environment->_parent = _vm->_environment;
+        _vm->environment = localEnv;
+        _
+        auto continuation = _vm->Alloc<Continuation>();
+        continuation->_nextInstruction = proc->_entryPoint;
+    }
 };
 
 
